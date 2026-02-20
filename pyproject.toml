@@ -53,8 +53,9 @@ docs = [
     "pytkdocs[numpy-style]",
 ]
 
-[tool.setuptools]
-packages = ["virtual_accelerator"]
+[tool.setuptools.packages.find]
+include = [ "virtual_accelerator", ]
+namespaces = false
 
 [tool.setuptools.package-data]
 virtual_accelerator = ["py.typed"]
