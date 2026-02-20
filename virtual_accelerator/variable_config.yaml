@@ -1,0 +1,60 @@
+BPM:
+  X:
+    unit: mm
+    read_only: true
+    variable_class: ScalarVariable
+  Y:
+    unit: mm
+    read_only: true
+    variable_class: ScalarVariable
+QUAD:
+  BCTRL:
+    unit: kG
+    read_only: false
+    variable_class: ScalarVariable
+  BACT:
+    unit: kG
+    read_only: true
+    variable_class: ScalarVariable
+  BMIN:
+    unit: kG
+    read_only: true
+    variable_class: ScalarVariable
+  BMAX:
+    unit: kG
+    read_only: true
+    variable_class: ScalarVariable
+XCOR:
+  BCTRL:
+    unit: kG
+    read_only: false
+    variable_class: ScalarVariable
+  BACT:
+    unit: kG
+    read_only: true
+    variable_class: ScalarVariable
+  BMIN:
+    unit: kG
+    read_only: true
+    variable_class: ScalarVariable
+  BMAX:
+    unit: kG
+    read_only: true
+    variable_class: ScalarVariable
+YCOR:
+  BCTRL:
+    unit: kG
+    read_only: false
+    variable_class: ScalarVariable
+  BACT:
+    unit: kG
+    read_only: true
+    variable_class: ScalarVariable
+  BMIN:
+    unit: kG
+    read_only: true
+    variable_class: ScalarVariable
+  BMAX:
+    unit: kG
+    read_only: true
+    variable_class: ScalarVariable

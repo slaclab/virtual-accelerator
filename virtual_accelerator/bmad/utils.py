@@ -1,8 +1,5 @@
 import yaml
 from lume.variables import ScalarVariable
-from typing import Any
-from lume_bmad.transformer import BmadTransformer
-from pytao import Tao
 
 TAO_OUTPUT_UNITS = {
     "ele.name": "",
@@ -31,10 +28,6 @@ TAO_OUTPUT_UNITS = {
     "ele.mat6": "",
     "ele.vec0": "m",
 }
-
-###############################################################
-# Utility functions for importing control and output variables
-################################################################
 
 
 def import_control_variables(control_variable_file: str):
