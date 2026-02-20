@@ -1,0 +1,63 @@
+[build-system]
+requires = ["setuptools>=64", "setuptools-scm>=8"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "virtual-accelerator"
+dynamic = ["version"]
+description = "SLAC Specific implementation of virtual accelerators for SLAC beamlines"
+readme = "README.md"
+requires-python = ">=3.10"
+license = {text = "Apache-2.0"}
+authors = [
+    {name = "SLAC National Accelerator Laboratory"}
+]
+classifiers = [
+    "Development Status :: 4 - Beta",
+    "Intended Audience :: Science/Research",
+    "License :: OSI Approved :: Apache Software License",
+    "Programming Language :: Python :: 3",
+    "Programming Language :: Python :: 3.11",
+    "Programming Language :: Python :: 3.12",
+    "Programming Language :: Python :: 3.13",
+    "Topic :: Scientific/Engineering",
+]
+dependencies = [
+    "lume-base @ git+https://github.com/slaclab/lume-base@main",
+    "lume-torch @ git+https://github.com/lume-science/lume-torch@main",
+    "lume-bmad @ git+https://github.com/lume-science/lume-bmad@main",
+    "lume-cheetah @ git+https://github.com/lume-science/lume-cheetah@main",
+    "lume-pva @ git+https://github.com/lume-science/lume-pva@main",
+    "lume-impact @ git+https://github.com/ChristopherMayes/lume-impact",
+]
+
+[project.urls]
+Homepage = "https://github.com/slaclab/virtual-accelerator"
+Repository = "https://github.com/slaclab/virtual-accelerator"
+Documentation = "https://github.com/slaclab/virtual-accelerator"
+
+[project.optional-dependencies]
+dev = [
+    "pytest",
+    "ipykernel",
+    "pre-commit"
+]
+docs = [
+    "pygments",
+    "mkdocs",
+    "mkdocstrings",
+    "mkdocstrings-python",
+    "mkdocs-material",
+    "livereload",
+    "pytkdocs[numpy-style]",
+]
+
+[tool.setuptools]
+packages = ["virtual_accelerator"]
+
+[tool.setuptools.package-data]
+lume = ["py.typed"]
+
+[tool.ruff]
+# select = []
+# ignore = []
