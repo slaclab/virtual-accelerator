@@ -19,7 +19,7 @@ SLAC_VARIABLE_CONFIG_FILE = os.path.join(
 )
 
 
-def build_variables_for_mapping(
+def build_variables_and_mapping(
     *,
     devices: dict[str, dict[str,str]],
     variable_config: dict,
