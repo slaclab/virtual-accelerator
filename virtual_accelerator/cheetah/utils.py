@@ -188,25 +188,11 @@ def access_cheetah_attribute(element, pv_attribute, energy, set_value=None):
             ) from e
 
 
-def get_pv_mad_mapping(fname):
-    """
-    Create a mapping from control system names to element names from a CSV file.
-
-    Args:
-        fname (str): Path to the CSV file containing the mapping.
-
-    """
-    mapping = (
-        pd.read_csv(fname, dtype=str)
-        .set_index("Control System Name")["Element"]
-        .T.to_dict()
-    )
-    return mapping
-
-
 def get_mad_config_mapping(fname):
     """
-    Create a mapping from madnames to control names from a CSV file.
+    Create a mapping from madnames to control names and device types
+    from a CSV file.
+
 
     Args:
         fname (str): Path to the CSV file containing the mapping.
@@ -220,6 +206,15 @@ def get_mad_config_mapping(fname):
     return mapping
 
 def get_devices_from_lattice(fname,segment):
+    """
+    Given a CSV file and cheetah segment determines what cheetah
+    elements are also in the file. Returns the intersection of cheetah and file
+    elements key'd by name with config dictionary as value.
+    
+    Args:
+        fname (str) : Path to the CSV file containing the mapping.
+        segment (cheetah.accelerator.segment): relevant cheetah segment with devices
+    """
     mad_config_mapping = get_mad_config_mapping(fname)
     element_names = [element.name for element in segment.elements]
     devices_in_lattice = {
