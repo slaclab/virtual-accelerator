@@ -7,7 +7,7 @@ from pathlib import Path
 
 from cheetah.accelerator import Segment
 from lume.variables import ScalarVariable
-from virtual_accelerator.cheetah.utils import get_compatible_devices
+from virtual_accelerator.cheetah.utils import get_devices_from_lattice
 
 LCLS_ELEMENTS = os.path.join(
     Path(__file__).parent.resolve(),
@@ -19,7 +19,7 @@ SLAC_VARIABLE_CONFIG_FILE = os.path.join(
 )
 
 
-def build_variables_for_devices(
+def build_variables_for_mapping(
     *,
     devices: dict[str, dict[str,str]],
     variable_config: dict,
@@ -95,7 +95,7 @@ def build_variables_for_devices(
 
     return all_vars, mapping
 
-def generate_slac_variables(
+def generate_variables_and_mapping(
     lattice: Segment,
     *,
     lcls_elements_path: str | None = None,
@@ -168,10 +168,10 @@ def generate_slac_variables(
 
     print(variable_config_resolved)
 
-    devices = get_compatible_devices(lcls_elements_path,lattice) #rename this function
+    devices = get_devices_from_lattice(lcls_elements_path,lattice) #rename this function
 
     
-    all_vars, mapping = build_variables_for_devices(
+    all_vars, mapping = build_variables_and_mapping(
         devices=devices,
         variable_config=variable_config_resolved, 
     )

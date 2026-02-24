@@ -219,8 +219,12 @@ def get_mad_config_mapping(fname):
     )
     return mapping
 
-def get_compatible_devices(fname,segment):
+def get_devices_from_lattice(fname,segment):
     mad_config_mapping = get_mad_config_mapping(fname)
     element_names = [element.name for element in segment.elements]
-    compatible_devices = {madname.lower(): config_dict for madname,config_dict in mad_config_mapping.items() if madname.lower() in element_names }
-    return compatible_devices
+    devices_in_lattice = {
+            madname.lower(): config_dict 
+            for madname,config_dict in mad_config_mapping.items()
+            if madname.lower() in element_names
+            }
+    return devices_in_lattice
