@@ -24,6 +24,55 @@ def build_variables_for_devices(
     devices: dict[str, dict[str,str]],
     variable_config: dict,
 ) -> dict[str, ScalarVariable]:
+    """ 
+    Instantiate ScalarVariables for a set of devices using a device-type mapping.
+
+    Given a mapping of lattice/beamline devices to their control-system metadata
+    (control PV prefix and device type), this function:
+
+      - Looks up the configured PV attributes for each device type in
+        `variable_config`
+      - Builds full PV names as "{control_name}:{attr}"
+      - Instantiates the configured `variable_class` with `name=<pv>` plus any
+        remaining spec kwargs
+      - Builds a reverse mapping from control_name -> device identifier
+
+    Parameters
+    ----------
+    devices : dict[str, dict[str, str]]
+        Mapping of device identifier -> device metadata. Each device metadata
+        dict must contain exactly two entries whose values are, in iteration
+        order, (control_name, dev_type). For example:
+            {
+                "QUAD_001": {"control_name": "QUAD:IN20:731", "type": "QUAD"},
+                ...
+            }
+        Note: the current implementation uses `dev_config.values()`; if dict
+        key order is not guaranteed by construction, prefer explicit keys.
+
+    variable_config : dict
+        Device-type -> PV-attribute -> spec mapping. Each spec must include:
+            - "variable_class": callable to construct a ScalarVariable
+        and may include additional keyword arguments passed to the constructor
+        (e.g., unit, read_only, limits, metadata).
+
+    Returns
+    -------
+    tuple[dict[str, ScalarVariable], dict[str, str]]
+        (all_vars, mapping) where:
+          - all_vars maps full PV name -> ScalarVariable instance
+          - mapping maps control_name -> device identifier
+
+    Raises
+    ------
+    KeyError
+        If a spec is missing required keys (e.g., "variable_class").
+    TypeError
+        If "variable_class" is not callable or constructor kwargs are invalid.
+    Exception
+        Propagates any exception raised during variable instantiation.
+    """
+
 
     all_vars: dict[str, ScalarVariable] = {}
     mapping: dict[str,str] = {}
@@ -54,47 +103,59 @@ def generate_slac_variables(
     config_file: str | None = None,
 ) -> tuple[dict[str, ScalarVariable], dict[str, ScalarVariable]]:
     """
-    Generate LUME ScalarVariables from SLAC control YAML definitions.
+    Generate ScalarVariables for SLAC-style controls from a Cheetah lattice.
 
     This is a single-entry functional API that:
 
-        1. Loads and merges SLAC device YAML files
-        2. Filters devices to those present in a Cheetah lattice
-        3. Applies a device-type → PV-attribute mapping
-        4. Instantiates ScalarVariable objects
-        5. Splits them into control and observable variables
+      1. Resolves the variable configuration (either provided directly or loaded
+         from a YAML file).
+      2. Filters/collects devices compatible with the provided lattice using the
+         LCLS elements table.
+      3. Instantiates variables for each device using the device-type -> PV-attr
+         mapping.
+      4. Returns the created variables and a reverse mapping from control PV
+         prefix to lattice device identifier.
 
     Parameters
     ----------
     lattice : Segment
-        Cheetah accelerator segment.
-    slac_tools_dir : str, optional
-        Base directory containing SLAC YAML files.
+        Cheetah accelerator segment used to determine which devices are present.
+
+    lcls_elements_path : str, optional
+        Path to the LCLS elements CSV used to map/identify control names and
+        device types. If not provided, defaults to the module-level LCLS_ELEMENTS.
+
     variable_config : dict, optional
-        Device-type → PV-attribute → variable specification mapping.
+        Device-type -> PV-attribute -> variable specification mapping. If not
+        provided, the configuration is loaded from `config_file` (or the default
+        SLAC_VARIABLE_CONFIG_FILE).
+
     config_file : str, optional
-        YAML config file containing both:
-            - SLAC_VARIABLE_CONFIG
+        YAML configuration file containing `SLAC_VARIABLE_CONFIG`. Used only when
+        `variable_config` is not provided.
 
     Returns
     -------
-    tuple[dict[str, ScalarVariable], dict[str, ScalarVariable]]
-        (control_variables, observable_variables),
-        both keyed by full PV name.
+    tuple[dict[str, ScalarVariable], dict[str, str]]
+        (all_vars, mapping) where:
+          - all_vars maps full PV name -> ScalarVariable instance
+          - mapping maps control_name -> device identifier
 
     Raises
     ------
-    ValueError
-        If configuration cannot be resolved.
+    FileNotFoundError
+        If `config_file` is required but does not exist.
     TypeError
-        If configuration structure is invalid.
+        If the loaded configuration has an invalid structure (e.g., wrong types).
+    ValueError
+        If configuration cannot be resolved or required information is missing.
+    Exception
+        Propagates exceptions raised during device filtering or variable creation.
 
-    Design Notes
-    ------------
-    - Stateless: no internal storage.
-    - Deterministic: same inputs → same outputs.
-    - Safe-by-default: errors during variable creation
-      are handled via callback instead of stopping execution.
+    Notes
+    -----
+    This function is stateless and deterministic given the same inputs and file
+    contents. Errors during variable instantiation are not suppressed.
     """
     if lcls_elements_path is None:
         lcls_elements_path = str(LCLS_ELEMENTS)
@@ -163,6 +224,44 @@ def resolve_variable_config(
     variable_config,
     config_file,
 ) -> dict:
+    """
+    Resolve the variable configuration and normalize variable_class entries.
+
+    If `variable_config` is provided, it is used directly. Otherwise the
+    configuration is loaded from `config_file` (or the default
+    SLAC_VARIABLE_CONFIG_FILE).
+
+    Additionally, this function resolves any string-valued "variable_class"
+    entries (e.g., "pkg.module.ClassName") into the corresponding Python class
+    object via `import_from_dotted_path`.
+
+    Parameters
+    ----------
+    variable_config : dict or None
+        Device-type -> PV-attribute -> spec mapping. If None, the configuration
+        is loaded from `config_file`.
+
+    config_file : str or None
+        YAML configuration file used when `variable_config` is None. If None,
+        defaults to SLAC_VARIABLE_CONFIG_FILE.
+
+    Returns
+    -------
+    dict[str, dict[str, dict[str, Any]]]
+        Resolved configuration with "variable_class" entries normalized to class
+        objects (callables).
+
+    Raises
+    ------
+    FileNotFoundError
+        If loading from `config_file` and the file does not exist.
+    TypeError
+        If the loaded configuration structure is invalid.
+    ValueError
+        If a "variable_class" string is not a valid dotted path.
+    ImportError
+        If a module/class referenced by "variable_class" cannot be imported.
+    """
 
     if variable_config is None:
         if config_file is None:
@@ -207,6 +306,51 @@ def split_control_and_observable(
     return control_vars, observable_vars
 
 def import_from_dotted_path(path: str):
+    """
+    Import and return an object from a dotted module path.
+
+    This utility resolves strings of the form:
+
+        "package.module.ClassName"
+
+    into the corresponding Python object by importing the module
+    and retrieving the named attribute.
+
+    Parameters
+    ----------
+    path : str
+        Fully-qualified dotted path to an importable attribute or class.
+
+    Returns
+    -------
+    Any
+        The imported attribute (typically a class or callable).
+
+    Raises
+    ------
+    ValueError
+        If `path` does not contain both a module and attribute
+        component (i.e., missing a dot separator).
+
+    ModuleNotFoundError
+        If the module portion of the path cannot be imported.
+
+    AttributeError
+        If the requested attribute does not exist in the module.
+
+    Examples
+    --------
+    >>> import_from_dotted_path(
+    ...     "lume.variables.ScalarVariable"
+    ... )
+    <class 'lume.variables.ScalarVariable'>
+
+    Notes
+    -----
+    This function is commonly used when loading configuration from
+    YAML or JSON files where Python classes must be specified as
+    strings and resolved at runtime.
+    """
     module_path, _, class_name = path.rpartition(".")
     if not module_path:
         raise ValueError(
