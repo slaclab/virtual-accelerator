@@ -1,5 +1,5 @@
 from abc import ABC, abstractmethod
-from lume_cheetah.utils import access_cheetah_attribute
+from virtual_accelerator.cheetah.utils import access_cheetah_attribute
 
 class CheetahTransformer(ABC):
     """
@@ -57,7 +57,7 @@ class SLACCheetahTransformer(CheetahTransformer):
     ----------
     control_name_to_cheetah : dict[str, str]
         A dictionary mapping control variable names to cheetah elements 
-        (e.g. {"QUAD:IN20:511:BCTRL" : "QE03"})
+        (e.g. {"QUAD:IN20:511 : "qe03"})
         #same something about how bctrl maps to k1, in utils.py
     """
     
@@ -84,7 +84,7 @@ class SLACCheetahTransformer(CheetahTransformer):
         """
         #get the last part after the last colon, which is the attribute name
         control_name, attribute = control_variable_name.rsplit(":", 1)
-        element_name = self.control_name_to_cheetah.get(control_variable_name) # mapping { "QUAD:IN20:511:BCTRL" : "QE03"}
+        element_name = self.control_name_to_cheetah.get(control_name) # mapping { "QUAD:IN20:511:BCTRL" : "QE03"}
         if element_name is None:
             raise ValueError(f"No mapping found for control variable '{control_variable_name}'")
 
@@ -107,12 +107,10 @@ class SLACCheetahTransformer(CheetahTransformer):
             The name of the control variable (e.g. "QUAD:IN20:511:BCTRL")
         value : Any
             The value to set for the corresponding cheetah property, in EPICS units.
-        energy : float
-            The beam energy in eV, used for unit conversions if necessary.
         """
 
         control_name, attribute = control_variable_name.rsplit(":", 1) 
-        element_name = self.control_name_to_cheetah.get(control_variable_name)
+        element_name = self.control_name_to_cheetah.get(control_name)
         if element_name is None:
             raise ValueError(f"No mapping found for control variable '{control_variable_name}'")
 
