@@ -66,7 +66,6 @@ class CheetahSimulator:
 
     def reset(self):
         self.segment = deepcopy(self._initial_segment)
-        self.beam_distribution = self.initial_beam_distribution.clone()
         self.track()
         self.energies = self.get_energy()
 
