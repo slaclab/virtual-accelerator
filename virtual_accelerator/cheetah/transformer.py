@@ -1,48 +1,7 @@
 from abc import ABC, abstractmethod
 from virtual_accelerator.cheetah.utils import access_cheetah_attribute
+from lume_cheetah.transformer import CheetahTransformer
 
-class CheetahTransformer(ABC):
-    """
-    Class that handles transformations between control system
-    names and values and cheetah element names and attributes.
-
-    Should be subclassed for each specific accelerator facility to handle
-    any necessary unit conversions or special cases in the mapping
-    between control variables and cheetah properties.
-
-    """
-    
-
-    @abstractmethod
-    def get_cheetah_property(self, simulator, control_variable_name):
-        """
-        Given a control variable name, return the corresponding cheetah value.
-
-        Parameters
-        ----------
-        control_variable_name : str
-            The name of the control variable (e.g. "QUAD:IN20:511:BCTRL")
-
-        Returns
-        -------
-        Any
-            The corresponding cheetah element property value
-        """
-        pass
-
-    @abstractmethod
-    def set_cheetah_property(self, simulator, control_variable_name, value):
-        """
-        Given a control variable name and value, set the corresponding cheetah property.
-
-        Parameters
-        ----------
-        control_variable_name : str
-            The name of the control variable (e.g. "QUAD:IN20:511:BCTRL")
-        value : Any
-            The value to set for the corresponding cheetah property
-        """
-        pass
 
 
 class SLACCheetahTransformer(CheetahTransformer):
