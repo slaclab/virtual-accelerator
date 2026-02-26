@@ -20,7 +20,6 @@ SLAC_VARIABLE_CONFIG_FILE = os.path.join(
 
 
 def build_variables_and_mapping(
-    *,
     devices: dict[str, dict[str,str]],
     variable_config: dict,
 ) -> dict[str, ScalarVariable]:
@@ -97,7 +96,6 @@ def build_variables_and_mapping(
 
 def generate_variables_and_mapping(
     lattice: Segment,
-    *,
     lcls_elements_path: str | None = None,
     variable_config: dict[str, dict[str, dict[str, Any]]] | None = None,
     config_file: str | None = None,
@@ -166,7 +164,7 @@ def generate_variables_and_mapping(
         config_file=config_file,
     )
 
-    print(variable_config_resolved)
+    
 
     devices = get_devices_from_lattice(lcls_elements_path,lattice) #rename this function
 
@@ -220,7 +218,6 @@ def load_config_from_file(path: str) -> tuple[dict[str, Any], list[str]]:
 
 
 def resolve_variable_config(
-    *,
     variable_config,
     config_file,
 ) -> dict:
