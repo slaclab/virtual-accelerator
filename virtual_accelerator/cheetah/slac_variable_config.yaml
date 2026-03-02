@@ -63,3 +63,37 @@ SLAC_VARIABLE_CONFIG:
       unit: kG-m
       read_only: true
       variable_class: lume.variables.ScalarVariable
+
+  OTRS:
+    Image:ArrayData:
+      unit: pixel
+      read_only: true
+      variable_class: lume.variables.NDVariable
+    PNEUMATIC:
+      unit: bool
+      read_only: false
+      variable_class: lume.variables.ScalarVariables
+    Image:ArraySize1_RBV:
+      unit: pixel
+      read_only: false
+      variable_class: lume.variables.ScalarVariables
+    Image:ArraySize0_RBV:
+      unit: pixel
+      read_only: false
+      variable_class: lume.variables.ScalarVariables  
+    RESOLUTION:
+      unit: pixel/mm
+      read_only: true
+      variable_class: lume.variables.ScalarVariable
+    IMAGE:
+      unit: pixel
+      read_only: true
+      variable_class: lume.variables.NDVariable
+    N_OF_ROW:
+      unit: pixel
+      read_only: false
+      variable_class: lume.variables.ScalarVariable
+    N_OF_COL: 
+      unit: pixel
+      read_only: false
+      variable_class: lume.variables.ScalarVariable
