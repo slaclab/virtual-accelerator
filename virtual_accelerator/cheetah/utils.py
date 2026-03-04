@@ -124,7 +124,7 @@ SCREEN_MAPPING = {
     "N_OF_COL": FieldAccessor(lambda e, energy: e.resolution[1]),
 }
 
-
+#CHEETAH ELEMENT MAPPINGS
 MAPPINGS = {
     "Quadrupole": QUADRUPOLE_MAPPING,
     "Solenoid": SOLENOID_MAPPING,
@@ -223,3 +223,31 @@ def get_devices_from_lattice(fname,segment):
             if madname.lower() in element_names
             }
     return devices_in_lattice
+
+
+
+def get_mad_mapping(fname):
+    """
+    Create a mapping from madnames to control names and device types
+    from a CSV file.
+
+
+    Args:
+        fname (str): Path to the CSV file containing the mapping.
+
+    """
+    mapping = (
+        pd.read_csv(fname, dtype=str)
+        .set_index("Element")
+        ['Control System Name'].to_dict()
+    )
+    return mapping
+
+def get_devs_from_lattice(fname, segment):
+    mapping = get_mad_mapping(fname)
+    devices_in_lattice = {element.name : mapping[(element.name).upper()]
+                    for element in segment.elements
+                    if (element.name).upper() in mapping }
+    return devices_in_lattice
+
+

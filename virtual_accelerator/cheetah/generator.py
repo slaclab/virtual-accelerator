@@ -4,10 +4,12 @@ from typing import Any
 import os
 import yaml
 from pathlib import Path
-
+import pprint
 from cheetah.accelerator import Segment
-from lume.variables import ScalarVariable
-from virtual_accelerator.cheetah.utils import get_devices_from_lattice
+
+from lume.variables import Variable, ScalarVariable, NDVariable
+from virtual_accelerator.cheetah.utils import get_devs_from_lattice
+from copy import copy
 
 LCLS_ELEMENTS = os.path.join(
     Path(__file__).parent.resolve(),
@@ -18,81 +20,158 @@ SLAC_VARIABLE_CONFIG_FILE = os.path.join(
     "slac_variable_config.yaml",
 )
 
+def resolve_slac_variables(element, control_name, dev_attr_mapping):
+    """
+    Instantiate variables for a single lattice element using a SLAC variable
+    configuration mapping.
 
-def build_variables_and_mapping(
-    devices: dict[str, dict[str,str]],
-    variable_config: dict,
-) -> dict[str, ScalarVariable]:
-    """ 
-    Instantiate ScalarVariables for a set of devices using a device-type mapping.
+    This function converts a device attribute configuration (typically loaded
+    from the SLAC YAML variable config) into instantiated LUME `Variable`
+    objects.
 
-    Given a mapping of lattice/beamline devices to their control-system metadata
-    (control PV prefix and device type), this function:
+    For each configured attribute:
+      - A full PV name is constructed as "{control_name}:{attr}".
+      - The configured `variable_class` is instantiated.
+      - Additional keyword arguments from the configuration are passed through.
 
-      - Looks up the configured PV attributes for each device type in
-        `variable_config`
-      - Builds full PV names as "{control_name}:{attr}"
-      - Instantiates the configured `variable_class` with `name=<pv>` plus any
-        remaining spec kwargs
-      - Builds a reverse mapping from control_name -> device identifier
+    Special handling is applied for NDVariables whose shape must be determined
+    from the lattice element (e.g. screen image arrays).
 
     Parameters
     ----------
-    devices : dict[str, dict[str, str]]
-        Mapping of device identifier -> device metadata. Each device metadata
-        dict must contain exactly two entries whose values are, in iteration
-        order, (control_name, dev_type). For example:
-            {
-                "QUAD_001": {"control_name": "QUAD:IN20:731", "type": "QUAD"},
-                ...
-            }
-        Note: the current implementation uses `dev_config.values()`; if dict
-        key order is not guaranteed by construction, prefer explicit keys.
+    element : Any
+        Cheetah lattice element instance (e.g. Screen, BPM, Quadrupole).
 
-    variable_config : dict
-        Device-type -> PV-attribute -> spec mapping. Each spec must include:
-            - "variable_class": callable to construct a ScalarVariable
-        and may include additional keyword arguments passed to the constructor
-        (e.g., unit, read_only, limits, metadata).
+    control_name : str
+        Control-system PV prefix for this device
+        (e.g. "QUAD:IN20:425").
+
+    dev_attr_mapping : dict[str, dict[str, Any]]
+        Mapping of PV attribute -> variable specification loaded from the
+        SLAC variable configuration.
+
+        Example structure::
+
+            {
+                "Image:ArrayData": {
+                    "variable_class": NDVariable,
+                    "read_only": True,
+                    "unit": "pixel",
+                    "shape": None
+                },
+                "PNEUMATIC": {
+                    "variable_class": ScalarVariable,
+                    "read_only": False
+                }
+            }
 
     Returns
     -------
-    tuple[dict[str, ScalarVariable], dict[str, str]]
-        (all_vars, mapping) where:
-          - all_vars maps full PV name -> ScalarVariable instance
-          - mapping maps control_name -> device identifier
+    dict[str, Variable]
+        Mapping of full PV name -> instantiated LUME Variable
+        (ScalarVariable or NDVariable).
+    """
+    variables = {}
 
-    Raises
-    ------
-    KeyError
-        If a spec is missing required keys (e.g., "variable_class").
-    TypeError
-        If "variable_class" is not callable or constructor kwargs are invalid.
-    Exception
-        Propagates any exception raised during variable instantiation.
+    for attr, var_config in dev_attr_mapping.items():
+        var_config = copy(var_config)
+        variable_name = ':'.join((control_name, attr))
+        variable_class = var_config.pop('variable_class')
+
+        is_nd = isinstance(variable_class, type) and issubclass(variable_class, NDVariable)
+        if is_nd and attr == "Image:ArrayData":
+            var_config["shape"] = tuple(element.resolution)    
+
+        variables[variable_name] = variable_class(name=variable_name, **var_config)
+            #elif isinstance(variable_class, ScalarVariable) and attr == 'Image:ArraySize0_RBV':
+                # can pass because these don't need defaults
+
+    return variables
+            
+def build_variables_and_mapping(
+    devices: dict[str, str],
+    variable_config: dict,
+    lattice: Segment,
+    resolve_variable: callable | None = None
+) -> tuple[dict[str, Variable], dict[str, str]]:
+    """
+    Build LUME variables for all devices present in a lattice.
+
+    This function iterates over a set of lattice devices and uses the
+    SLAC variable configuration to instantiate the appropriate LUME
+    Variable objects for each device.
+
+    For each lattice element:
+      - The element type is determined from the lattice object.
+      - The corresponding variable configuration block is retrieved.
+      - Variables are instantiated using the provided resolver function.
+
+    A reverse mapping from control-system prefix to lattice element name
+    is also generated.
+
+    Parameters
+    ----------
+    devices : dict[str, str]
+        Mapping of lattice element name -> control-system PV prefix.
+
+        Example::
+
+            {
+                "qb03": "QUAD:IN20:731",
+                "yc01": "YCOR:IN20:425"
+            }
+
+    variable_config : dict
+        Device-type -> PV attribute -> variable specification mapping
+        loaded from the SLAC variable YAML configuration.
+
+    lattice : Segment
+        Cheetah accelerator lattice containing the device objects.
+
+    resolve_variable : callable, optional
+        Function responsible for creating variables for a single device.
+        Defaults to `resolve_slac_variables`.
+
+    Returns
+    -------
+    tuple[dict[str, Variable], dict[str, str]]
+
+        all_vars
+            Mapping of full PV name -> instantiated Variable.
+
+        mapping
+            Mapping of control-system PV prefix -> lattice element name.
     """
 
 
-    all_vars: dict[str, ScalarVariable] = {}
+    if resolve_variable is None:
+        resolve_variable = resolve_slac_variables
+
+    all_vars: dict[str, Variable] = {}
     mapping: dict[str,str] = {}
-    for device, dev_config in devices.items():
-        control_name, dev_type = dev_config.values()
-        dev_attr_mapping = variable_config.get(dev_type)
-        if dev_attr_mapping is None:
+    for lattice_element_name, control_name in devices.items():
+        try:
+            element = getattr(lattice, lattice_element_name)
+            element_type = type(element).__name__
+        except AttributeError as e:
+            raise KeyError(f"Element {lattice_element_name!r} not found in lattice") from e
+        
+        dev_attr_mapping = variable_config.get(element_type)
+        if dev_attr_mapping is not None:
+            variables = resolve_variable(
+                element,
+                control_name,
+                dev_attr_mapping
+            )
+
+            all_vars.update(variables)
+
+            mapping[control_name] = lattice_element_name
+        else:
             continue
 
-        for attr in dev_attr_mapping:
-            try:
-                spec = dev_attr_mapping[attr]
-                variable_class = spec["variable_class"]
-                kwargs = {k: v for k, v in spec.items() if k != "variable_class"}
-                variable_name = ':'.join((control_name,attr))
-                all_vars[variable_name] = variable_class(name=variable_name, **kwargs)
-                mapping[control_name] = device
-            except Exception as exc:
-                raise exc
-
     return all_vars, mapping
+    
 
 def generate_variables_and_mapping(
     lattice: Segment,
@@ -101,110 +180,97 @@ def generate_variables_and_mapping(
     config_file: str | None = None,
 ) -> tuple[dict[str, ScalarVariable], dict[str, ScalarVariable]]:
     """
-    Generate ScalarVariables for SLAC-style controls from a Cheetah lattice.
+    Generate LUME variables for a SLAC-style control system from a Cheetah lattice.
 
-    This is a single-entry functional API that:
+    This is the primary high-level entry point for building variables used by the
+    virtual accelerator. The function performs the following steps:
 
-      1. Resolves the variable configuration (either provided directly or loaded
-         from a YAML file).
-      2. Filters/collects devices compatible with the provided lattice using the
-         LCLS elements table.
-      3. Instantiates variables for each device using the device-type -> PV-attr
-         mapping.
-      4. Returns the created variables and a reverse mapping from control PV
-         prefix to lattice device identifier.
+      1. Resolves the variable configuration (either directly provided or
+         loaded from a YAML configuration file).
+      2. Determines which devices from the SLAC elements table exist in the
+         provided lattice.
+      3. Instantiates the appropriate Variable objects for each device.
+      4. Returns both the variables and a reverse mapping to lattice elements.
 
     Parameters
     ----------
     lattice : Segment
-        Cheetah accelerator segment used to determine which devices are present.
+        Cheetah accelerator segment containing the lattice elements.
 
     lcls_elements_path : str, optional
-        Path to the LCLS elements CSV used to map/identify control names and
-        device types. If not provided, defaults to the module-level LCLS_ELEMENTS.
+        Path to the CSV file describing SLAC lattice elements and their
+        control-system identifiers. Defaults to the module-level
+        `LCLS_ELEMENTS`.
 
     variable_config : dict, optional
-        Device-type -> PV-attribute -> variable specification mapping. If not
-        provided, the configuration is loaded from `config_file` (or the default
-        SLAC_VARIABLE_CONFIG_FILE).
+        Pre-loaded SLAC variable configuration mapping.
+
+        If provided, this configuration will be used directly instead of
+        loading a YAML configuration file.
 
     config_file : str, optional
-        YAML configuration file containing `SLAC_VARIABLE_CONFIG`. Used only when
-        `variable_config` is not provided.
+        Path to a YAML configuration file containing `SLAC_VARIABLE_CONFIG`.
+        Used only when `variable_config` is not provided.
 
     Returns
     -------
-    tuple[dict[str, ScalarVariable], dict[str, str]]
-        (all_vars, mapping) where:
-          - all_vars maps full PV name -> ScalarVariable instance
-          - mapping maps control_name -> device identifier
+    tuple[dict[str, Variable], dict[str, str]]
 
-    Raises
-    ------
-    FileNotFoundError
-        If `config_file` is required but does not exist.
-    TypeError
-        If the loaded configuration has an invalid structure (e.g., wrong types).
-    ValueError
-        If configuration cannot be resolved or required information is missing.
-    Exception
-        Propagates exceptions raised during device filtering or variable creation.
+        all_vars
+            Mapping of full PV name -> instantiated Variable
+            (ScalarVariable or NDVariable).
 
-    Notes
-    -----
-    This function is stateless and deterministic given the same inputs and file
-    contents. Errors during variable instantiation are not suppressed.
+        mapping
+            Mapping of control-system PV prefix -> lattice element name.
     """
     if lcls_elements_path is None:
         lcls_elements_path = str(LCLS_ELEMENTS)
-
 
     variable_config_resolved = resolve_variable_config(
         variable_config=variable_config,
         config_file=config_file,
     )
 
-    
 
-    devices = get_devices_from_lattice(lcls_elements_path,lattice) #rename this function
+    devices = get_devs_from_lattice(lcls_elements_path,lattice) #rename this function
 
-    
-    all_vars, mapping = build_variables_and_mapping(
-        devices=devices,
-        variable_config=variable_config_resolved, 
-    )
+    all_vars, mapping = build_variables_and_mapping(devices,variable_config_resolved,lattice)
 
     return all_vars, mapping
 
 def load_config_from_file(path: str) -> tuple[dict[str, Any], list[str]]:
     """
-    Load SLAC variable configuration and ignore flags from YAML.
+    Load the SLAC variable configuration from a YAML file.
 
     Parameters
     ----------
     path : str
-        Path to a YAML configuration file containing:
-            - SLAC_VARIABLE_CONFIG (dict)
+        Path to a YAML configuration file containing the key
+        `SLAC_VARIABLE_CONFIG`.
 
     Returns
     -------
-    dict[str, Any] - variable_config
+    dict[str, Any]
+        Parsed SLAC variable configuration mapping.
 
     Raises
     ------
     FileNotFoundError
-        If the file does not exist.
-    TypeError
-        If required keys are missing or have incorrect types.
+        If the configuration file does not exist.
 
-    YAML Format
-    -----------
-    SLAC_VARIABLE_CONFIG:
-        DEVICE_TYPE:
-            PV_ATTR:
-                variable_class: SomeScalarVariableClass
-                read_only: true
-                ...
+    TypeError
+        If `SLAC_VARIABLE_CONFIG` exists but is not a dictionary.
+
+    Notes
+    -----
+    Expected YAML structure::
+
+        SLAC_VARIABLE_CONFIG:
+            DEVICE_TYPE:
+                PV_ATTR:
+                    variable_class: lume.variables.ScalarVariable
+                    read_only: true
+                    unit: mm
     """
     with open(path, "r") as f:
         cfg = yaml.safe_load(f) or {}
@@ -222,42 +288,29 @@ def resolve_variable_config(
     config_file,
 ) -> dict:
     """
-    Resolve the variable configuration and normalize variable_class entries.
+    Resolve and normalize the SLAC variable configuration.
 
-    If `variable_config` is provided, it is used directly. Otherwise the
-    configuration is loaded from `config_file` (or the default
-    SLAC_VARIABLE_CONFIG_FILE).
+    This function ensures a usable variable configuration mapping is available.
+    If a configuration dictionary is not provided directly, it is loaded from
+    a YAML configuration file.
 
-    Additionally, this function resolves any string-valued "variable_class"
-    entries (e.g., "pkg.module.ClassName") into the corresponding Python class
-    object via `import_from_dotted_path`.
+    Additionally, string values for `variable_class` are resolved into actual
+    Python classes using `import_from_dotted_path`.
 
     Parameters
     ----------
     variable_config : dict or None
-        Device-type -> PV-attribute -> spec mapping. If None, the configuration
-        is loaded from `config_file`.
+        Pre-loaded configuration mapping. If provided, it is used directly.
 
     config_file : str or None
-        YAML configuration file used when `variable_config` is None. If None,
-        defaults to SLAC_VARIABLE_CONFIG_FILE.
+        YAML configuration file used when `variable_config` is not supplied.
+        Defaults to `SLAC_VARIABLE_CONFIG_FILE`.
 
     Returns
     -------
-    dict[str, dict[str, dict[str, Any]]]
-        Resolved configuration with "variable_class" entries normalized to class
-        objects (callables).
-
-    Raises
-    ------
-    FileNotFoundError
-        If loading from `config_file` and the file does not exist.
-    TypeError
-        If the loaded configuration structure is invalid.
-    ValueError
-        If a "variable_class" string is not a valid dotted path.
-    ImportError
-        If a module/class referenced by "variable_class" cannot be imported.
+    dict
+        Normalized variable configuration where `variable_class` entries
+        are Python classes instead of dotted strings.
     """
 
     if variable_config is None:
@@ -265,6 +318,7 @@ def resolve_variable_config(
             config_file = SLAC_VARIABLE_CONFIG_FILE
 
         variable_config = load_config_from_file(config_file)
+    #print(variable_config)
 
     # resolve variable_class strings
     for device_type, attrs in variable_config.items():

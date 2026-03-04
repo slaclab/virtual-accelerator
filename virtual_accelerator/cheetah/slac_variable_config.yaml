@@ -5,12 +5,13 @@ SLAC_VARIABLE_CONFIG:
       unit: mm
       read_only: true
       variable_class: lume.variables.ScalarVariable
+      default_value: NULL
     Y:
       unit: mm
       read_only: true
       variable_class: lume.variables.ScalarVariable
 
-  QUAD:
+  Quadrupole:
     BCTRL:
       unit: kG
       read_only: false
@@ -28,7 +29,7 @@ SLAC_VARIABLE_CONFIG:
       read_only: true
       variable_class: lume.variables.ScalarVariable
 
-  XCOR:
+  HorizontalCorrector:
     BCTRL:
       unit: kG-m
       read_only: false
@@ -46,7 +47,7 @@ SLAC_VARIABLE_CONFIG:
       read_only: true
       variable_class: lume.variables.ScalarVariable
 
-  YCOR:
+  VerticalCorrector:
     BCTRL:
       unit: kG-m
       read_only: false
@@ -64,36 +65,25 @@ SLAC_VARIABLE_CONFIG:
       read_only: true
       variable_class: lume.variables.ScalarVariable
 
-  OTRS:
+  Screen:
     Image:ArrayData:
       unit: pixel
       read_only: true
       variable_class: lume.variables.NDVariable
+      shape: NULL
     PNEUMATIC:
       unit: bool
       read_only: false
-      variable_class: lume.variables.ScalarVariables
+      variable_class: lume.variables.ScalarVariable
     Image:ArraySize1_RBV:
       unit: pixel
       read_only: false
-      variable_class: lume.variables.ScalarVariables
+      variable_class: lume.variables.ScalarVariable
     Image:ArraySize0_RBV:
       unit: pixel
       read_only: false
-      variable_class: lume.variables.ScalarVariables  
+      variable_class: lume.variables.ScalarVariable
     RESOLUTION:
       unit: pixel/mm
       read_only: true
-      variable_class: lume.variables.ScalarVariable
-    IMAGE:
-      unit: pixel
-      read_only: true
-      variable_class: lume.variables.NDVariable
-    N_OF_ROW:
-      unit: pixel
-      read_only: false
-      variable_class: lume.variables.ScalarVariable
-    N_OF_COL: 
-      unit: pixel
-      read_only: false
       variable_class: lume.variables.ScalarVariable
