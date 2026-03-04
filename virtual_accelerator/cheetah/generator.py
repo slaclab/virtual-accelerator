@@ -4,7 +4,7 @@ from typing import Any
 import os
 import yaml
 from pathlib import Path
-from cheetah.accelerator import Segment
+from cheetah.accelerator import Segment, Element
 
 from lume.variables import Variable, ScalarVariable, NDVariable
 from virtual_accelerator.cheetah.utils import get_mad_mapping
@@ -21,7 +21,7 @@ SLAC_VARIABLE_CONFIG_FILE = os.path.join(
 
 
 def get_variables_from_element(
-    element, control_name, element_attr_mapping
+    element: Element, control_name: str, element_attr_mapping: dict[str, dict[str, Any]]
 ) -> dict[str, Variable]:
     """
     Instantiate variables for a single lattice element using a SLAC variable
@@ -41,7 +41,7 @@ def get_variables_from_element(
 
     Parameters
     ----------
-    element : Any
+    element : Element
         Cheetah lattice element instance (e.g. Screen, BPM, Quadrupole).
 
     control_name : str
