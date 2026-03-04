@@ -8,7 +8,7 @@ import pprint
 from cheetah.accelerator import Segment
 
 from lume.variables import Variable, ScalarVariable, NDVariable
-from virtual_accelerator.cheetah.utils import get_devs_from_lattice
+from virtual_accelerator.cheetah.utils import get_devices_from_lattice
 from copy import copy
 
 LCLS_ELEMENTS = os.path.join(
@@ -83,8 +83,6 @@ def resolve_slac_variables(element, control_name, dev_attr_mapping):
             var_config["shape"] = tuple(element.resolution)    
 
         variables[variable_name] = variable_class(name=variable_name, **var_config)
-            #elif isinstance(variable_class, ScalarVariable) and attr == 'Image:ArraySize0_RBV':
-                # can pass because these don't need defaults
 
     return variables
             
@@ -232,7 +230,7 @@ def generate_variables_and_mapping(
     )
 
 
-    devices = get_devs_from_lattice(lcls_elements_path,lattice) #rename this function
+    devices = get_devices_from_lattice(lcls_elements_path,lattice)
 
     all_vars, mapping = build_variables_and_mapping(devices,variable_config_resolved,lattice)
 
@@ -318,9 +316,7 @@ def resolve_variable_config(
             config_file = SLAC_VARIABLE_CONFIG_FILE
 
         variable_config = load_config_from_file(config_file)
-    #print(variable_config)
 
-    # resolve variable_class strings
     for device_type, attrs in variable_config.items():
         for attr, spec in attrs.items():
             vc = spec.get("variable_class")
