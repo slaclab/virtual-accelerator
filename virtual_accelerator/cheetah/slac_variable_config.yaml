@@ -1,89 +1,87 @@
-SLAC_VARIABLE_CONFIG:
+BPM:
+  X:
+    unit: mm
+    read_only: true
+    variable_class: ScalarVariable
+    default_value: NULL
+  Y:
+    unit: mm
+    read_only: true
+    variable_class: ScalarVariable
 
-  BPM:
-    X:
-      unit: mm
-      read_only: true
-      variable_class: lume.variables.ScalarVariable
-      default_value: NULL
-    Y:
-      unit: mm
-      read_only: true
-      variable_class: lume.variables.ScalarVariable
+Quadrupole:
+  BCTRL:
+    unit: kG
+    read_only: false
+    variable_class: ScalarVariable
+  BACT:
+    unit: kG
+    read_only: true
+    variable_class: ScalarVariable
+  BMIN:
+    unit: kG
+    read_only: true
+    variable_class: ScalarVariable
+  BMAX:
+    unit: kG
+    read_only: true
+    variable_class: ScalarVariable
 
-  Quadrupole:
-    BCTRL:
-      unit: kG
-      read_only: false
-      variable_class: lume.variables.ScalarVariable
-    BACT:
-      unit: kG
-      read_only: true
-      variable_class: lume.variables.ScalarVariable
-    BMIN:
-      unit: kG
-      read_only: true
-      variable_class: lume.variables.ScalarVariable
-    BMAX:
-      unit: kG
-      read_only: true
-      variable_class: lume.variables.ScalarVariable
+HorizontalCorrector:
+  BCTRL:
+    unit: kG-m
+    read_only: false
+    variable_class: ScalarVariable
+  BACT:
+    unit: kG-m
+    read_only: true
+    variable_class: ScalarVariable
+  BMIN:
+    unit: kG-m
+    read_only: true
+    variable_class: ScalarVariable
+  BMAX:
+    unit: kG-m
+    read_only: true
+    variable_class: ScalarVariable
 
-  HorizontalCorrector:
-    BCTRL:
-      unit: kG-m
-      read_only: false
-      variable_class: lume.variables.ScalarVariable
-    BACT:
-      unit: kG-m
-      read_only: true
-      variable_class: lume.variables.ScalarVariable
-    BMIN:
-      unit: kG-m
-      read_only: true
-      variable_class: lume.variables.ScalarVariable
-    BMAX:
-      unit: kG-m
-      read_only: true
-      variable_class: lume.variables.ScalarVariable
+VerticalCorrector:
+  BCTRL:
+    unit: kG-m
+    read_only: false
+    variable_class: ScalarVariable
+  BACT:
+    unit: kG-m
+    read_only: true
+    variable_class: ScalarVariable
+  BMIN:
+    unit: kG-m
+    read_only: true
+    variable_class: ScalarVariable
+  BMAX:
+    unit: kG-m
+    read_only: true
+    variable_class: ScalarVariable
 
-  VerticalCorrector:
-    BCTRL:
-      unit: kG-m
-      read_only: false
-      variable_class: lume.variables.ScalarVariable
-    BACT:
-      unit: kG-m
-      read_only: true
-      variable_class: lume.variables.ScalarVariable
-    BMIN:
-      unit: kG-m
-      read_only: true
-      variable_class: lume.variables.ScalarVariable
-    BMAX:
-      unit: kG-m
-      read_only: true
-      variable_class: lume.variables.ScalarVariable
-
-  Screen:
-    Image:ArrayData:
-      unit: pixel
-      read_only: true
-      variable_class: lume.variables.NDVariable
-      shape: NULL
-    PNEUMATIC:
-      unit: bool
-      read_only: false
-      variable_class: lume.variables.ScalarVariable
-    Image:ArraySize1_RBV:
-      unit: pixel
-      read_only: true
-      variable_class: lume.variables.ScalarVariable
-    Image:ArraySize0_RBV:
-      unit: pixel
-      read_only: true
-      variable_class: lume.variables.ScalarVariable
-    RESOLUTION:
-      unit: pixel/mm
-      read_only: true
-      variable_class: lume.variables.ScalarVariable
+Screen:
+  Image:ArrayData:
+    unit: pixel
+    read_only: true
+    variable_class: NDVariable
+    shape: NULL
+  PNEUMATIC:
+    unit: bool
+    read_only: false
+    variable_class: ScalarVariable
+  Image:ArraySize1_RBV:
+    unit: pixel
+    read_only: true
+    variable_class: ScalarVariable
+  Image:ArraySize0_RBV:
+    unit: pixel
+    read_only: true
+    variable_class: ScalarVariable
+  RESOLUTION:
+    unit: pixel/mm
+    read_only: true
+    variable_class: ScalarVariable
