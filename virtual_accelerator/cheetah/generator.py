@@ -4,7 +4,6 @@ from typing import Any
 import os
 import yaml
 from pathlib import Path
-import pprint
 from cheetah.accelerator import Segment
 
 from lume.variables import Variable, ScalarVariable, NDVariable
