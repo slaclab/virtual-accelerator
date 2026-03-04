@@ -77,11 +77,11 @@ SLAC_VARIABLE_CONFIG:
       variable_class: lume.variables.ScalarVariable
     Image:ArraySize1_RBV:
       unit: pixel
-      read_only: false
+      read_only: true
       variable_class: lume.variables.ScalarVariable
     Image:ArraySize0_RBV:
       unit: pixel
-      read_only: false
+      read_only: true
       variable_class: lume.variables.ScalarVariable
     RESOLUTION:
       unit: pixel/mm
