@@ -1,12 +1,15 @@
 import yaml
-from lume.variables import ScalarVariable
+from lume.variables import ScalarVariable, ParticleGroupVariable
 from typing import Any
 from lume_bmad.transformer import BmadTransformer
 from pytao import Tao
+#from pmd_beamphysics import ParticleGroup
+from beamphysics.interfaces.bmad import (
+    bmad_to_particlegroup_data,
+    particlegroup_to_bmad,
+    write_bmad)
+from beamphysics import ParticleGroup
 
-# from lcls_live.datamaps import get_datamaps
-
- 
 TAO_OUTPUT_UNITS = {
     "ele.name": "",
     "ele.ix_ele": "",
@@ -132,6 +135,7 @@ def import_control_variables(control_variable_file: str):
                 unit="",
                 read_only=False,
             )
+        
     return var_dict, control_name_to_bmad
 
 
@@ -167,23 +171,20 @@ def import_output_variables(output_variable_file: str):
                 unit=TAO_OUTPUT_UNITS[attr],
                 read_only=True,
             )
-    for ele in [ "WS12", "WS28144", "WS32"]:
-        name = ele + "_beam"
-        out_dict[name] = ScalarVariable(
+    name = "input_beam"
+    out_dict[name] = ParticleGroupVariable(
+                name=name,
+                read_only=False,
+            )
+            
+    name = "output_beam"
+    out_dict[name] = ParticleGroupVariable(
                 name=name,
                 read_only=True,
             )
     return out_dict
+
+        
 ###############################################################
 # Utility classes / functions for Bmad/Tao interaction
-###############################################################
-
-def get_beam_info(tao):
-    beam_info = {}
-    lines = tao.cmd('python show beam')
-    track_type = [l.split('=') for l in lines if "global%track_type" in l][0][1]
-    beam_info['track_type'] =  track_type[2:-1]
-    saved_at = [l.split('=') for l in lines if "saved_at" in l][0][1]
-    saved_at = saved_at.strip(' "').split(',')
-    beam_info['saved_at'] = [s.strip(' ') for s in saved_at]
-    return beam_info
+############################################################### 

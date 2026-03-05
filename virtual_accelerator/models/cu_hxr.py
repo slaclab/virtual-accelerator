@@ -20,9 +20,9 @@ def get_cu_hxr_bmad_model():
         Instance of the LUMEBmadModel for the CU_HXR lattice.
     """
 
-    LCLS_LATTICE = os.environ["LCLS_LATTICE"]
+    LCLS_LATTICE = os.environ["LCLS_LATTICE"] 
 
-    init_file = os.path.join(LCLS_LATTICE, "bmad/models/cu_hxr/tao.init")
+    init_file = os.path.join(LCLS_LATTICE, "bmad/models/cu_hxr/tao_beam.init")
 
     control_vars, control_name_to_bmad = import_control_variables("hxr_input.yaml")
     output_vars = import_output_variables("hxr_output.yaml")

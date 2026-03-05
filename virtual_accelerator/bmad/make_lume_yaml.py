@@ -105,39 +105,6 @@ control_name_to_bmad, yaml_data = get_control_name_to_bmad_cu(beam_path)
 with open('hxr_input.yaml', 'w') as yaml_file:
     yaml.dump(yaml_data, yaml_file, default_flow_style=False, sort_keys=False)
 
-"""    
-data = {}
-print('THIS')
-datamaps = get_datamaps(beam_path)
-for dm_key in  datamaps.items():
-    data[dm_key] = []
-    if dm_key[0] != 'K':
-        sub_keys = datamaps[dm_key].data.keys().to_list()
-        number_of_elements = len(hxr.all_data_maps[dm_key].data[sub_keys[0]])
-        for indx in range(0, number_of_elements):
-            ele_dict = {}
-            for sk in sub_keys:
-                val =  datamaps[dm_key].data[sk][indx]
-                if isinstance(val, (np.integer, np.floating)):
-                    val = float(val)
-                ele_dict[sk] = val
-                if sk == 'pvname':
-                    device_info = get_device_info(val)
-                    ele_dict['min_value'] = device_info[0]
-                    ele_dict['max_value'] = device_info[1]
-                    ele_dict['unit'] = device_info[2]
-            data[dm_key].append(ele_dict)
-    if dm_key[0] == 'K':
-        klys_datamap = datamaps[dm_key]
-        data[dm_key].append(klys_datamap.asdict())
-
-
-
-with open('hxr_input1.yaml', 'w') as yaml_file:
-    yaml.dump(yaml_data, yaml_file, default_flow_style=False, sort_keys=False)
-
-"""           
-
 
 """
 output dictionary
