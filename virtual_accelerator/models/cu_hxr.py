@@ -52,6 +52,7 @@ def get_cu_hxr_bmad_model():
         control_variables=control_vars,
         output_variables=output_vars,
         transformer=transformer,
+        dump_locations=["OTR2"],
     )
 
     return model
