@@ -6,7 +6,6 @@ from virtual_accelerator.bmad.cu_transformer import (
 )
 from virtual_accelerator.bmad.utils import (
     import_control_variables,
-    import_output_variables,
 )
 
 

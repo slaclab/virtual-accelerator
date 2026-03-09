@@ -9,34 +9,6 @@ from beamphysics.interfaces.bmad import (
     write_bmad)
 from beamphysics import ParticleGroup
 
-TAO_OUTPUT_UNITS = {
-    "ele.name": "",
-    "ele.ix_ele": "",
-    "ele.ix_branch": "",
-    "ele.a.beta": "m",
-    "ele.a.alpha": "",
-    "ele.a.eta": "m",
-    "ele.a.etap": "",
-    "ele.a.gamma": "1/m",
-    "ele.a.phi": "",
-    "ele.b.beta": "m",
-    "ele.b.alpha": "",
-    "ele.b.eta": "m",
-    "ele.b.etap": "",
-    "ele.b.gamma": "1/m",
-    "ele.b.phi": "",
-    "ele.x.eta": "m",
-    "ele.x.etap": "",
-    "ele.y.eta": "m",
-    "ele.y.etap": "",
-    "ele.s": "m",
-    "ele.l": "m",
-    "ele.e_tot": "eV",
-    "ele.p0c": "eV",
-    "ele.mat6": "",
-    "ele.vec0": "m",
-}
-
 ###############################################################
 # Utility functions for importing control and output variables
 ################################################################
@@ -136,54 +108,3 @@ def import_control_variables(control_variable_file: str):
             )
         
     return var_dict, control_name_to_bmad
-
-
-def import_output_variables(output_variable_file: str):
-    """
-    Import output variables from a YAML file and define them as ScalarVariables.
-    Note that output variables are read-only.
-
-    TODO: move SLAC specific mapping and unit conversions to slac-tools
-
-    Parameters
-    ----------
-    output_variable_file: str
-        Path to the YAML file containing output variable definitions.
-
-    Returns
-    -------
-    dict[str, ScalarVariable]
-        Dictionary of output variables mapped by their names.
-    """
-
-    out_dict = {}
-
-    with open(output_variable_file, "r") as file:
-        output_variables = yaml.safe_load(file)
-
-    for ele in output_variables.keys(): 
-        for attr in output_variables[ele].keys():
-            name = attr.replace("ele", "")
-            name = ele + name 
-            out_dict[name] = ScalarVariable(
-                name=name,
-                unit=TAO_OUTPUT_UNITS[attr],
-                read_only=True,
-            )
-    name = "input_beam"
-    out_dict[name] = ParticleGroupVariable(
-                name=name,
-                read_only=False,
-            )
-            
-    name = "output_beam"
-    out_dict[name] = ParticleGroupVariable(
-                name=name,
-                read_only=True,
-            )
-    return out_dict
-
-        
-###############################################################
-# Utility classes / functions for Bmad/Tao interaction
-############################################################### 
