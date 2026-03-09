@@ -25,7 +25,8 @@ def get_cu_hxr_bmad_model():
     init_file = os.path.join(LCLS_LATTICE, "bmad/models/cu_hxr/tao_beam.init")
 
     control_vars, control_name_to_bmad = import_control_variables("hxr_input.yaml")
-    output_vars = import_output_variables("hxr_output.yaml")
+    #output_vars = import_output_variables("hxr_output.yaml")
+    output_vars = {}
 
     transformer = CUBmadTransformer(control_name_to_bmad=control_name_to_bmad)
 

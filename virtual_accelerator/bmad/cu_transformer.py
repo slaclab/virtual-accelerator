@@ -65,8 +65,7 @@ class CUBmadTransformer(BmadTransformer):
             return ele_attr[attr]
 
     def get_tao_commands(
-        self, tao: Tao, pvdata: dict[str, Any], beam_path: str
-    ) -> list[str]:
+        self, tao: Tao, pvdata: dict[str, Any]) -> list[str]:
         """
         Get Tao commands to set a property of an element in Bmad via Tao. Handle
         mapping control names to element attributes and any necessary unit conversions as needed.
@@ -77,8 +76,6 @@ class CUBmadTransformer(BmadTransformer):
             Instance of the Tao class.
         pvdata: dict[str, Any]
             Dictionary of control variable names and values to set
-        beam_path: str
-            Beam path in the Bmad lattice (e.g. "cu_hxr")
 
         Returns
         -------
@@ -131,11 +128,6 @@ class CUBmadTransformer(BmadTransformer):
         return tao_cmds
 
     
-    def get_beam_variables(self,beam_path):
-        if beam_path == "cu_hxr":
-            beam_variables =  {'input_element':'OTR2', 'output_element': 'BEGUNDH'}
-        if beam_path == "cu_sxr":
-            beam_variables =  {'input_element':'OTR2', 'output_element': 'BEGUNDS'}
-        return beam_variables
-
+    def get_beam_elements(self):
+            return {'input_element':'OTR2', 'output_element': 'BEGUNDH'}
 
