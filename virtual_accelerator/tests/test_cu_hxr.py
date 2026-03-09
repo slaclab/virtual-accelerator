@@ -4,6 +4,9 @@ import matplotlib.pyplot as plt
 
 class TestCUHXR:
     def test_cu_hxr(self):
+
+        # may be needed to set LCLS_LATTICE env variable to run this test, but should be set in CI already
+        # os.environ["LCLS_LATTICE"] = "/home/rroussel/lcls-lattice"
         model = get_cu_hxr_bmad_model()
 
         # set tracking
