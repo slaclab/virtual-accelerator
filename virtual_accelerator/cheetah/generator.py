@@ -7,13 +7,9 @@ from pathlib import Path
 from cheetah.accelerator import Segment, Element
 import warnings
 from lume.variables import Variable, ScalarVariable, NDVariable
-from virtual_accelerator.cheetah.utils import get_mad_mapping, get_control_mad_mapping
 from copy import copy
 
-LCLS_ELEMENTS = os.path.join(
-    Path(__file__).parent.resolve(),
-    "lcls_elements.csv",
-)
+
 SLAC_VARIABLE_CONFIG_FILE = os.path.join(
     Path(__file__).parent.resolve(),
     "slac_variable_config.yaml",
@@ -102,6 +98,7 @@ def get_variables_from_element(
     # determine the cheetah element type as a string to look up in the config mapping
     element_type = type(element).__name__
     element_attributes = element_attr_mapping.get(element_type)
+
     if element_attributes is None:
         warnings.warn(
             f"No variable configuration found for element type {element_type!r}"
@@ -187,19 +184,11 @@ def get_variables_from_segment(
     """
     # 
     all_variables = {}
-    for element in segment.elements:
-        
-        #try:
-            # 1.) control_name = device_mapping[element.name]; # KeyError: 'DL00'
-            # 2.) control_name = device_mapping[element.name.lower()] # KeyError: 'dl00
-            #control_name = device_mapping[element.name]
 
-        #except KeyError as e:
-        #    raise KeyError(f"Element {element.name} not found in device mapping") from e
-        
-        # need an if statement here because no intersection has been taken yet
-        
-        if element.name.upper() in device_mapping:
+    for element in segment.elements:
+        if (type(element).__name__ == 'Drift'): 
+            continue
+        elif element.name.upper() in device_mapping: 
             control_name = device_mapping[element.name.upper()]
         else:
             warnings.warn(f"Element {element.name} not found in device mapping")
@@ -213,14 +202,11 @@ def get_variables_from_segment(
     return all_variables
 
 
-def generate_variables_and_mapping(
+def generate_variables(
     segment: Segment,
-    lcls_elements_path: str | None = None,
+    device_mapping: dict[str,str],
     variable_config_file: str | None = None,
 ) -> dict[str, ScalarVariable]:
-    # str | None need to be str | None = None to have the arg be omittable
-    # for convenience of slac users, you can pass nothing other than segment
-    # other facilities need there own similar files.
     """
     Generate LUME variables for a SLAC-style control system from a Cheetah lattice.
 
@@ -239,51 +225,32 @@ def generate_variables_and_mapping(
     lattice : Segment
         Cheetah accelerator segment containing the lattice elements.
 
-    lcls_elements_path : str, optional
-        Path to the CSV file describing SLAC lattice elements and their
-        control-system identifiers. Defaults to the module-level
-        `LCLS_ELEMENTS`.
+    device_mapping: dict
+        Mapping from Madname to Control Name
 
     variable_config_file : str, optional
         Path to a YAML variable configuration file
 
     Returns
     -------
-    tuple[dict[str, Variable], dict[str, str]]
+    dict[str, Variable]
 
         all_vars
             Mapping of full PV name -> instantiated Variable
             (ScalarVariable or NDVariable).
-
-        mapping
-            Mapping of control-system PV prefix -> lattice element name.
     """
-    if lcls_elements_path is None:
-        lcls_elements_path = str(LCLS_ELEMENTS)
     
     if variable_config_file is None:
         variable_config_file = str(SLAC_VARIABLE_CONFIG_FILE)
 
-    # This is fine with the rework of yaml
     with open(variable_config_file, "r") as f:
         element_attr_mapping = yaml.safe_load(f)
 
-    # this format is not the actual mapping cheetah uses. maybe some other backend might
-    # this returns {} 
-    # use this so its fine to keep, since it just maps mad to control name
-    #{"QE02": "QUAD:IN20:441, "QE03": "QUAD:IN20:511"}
-    
-    device_name_mapping = get_mad_mapping(lcls_elements_path)
-
-    # but cheetah needs the mapping -> {"qe02": "QUAD:IN20:441, "qe03": "QUAD:IN20:511"}
-    # and the cheetah transformer needsd -> {"QUAD:IN20:441": "qe02", "QUAD:IN20:511" : "qe03"}
     all_vars = get_variables_from_segment(
-        segment, device_name_mapping, element_attr_mapping
+        segment, device_mapping, element_attr_mapping
     )
-    mapping = get_control_mad_mapping(lcls_elements_path)
-    mapping = {k: v.lower() for k, v in mapping.items()}
 
-    return all_vars, mapping
+    return all_vars
 
 
 def split_control_and_observable(
