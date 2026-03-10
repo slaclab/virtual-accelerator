@@ -1,7 +1,7 @@
 import pandas as pd
 import torch
-
-
+import os
+from pathlib import Path
 class NoSetMethodError(Exception):
     pass
 
@@ -135,6 +135,10 @@ MAPPINGS = {
     "TransverseDeflectingCavity": TRANSVERSE_DEFLECTING_CAVITY_MAPPING,
 }
 
+LCLS_ELEMENTS = os.path.join(
+    Path(__file__).parent.resolve(),
+    "lcls_elements.csv",
+)
 
 def access_cheetah_attribute(element, pv_attribute, energy, set_value=None):
     """
@@ -188,7 +192,7 @@ def access_cheetah_attribute(element, pv_attribute, energy, set_value=None):
             ) from e
 
 
-def get_mad_mapping(fname):
+def get_mad_control_mapping(fname: str | None = None):
     """
     Create a mapping from madnames to control names and device types
     from a CSV file.
@@ -198,6 +202,8 @@ def get_mad_mapping(fname):
         fname (str): Path to the CSV file containing the mapping.
 
     """
+    if fname is None:
+        fname = str(LCLS_ELEMENTS)
     mapping = (
         pd.read_csv(fname, dtype=str)
         .set_index("Element")
@@ -205,7 +211,7 @@ def get_mad_mapping(fname):
     )
     return mapping
 
-def get_control_mad_mapping(fname):
+def get_control_mad_mapping(fname: str | None = None):
     """
     Create a mapping from control system names to element names from a CSV file.
 
@@ -213,6 +219,10 @@ def get_control_mad_mapping(fname):
         fname (str): Path to the CSV file containing the mapping.
 
     """
+
+    if fname is None:
+        fname = str(LCLS_ELEMENTS)
+
     mapping = (
         pd.read_csv(fname, dtype=str)
         .set_index("Control System Name")["Element"]
