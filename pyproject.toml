@@ -24,6 +24,8 @@ classifiers = [
     "Topic :: Scientific/Engineering",
 ]
 dependencies = [
+    "pandas",
+    "torch",
     "lume-base @ git+https://github.com/slaclab/lume-base@main",
     "lume-torch @ git+https://github.com/lume-science/lume-torch@main",
     "lume-bmad @ git+https://github.com/lume-science/lume-bmad@main",

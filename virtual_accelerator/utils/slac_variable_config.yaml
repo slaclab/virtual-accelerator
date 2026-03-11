@@ -18,6 +18,10 @@ Quadrupole:
     unit: kG
     read_only: true
     variable_class: ScalarVariable
+  BDES:
+    unit: kG
+    read_only: true
+    variable_class: ScalarVariable
   BMIN:
     unit: kG
     read_only: true
@@ -27,12 +31,38 @@ Quadrupole:
     read_only: true
     variable_class: ScalarVariable
 
+Solenoid:
+  BCTRL:
+    unit: kG-m
+    read_only: false
+    variable_class: ScalarVariable
+  BACT:
+    unit: kG-m
+    read_only: true
+    variable_class: ScalarVariable
+  BDES:
+    unit: kG-m
+    read_only: true
+    variable_class: ScalarVariable
+  BMIN:
+    unit: kG-m
+    read_only: true
+    variable_class: ScalarVariable
+  BMAX:
+    unit: kG-m
+    read_only: true
+    variable_class: ScalarVariable
+
 HorizontalCorrector:
   BCTRL:
     unit: kG-m
     read_only: false
     variable_class: ScalarVariable
   BACT:
+    unit: kG-m
+    read_only: true
+    variable_class: ScalarVariable
+  BDES:
     unit: kG-m
     read_only: true
     variable_class: ScalarVariable
@@ -51,6 +81,10 @@ VerticalCorrector:
     read_only: false
     variable_class: ScalarVariable
   BACT:
+    unit: kG-m
+    read_only: true
+    variable_class: ScalarVariable
+  BDES:
     unit: kG-m
     read_only: true
     variable_class: ScalarVariable

@@ -35,7 +35,7 @@ class CUBmadTransformer(BmadTransformer):
             {
                 "OTR2": {
                     "bins": 1024,
-                    "resolution": 0.1, # mm/pixel
+                    "resolution": 10, # um/pixel
                 }
             }
 
@@ -71,30 +71,38 @@ class CUBmadTransformer(BmadTransformer):
         """
 
         # Map control name to element and attribute
-        element_name = self.control_name_to_bmad[":".join(control_name.split(":")[0:3])]
-        device_type = control_name.split(":")[0]  # QUAD, KLYS, etc.
+        # get prefix
+        if "Image" in control_name:
+            element_name = self.control_name_to_bmad[":".join(control_name.split(":")[:3])]
+            attr = ":".join(control_name.split(":")[3:])
+        else:
+            element_name = self.control_name_to_bmad[":".join(control_name.split(":")[:-1])]
+            attr = ":".join(control_name.split(":")[-1:])
 
-        attr = ":".join(control_name.split(":")[3:])
+        device_type = control_name.split(":")[0]  # QUAD, KLYS, etc.
         ele_attr = tao.ele_gen_attribs(element_name)
 
         if device_type == "QUAD":
-            if attr == "BCTRL" or attr == "BACT" or attr == "BDES":
+            if attr in ["BCTRL", "BACT", "BDES"]:
                 # convert from Bmad units to EPICS units
                 return -ele_attr["B1_GRADIENT"] * ele_attr["L"] * 10
-        elif device_type == "KLYS" or device_type == "ACCL":
-            if attr == "ENLD" or "ADES" in attr:
+        elif device_type == "SOLN":
+            if attr in ["BCTRL", "BACT", "BDES"]:
+                return ele_attr["BS_FIELD"] * 10 # TODO confirm this conversion
+        elif device_type in ["KLYS", "ACCL"]:
+            if attr in ["ENLD", "ADES"]:
                 tao.ele_control_var(element_name)
                 return tao.ele_control_var(element_name)["ENLD_MEV"]
-            if attr == "PHAS" or "PDES" in attr:
+            if attr in ["PHAS", "PDES"]:
                 return tao.ele_control_var(element_name)["PHASE_DEG"]
             if attr == "BEAMCODE1_STAT":
                 return tao.ele_control_var(element_name)["IN_USE"]
-        elif device_type == "XCOR" or device_type == "YCOR":
+        elif device_type in ["XCOR", "YCOR", "EFC"]:
             return tao.ele_gen_attribs(element_name)["BL_KICK"]
         elif device_type == "OTRS":
             if attr == "Image:ArrayData":
                 bins = self.screen_attributes[element_name]["bins"]
-                resolution = self.screen_attributes[element_name]["resolution"]
+                resolution = self.screen_attributes[element_name]["resolution"]*1e-6 # um / pixel
                 range = bins * resolution / 2
 
                 beam = get_particle_group_at_element(tao, element_name)
@@ -169,6 +177,10 @@ class CUBmadTransformer(BmadTransformer):
                 if attr == "BCTRL" or attr == "BDES":
                     bmad_value = -0.1 * value
                     bmad_attr = "bl_kick"
+            elif device_type == "SOLN":
+                if attr == "BCTRL" or attr == "BDES":
+                    bmad_value = -0.1 * value
+                    bmad_attr = "BS_FIELD"
             elif device_type == "KLYS":
                 bmad_value = value
                 bmad_attr = klys_attr_to_bmad[attr]
