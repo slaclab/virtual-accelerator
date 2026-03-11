@@ -3,8 +3,8 @@ from cheetah.accelerator import Screen, Segment
 import warnings
 from lume.variables import Variable
 from virtual_accelerator.utils.variables import (
-    get_variables_from_element_name, 
-    get_name_to_epics_mapping, 
+    get_variables_from_element_name,
+    get_name_to_epics_mapping,
     get_element_attr_mapping,
 )
 
@@ -47,15 +47,15 @@ def get_variables_from_segment(
     See `get_variables_from_element_name` for details on the specification of `element_attr_mapping`.
 
     """
-    # 
+    #
     all_variables = {}
     device_mapping = device_mapping or get_name_to_epics_mapping()
     element_attr_mapping = element_attr_mapping or get_element_attr_mapping()
 
     for element in segment.elements:
-        if type(element).__name__ in ["Drift","Marker","Cavity"]: 
+        if type(element).__name__ in ["Drift", "Marker", "Cavity"]:
             continue
-        elif element.name.upper() in device_mapping: 
+        elif element.name.upper() in device_mapping:
             control_name = device_mapping[element.name.upper()]
         else:
             warnings.warn(f"Element {element.name} not found in device mapping")
@@ -67,7 +67,9 @@ def get_variables_from_segment(
 
         # if element type is a screen then modify the output variable
         if isinstance(element, Screen):
-            element_variables[f"{control_name}:Image:ArrayData"].shape = element.resolution
+            element_variables[
+                f"{control_name}:Image:ArrayData"
+            ].shape = element.resolution
 
         all_variables.update(element_variables)
 

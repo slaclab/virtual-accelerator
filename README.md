@@ -2,13 +2,13 @@ This repository includes SLAC-specific python code to be utilized with creating 
 
 ## Installation
 Clone this repo into a local location, enter it and run
-``` 
+```
 pip install .
 ```
 the `-e` flag can be added if editing the files.
-See `pyproject.toml` for dependencies. If you want to use the virtual-accelerator package without all of the codes, 
+See `pyproject.toml` for dependencies. If you want to use the virtual-accelerator package without all of the codes,
 you can install code-dependent packages (Bmad, cheetah, etc.) yourself and install virtual-accelerator without all
 dependencies via the flag `-no-deps`.
 
-Creating the model instances requires the `$LCLS_LATTICE` environment variable to be set to a location containing the 
+Creating the model instances requires the `$LCLS_LATTICE` environment variable to be set to a location containing the
 contents of the lcls-lattice repo https://github.com/slaclab/lcls-lattice.

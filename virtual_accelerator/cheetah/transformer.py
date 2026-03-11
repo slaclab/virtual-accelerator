@@ -1,7 +1,5 @@
-from abc import ABC, abstractmethod
 from virtual_accelerator.cheetah.utils import access_cheetah_attribute
 from lume_cheetah.transformer import CheetahTransformer
-
 
 
 class SLACCheetahTransformer(CheetahTransformer):
@@ -15,11 +13,11 @@ class SLACCheetahTransformer(CheetahTransformer):
     Attributes
     ----------
     control_name_to_cheetah : dict[str, str]
-        A dictionary mapping control variable names to cheetah elements 
+        A dictionary mapping control variable names to cheetah elements
         (e.g. {"QUAD:IN20:511 : "qe03"})
         #same something about how bctrl maps to k1, in utils.py
     """
-    
+
     def __init__(self, control_name_to_cheetah: dict[str, str]):
         self._control_name_to_cheetah = control_name_to_cheetah
 
@@ -41,16 +39,23 @@ class SLACCheetahTransformer(CheetahTransformer):
         energy : float
             The beam energy in eV, used for unit conversions if necessary.
         """
-        #get the last part after the last colon, which is the attribute name
-        control_name, attribute = ":".join(control_variable_name.split(":", 3)[:3]), control_variable_name.split(":", 3)[3]
-        element_name = self.control_name_to_cheetah.get(control_name) # mapping { "QUAD:IN20:511:BCTRL" : "QE03"}
+        # get the last part after the last colon, which is the attribute name
+        control_name, attribute = (
+            ":".join(control_variable_name.split(":", 3)[:3]),
+            control_variable_name.split(":", 3)[3],
+        )
+        element_name = self.control_name_to_cheetah.get(
+            control_name
+        )  # mapping { "QUAD:IN20:511:BCTRL" : "QE03"}
         if element_name is None:
-            raise ValueError(f"No mapping found for control variable '{control_variable_name}'")
+            raise ValueError(
+                f"No mapping found for control variable '{control_variable_name}'"
+            )
 
         element = getattr(simulator.segment, element_name)
-        beam_energy_at_element = simulator.energies[element_name] 
+        beam_energy_at_element = simulator.energies[element_name]
         # due to getting beam energy this calc is very slow, maybe some list format should
-        # be passable for args. 
+        # be passable for args.
         return access_cheetah_attribute(element, attribute, beam_energy_at_element)
 
     def set_cheetah_property(self, simulator, control_variable_name, value):
@@ -68,13 +73,15 @@ class SLACCheetahTransformer(CheetahTransformer):
             The value to set for the corresponding cheetah property, in EPICS units.
         """
 
-        control_name, attribute = control_variable_name.rsplit(":", 1) 
+        control_name, attribute = control_variable_name.rsplit(":", 1)
         element_name = self.control_name_to_cheetah.get(control_name)
         if element_name is None:
-            raise ValueError(f"No mapping found for control variable '{control_variable_name}'")
+            raise ValueError(
+                f"No mapping found for control variable '{control_variable_name}'"
+            )
 
         element = getattr(simulator.segment, element_name)
         beam_energy_at_element = simulator.energies[element_name]
-        access_cheetah_attribute(element, attribute, beam_energy_at_element, set_value=value)
-
-
+        access_cheetah_attribute(
+            element, attribute, beam_energy_at_element, set_value=value
+        )

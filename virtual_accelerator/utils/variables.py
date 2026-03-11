@@ -1,4 +1,3 @@
-
 import copy
 import os
 from pathlib import Path
@@ -24,8 +23,17 @@ def get_name_to_epics_mapping():
     dict[str, str]
         Mapping of lattice element name -> control-system PV prefix.
     """
-    fpath =  os.path.join(Path(__file__).parent.resolve(),"lcls_elements.csv",)
-    return pd.read_csv(fpath, dtype=str).set_index("Element")['Control System Name'].dropna().to_dict()
+    fpath = os.path.join(
+        Path(__file__).parent.resolve(),
+        "lcls_elements.csv",
+    )
+    return (
+        pd.read_csv(fpath, dtype=str)
+        .set_index("Element")["Control System Name"]
+        .dropna()
+        .to_dict()
+    )
+
 
 def get_epics_to_name_mapping():
     """
@@ -38,6 +46,7 @@ def get_epics_to_name_mapping():
     """
     return {v: k for k, v in get_name_to_epics_mapping().items()}
 
+
 def get_element_attr_mapping():
     """
     Get the mapping from element type to PV attributes and variable specifications.
@@ -48,12 +57,15 @@ def get_element_attr_mapping():
         Nested dictionary containing a mapping of cheetah element types to PV attributes and
         their variable specifications.
     """
-    with open(os.path.join(Path(__file__).parent.resolve(),"slac_variable_config.yaml"), "r") as f:
-        return yaml.safe_load(f)    
-    
+    with open(
+        os.path.join(Path(__file__).parent.resolve(), "slac_variable_config.yaml"), "r"
+    ) as f:
+        return yaml.safe_load(f)
+
+
 def get_variables_from_element_name(
-    element_class_name: str, 
-    control_name: str, 
+    element_class_name: str,
+    control_name: str,
     element_attr_mapping: dict[str, dict[str, Any]],
 ) -> dict[str, Variable]:
     """
@@ -139,7 +151,6 @@ def get_variables_from_element_name(
 
     # iterate over the configured attributes for this element type and instantiate variables
     for attr, var_config in element_attributes.items():
-
         # create the variable name by combining the control name and attribute
         # (e.g. "QUAD:IN20:425:BCTRL")
         variable_name = f"{control_name}:{attr}"
@@ -160,9 +171,12 @@ def get_variables_from_element_name(
                     f"Unknown variable_class {variable_class!r} "
                     f"for {element_type}.{attr}"
                 ) from e
-            
+
         if variable_class == NDVariable:
-            variable_info["shape"] = (1,1) # default shape for NDVariables, should be updated after instantiation
+            variable_info["shape"] = (
+                1,
+                1,
+            )  # default shape for NDVariables, should be updated after instantiation
 
         # create a variable instance using the specified variable class
         # and additional configuration parameters
@@ -172,6 +186,7 @@ def get_variables_from_element_name(
         )
 
     return variables
+
 
 def split_control_and_observable(
     all_vars: dict[str, ScalarVariable],

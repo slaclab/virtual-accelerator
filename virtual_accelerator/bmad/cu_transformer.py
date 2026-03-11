@@ -6,6 +6,7 @@ from beamphysics.interfaces.bmad import write_bmad
 from os import getcwd
 import numpy as np
 
+
 class CUBmadTransformer(BmadTransformer):
     """
     Attributes
@@ -73,10 +74,14 @@ class CUBmadTransformer(BmadTransformer):
         # Map control name to element and attribute
         # get prefix
         if "Image" in control_name:
-            element_name = self.control_name_to_bmad[":".join(control_name.split(":")[:3])]
+            element_name = self.control_name_to_bmad[
+                ":".join(control_name.split(":")[:3])
+            ]
             attr = ":".join(control_name.split(":")[3:])
         else:
-            element_name = self.control_name_to_bmad[":".join(control_name.split(":")[:-1])]
+            element_name = self.control_name_to_bmad[
+                ":".join(control_name.split(":")[:-1])
+            ]
             attr = ":".join(control_name.split(":")[-1:])
 
         device_type = control_name.split(":")[0]  # QUAD, KLYS, etc.
@@ -88,7 +93,7 @@ class CUBmadTransformer(BmadTransformer):
                 return -ele_attr["B1_GRADIENT"] * ele_attr["L"] * 10
         elif device_type == "SOLN":
             if attr in ["BCTRL", "BACT", "BDES"]:
-                return ele_attr["BS_FIELD"] * 10 # TODO confirm this conversion
+                return ele_attr["BS_FIELD"] * 10  # TODO confirm this conversion
         elif device_type in ["KLYS", "ACCL"]:
             if attr in ["ENLD", "ADES"]:
                 tao.ele_control_var(element_name)
@@ -102,7 +107,9 @@ class CUBmadTransformer(BmadTransformer):
         elif device_type == "OTRS":
             if attr == "Image:ArrayData":
                 bins = self.screen_attributes[element_name]["bins"]
-                resolution = self.screen_attributes[element_name]["resolution"]*1e-6 # um / pixel
+                resolution = (
+                    self.screen_attributes[element_name]["resolution"] * 1e-6
+                )  # um / pixel
                 range = bins * resolution / 2
 
                 beam = get_particle_group_at_element(tao, element_name)
@@ -192,6 +199,5 @@ class CUBmadTransformer(BmadTransformer):
 
         return tao_cmds
 
-    
     def get_beam_elements(self):
-            return {'input_element':'OTR2', 'output_element': 'BEGUNDH'}
+        return {"input_element": "OTR2", "output_element": "BEGUNDH"}

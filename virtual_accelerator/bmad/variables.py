@@ -1,7 +1,11 @@
 from typing import Any
 import warnings
 from pytao import Tao
-from virtual_accelerator.utils.variables import get_element_attr_mapping, get_element_attr_mapping, get_name_to_epics_mapping, get_variables_from_element_name
+from virtual_accelerator.utils.variables import (
+    get_element_attr_mapping,
+    get_name_to_epics_mapping,
+    get_variables_from_element_name,
+)
 
 
 def get_variables_from_tao(
@@ -51,8 +55,13 @@ def get_variables_from_tao(
     element_types = tao.lat_list("*", "ele.key")
 
     # map element types to standards
-    element_types = ["HorizontalCorrector" if etype == "HKicker" else etype for etype in element_types]
-    element_types = ["VerticalCorrector" if etype == "VKicker" else etype for etype in element_types]
+    element_types = [
+        "HorizontalCorrector" if etype == "HKicker" else etype
+        for etype in element_types
+    ]
+    element_types = [
+        "VerticalCorrector" if etype == "VKicker" else etype for etype in element_types
+    ]
 
     for element_name, element_type in zip(element_names, element_types):
         # handle slave elements
@@ -60,10 +69,10 @@ def get_variables_from_tao(
             lord_info = tao.lord_control(element_name)[0]
             element_name = lord_info["name"]
             element_type = lord_info["key"]
-        
-        if element_type in ["Drift","Marker","Cavity", "BPM"]: 
-            continue            
-        elif element_name in device_mapping: 
+
+        if element_type in ["Drift", "Marker", "Cavity", "BPM"]:
+            continue
+        elif element_name in device_mapping:
             control_name = device_mapping[element_name.upper()]
         else:
             warnings.warn(f"Element {element_name} not found in device mapping")

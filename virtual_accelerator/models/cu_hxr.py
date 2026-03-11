@@ -4,11 +4,14 @@ from pytao import Tao
 
 from lume_bmad.model import LUMEBmadModel
 from lume.variables import NDVariable
-from lume_cheetah import LUMECheetahModel,CheetahSimulator
+from lume_cheetah import LUMECheetahModel, CheetahSimulator
 from virtual_accelerator.cheetah.transformer import SLACCheetahTransformer
 from virtual_accelerator.cheetah.variables import get_variables_from_segment
 from virtual_accelerator.bmad.variables import get_variables_from_tao
-from virtual_accelerator.utils.variables import get_epics_to_name_mapping, split_control_and_observable
+from virtual_accelerator.utils.variables import (
+    get_epics_to_name_mapping,
+    split_control_and_observable,
+)
 from cheetah.accelerator import Segment
 from cheetah.particles import ParticleBeam
 import torch
@@ -53,7 +56,8 @@ def get_cu_hxr_bmad_model():
     }  ## TODO replace with correct values
 
     transformer = CUBmadTransformer(
-        control_name_to_bmad=control_name_to_element_name, screen_attributes=screen_attributes
+        control_name_to_bmad=control_name_to_element_name,
+        screen_attributes=screen_attributes,
     )
 
     model = LUMEBmadModel(
@@ -64,9 +68,12 @@ def get_cu_hxr_bmad_model():
         dump_locations=["OTR4"],
     )
 
-    model.tao.cmd("set beam_init position_file = $LCLS_LATTICE/bmad/beams/bmad_set_beam2000_pg")
+    model.tao.cmd(
+        "set beam_init position_file = $LCLS_LATTICE/bmad/beams/bmad_set_beam2000_pg"
+    )
 
     return model
+
 
 def get_cu_hxr_cheetah_model():
     """
@@ -77,25 +84,22 @@ def get_cu_hxr_cheetah_model():
     LUMECheetahModel
         Instance of the LUMECheetahModel for the CU_HXR lattice.
     """
-    # Get path to beam distributions
-    beam_dist = os.environ.get(
-        'BEAM_DISTRIBUTION',
-        '/sdf/group/ad/sw/machine-learning/Linac-Simulation-Server/simulation_server/beams'
-    )
     # Create Cheetah particle Beam from file
-    incoming_beam = ParticleBeam.from_twiss(beta_x=torch.tensor(1.0), beta_y=torch.tensor(1.0))
+    incoming_beam = ParticleBeam.from_twiss(
+        beta_x=torch.tensor(1.0), beta_y=torch.tensor(1.0)
+    )
     incoming_beam.particle_charges = torch.tensor(1.0)
 
     # Get path to lattice files
-    lcls_lattice = os.environ.get('LCLS_LATTICE')
+    lcls_lattice = os.environ.get("LCLS_LATTICE")
 
     # Create lattice from file
     segment = Segment.from_lattice_json(
         os.path.join(lcls_lattice, "cheetah/nc_hxr.json")
     )
 
-    #Set end destination from full lattice
-    segment = segment.subcell(end='otr2')
+    # Set end destination from full lattice
+    segment = segment.subcell(end="otr2")
 
     # Define the simulator using lattice and particle beam
     simulator = CheetahSimulator(
@@ -104,10 +108,14 @@ def get_cu_hxr_cheetah_model():
     )
 
     # get control system device to cheetah mapping
-    control_name_to_element_name = {k: v.lower() for k,v in get_epics_to_name_mapping().items()}
+    control_name_to_element_name = {
+        k: v.lower() for k, v in get_epics_to_name_mapping().items()
+    }
 
     # Create transformer that handles maps get/set calls
-    transformer = SLACCheetahTransformer(control_name_to_cheetah=control_name_to_element_name)
+    transformer = SLACCheetahTransformer(
+        control_name_to_cheetah=control_name_to_element_name
+    )
 
     # Get supported control system variables
     # for the model
