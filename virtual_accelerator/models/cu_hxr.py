@@ -84,9 +84,20 @@ def get_cu_hxr_cheetah_model():
     LUMECheetahModel
         Instance of the LUMECheetahModel for the CU_HXR lattice.
     """
+    # Get path to beam distributions
+    # beam_dist = os.environ.get(
+    #    'BEAM_DISTRIBUTION',
+    #    '/sdf/group/ad/sw/machine-learning/Linac-Simulation-Server/simulation_server/beams'
+    # )
     # Create Cheetah particle Beam from file
     incoming_beam = ParticleBeam.from_twiss(
-        beta_x=torch.tensor(1.0), beta_y=torch.tensor(1.0)
+        beta_x=torch.tensor(9.34),
+        alpha_x=torch.tensor(-1.6946),
+        emittance_x=torch.tensor(1e-7),
+        beta_y=torch.tensor(9.34),
+        alpha_y=torch.tensor(-1.6946),
+        emittance_y=torch.tensor(1e-7),
+        energy=torch.tensor(90e6),
     )
     incoming_beam.particle_charges = torch.tensor(1.0)
 
