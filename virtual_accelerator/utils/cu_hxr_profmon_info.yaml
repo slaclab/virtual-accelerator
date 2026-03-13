@@ -1,0 +1,72 @@
+OTRH1:
+   name: OTRS:IN20:465
+   nCol: 1392
+   nRow: 1040
+   bitdepth: 12
+   res: 18.59
+   orientX: 1
+   orientY: 1
+OTRH2:
+   name: OTRS:IN20:471
+   nCol: 1392
+   nRow: 1040
+   bitdepth: 12
+   res: 19.16
+   orientX: 1
+   orientY: 1
+OTR2:
+   name: OTRS:IN20:571
+   nCol: 1392
+   nRow: 1040
+   bitdepth: 12
+   res: 12.66
+   orientX: 1
+   orientY: 1
+OTR3:
+   name: OTRS:IN20:621
+   nCol: 1392
+   nRow: 1040
+   bitdepth: 12
+   res: 12.12
+   orientX: 1
+   orientY: 1
+OTR4:
+   name: OTRS:IN20:711
+   nCol: 1392
+   nRow: 1040
+   bitdepth: 12
+   res: 17.06
+   orientX: 1
+   orientY: 1
+OTR11:
+   name: OTRS:LI21:237
+   nCol: 1392
+   nRow: 1040
+   bitdepth: 12
+   res: 18.15
+   orientX: 1
+   orientY: 1
+OTR12:
+   name: OTRS:LI21:291
+   nCol: 1392
+   nRow: 1040
+   bitdepth: 12
+   res: 10.93
+   orientX: 1
+   orientY: 1
+OTR21:
+   name: OTRS:LI24:807
+   nCol: 1392
+   nRow: 1040
+   bitdepth: 12
+   res: 17.09
+   orientX: 1
+   orientY: 1
+OTRDMP:
+   name: OTRS:DMPH:695
+   nCol: 1024
+   nRow: 1024
+   bitdepth: 12
+   res: 27.47
+   orientX: 1
+   orientY: 1

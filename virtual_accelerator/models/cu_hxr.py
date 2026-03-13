@@ -41,21 +41,9 @@ def get_cu_hxr_bmad_model():
 
     # Define the controllable and observable variables
     control_variables, observable_variables = split_control_and_observable(variables)
-
-    # handle OTR4
-    control_variables["OTRS:IN20:711:Image:ArrayData"] = NDVariable(
-        name="OTRS:IN20:711:Image:ArrayData",
-        unit="",
-        read_only=True,
-        shape=(1024, 1024),
-    )
-    screen_attributes = {
-        "OTR4": {
-            "bins": np.array([1024, 1024]),  # number of pixels in x and y
-            "resolution": 10,  # um/pixel
-        }
-    }  ## TODO replace with correct values
-
+    # handle Profile Monitors
+    control_variables, screen_attributes = get_cu_hxr_screen_variables(control_variables, ["OTR4"])
+    
     transformer = CUBmadTransformer(
         control_name_to_bmad=control_name_to_element_name,
         screen_attributes=screen_attributes,

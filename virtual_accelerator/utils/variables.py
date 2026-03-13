@@ -4,6 +4,7 @@ from pathlib import Path
 import pandas as pd
 from typing import Any
 import warnings
+import numpy as np
 
 from lume.variables import Variable, ScalarVariable, NDVariable
 import yaml
@@ -214,3 +215,47 @@ def split_control_and_observable(
     control_vars = {k: v for k, v in all_vars.items() if not v.read_only}
     observable_vars = {k: v for k, v in all_vars.items() if v.read_only}
     return control_vars, observable_vars
+
+def get_cu_hxr_screen_variables(control_variables, element_list):
+    """
+    Get screen attributes for cu_hxr from yaml file
+
+    Parameters
+    ----------
+    control_varialbes dictionary
+    screen_list one or more of: ['OTRH1', 'OTRH2', 'OTR2', 'OTR3', 'OTR4', 
+                                 'OTR11', 'OTR12', 'OTR21', 'OTRDMP']
+
+    Returns
+    -------
+    dict[element: attributes ]
+    - number of pixels in x and y
+    - resolution um/pixel
+    - bit_depth
+    - orientation
+    """
+
+    with open(os.path.join(Path(__file__).parent.resolve(),"cu_hxr_profmon_info.yaml"), "r") as f:
+        screen_data = yaml.safe_load(f)   
+    
+    screen_attributes = {}
+    for element in screen_data.keys():
+        if element not in element_list:
+            continue
+        image_name = screen_data[element]["name"] + ":Image:ArrayData"
+        nCol = screen_data[element]["nCol"]
+        nRow = screen_data[element]["nRow"]
+        control_variables[image_name] =  NDVariable(
+            name=image_name,
+            unit="",
+            read_only=True,
+            shape=(nCol, nRow)
+        )
+        screen_attributes[element]={
+            "bins": np.array([nCol, nRow]),
+            "resolution": screen_data[element]["res"], 
+            "bit_depth": screen_data[element]["bitdepth"],
+            "orient": np.array([screen_data[element]["orientX"], screen_data[element]["orientY"]])
+        }
+    return control_variables, screen_attributes
+            
