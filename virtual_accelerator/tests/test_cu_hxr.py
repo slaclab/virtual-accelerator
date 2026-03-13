@@ -25,7 +25,7 @@ class TestCUHXRBmad:
         image = model.get(["OTRS:IN20:711:Image:ArrayData"])[
             "OTRS:IN20:711:Image:ArrayData"
         ]
-        assert image.shape == (1024, 1024)
+        assert image.shape == (1392, 1040)
 
         # set some control variables
         model.set({"QUAD:IN20:631:BCTRL": 0.0})
@@ -34,7 +34,7 @@ class TestCUHXRBmad:
         updated_image = model.get(["OTRS:IN20:711:Image:ArrayData"])[
             "OTRS:IN20:711:Image:ArrayData"
         ]
-        assert updated_image.shape == (1024, 1024)
+        assert updated_image.shape == (1392, 1040)
 
         # make sure it changed
         assert not (image == updated_image).all()

@@ -1,10 +1,8 @@
 import os
 from pathlib import Path
-import numpy as np
 from pytao import Tao
 
 from lume_bmad.model import LUMEBmadModel
-from lume.variables import NDVariable
 from lume_cheetah import LUMECheetahModel, CheetahSimulator
 from virtual_accelerator.cheetah.transformer import SLACCheetahTransformer
 from virtual_accelerator.cheetah.variables import get_variables_from_segment
@@ -12,6 +10,7 @@ from virtual_accelerator.bmad.variables import get_variables_from_tao
 from virtual_accelerator.utils.variables import (
     get_epics_to_name_mapping,
     split_control_and_observable,
+    get_cu_hxr_screen_variables,
 )
 from cheetah.accelerator import Segment
 from cheetah.particles import ParticleBeam
@@ -42,8 +41,11 @@ def get_cu_hxr_bmad_model():
     # Define the controllable and observable variables
     control_variables, observable_variables = split_control_and_observable(variables)
     # handle Profile Monitors
-    control_variables, screen_attributes = get_cu_hxr_screen_variables(control_variables, ["OTR4"])
-    
+    screens = ["OTR3", "OTR4", "OTR11", "OTR12", "OTR21", "OTRDMP"]
+    control_variables, screen_attributes = get_cu_hxr_screen_variables(
+        control_variables, screens
+    )
+
     transformer = CUBmadTransformer(
         control_name_to_bmad=control_name_to_element_name,
         screen_attributes=screen_attributes,
@@ -54,7 +56,7 @@ def get_cu_hxr_bmad_model():
         control_variables=control_variables,
         output_variables=observable_variables,
         transformer=transformer,
-        dump_locations=["OTR4"],
+        dump_locations=screens,
     )
 
     beam_path = os.path.join(Path(__file__).parent, "../bmad", "bmad_set_beam2000_pg")

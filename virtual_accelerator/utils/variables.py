@@ -216,6 +216,7 @@ def split_control_and_observable(
     observable_vars = {k: v for k, v in all_vars.items() if v.read_only}
     return control_vars, observable_vars
 
+
 def get_cu_hxr_screen_variables(control_variables, element_list):
     """
     Get screen attributes for cu_hxr from yaml file
@@ -223,7 +224,7 @@ def get_cu_hxr_screen_variables(control_variables, element_list):
     Parameters
     ----------
     control_varialbes dictionary
-    screen_list one or more of: ['OTRH1', 'OTRH2', 'OTR2', 'OTR3', 'OTR4', 
+    screen_list one or more of: ['OTRH1', 'OTRH2', 'OTR2', 'OTR3', 'OTR4',
                                  'OTR11', 'OTR12', 'OTR21', 'OTRDMP']
 
     Returns
@@ -235,9 +236,11 @@ def get_cu_hxr_screen_variables(control_variables, element_list):
     - orientation
     """
 
-    with open(os.path.join(Path(__file__).parent.resolve(),"cu_hxr_profmon_info.yaml"), "r") as f:
-        screen_data = yaml.safe_load(f)   
-    
+    with open(
+        os.path.join(Path(__file__).parent.resolve(), "cu_hxr_profmon_info.yaml"), "r"
+    ) as f:
+        screen_data = yaml.safe_load(f)
+
     screen_attributes = {}
     for element in screen_data.keys():
         if element not in element_list:
@@ -245,17 +248,15 @@ def get_cu_hxr_screen_variables(control_variables, element_list):
         image_name = screen_data[element]["name"] + ":Image:ArrayData"
         nCol = screen_data[element]["nCol"]
         nRow = screen_data[element]["nRow"]
-        control_variables[image_name] =  NDVariable(
-            name=image_name,
-            unit="",
-            read_only=True,
-            shape=(nCol, nRow)
+        control_variables[image_name] = NDVariable(
+            name=image_name, unit="", read_only=True, shape=(nCol, nRow)
         )
-        screen_attributes[element]={
+        screen_attributes[element] = {
             "bins": np.array([nCol, nRow]),
-            "resolution": screen_data[element]["res"], 
+            "resolution": screen_data[element]["res"],
             "bit_depth": screen_data[element]["bitdepth"],
-            "orient": np.array([screen_data[element]["orientX"], screen_data[element]["orientY"]])
+            "orient": np.array(
+                [screen_data[element]["orientX"], screen_data[element]["orientY"]]
+            ),
         }
     return control_variables, screen_attributes
-            
