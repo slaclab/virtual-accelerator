@@ -42,6 +42,8 @@ jobs:
           activate-environment: va-env
       - name: Install pytao (includes bmad)
         run: conda install -y pytao
+      - name: Install CPU-only PyTorch
+        run: pip install --upgrade --index-url https://download.pytorch.org/whl/cpu torch
       - name: Install package and remaining dependencies
         run: pip install ".[dev]"
       - name: List Python package versions
