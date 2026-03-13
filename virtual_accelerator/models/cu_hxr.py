@@ -1,4 +1,5 @@
 import os
+from pathlib import Path
 import numpy as np
 from pytao import Tao
 
@@ -68,9 +69,8 @@ def get_cu_hxr_bmad_model():
         dump_locations=["OTR4"],
     )
 
-    model.tao.cmd(
-        "set beam_init position_file = $LCLS_LATTICE/bmad/beams/bmad_set_beam2000_pg"
-    )
+    beam_path = os.path.join(Path(__file__).parent, "../bmad", "bmad_set_beam2000_pg")
+    model.tao.cmd(f"set beam_init position_file = {beam_path}")
 
     return model
 

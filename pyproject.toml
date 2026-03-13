@@ -28,7 +28,7 @@ dependencies = [
     "lume-base @ git+https://github.com/slaclab/lume-base@main",
     "lume-torch @ git+https://github.com/lume-science/lume-torch@main",
     "lume-bmad @ git+https://github.com/lume-science/lume-bmad@main",
-    "lume-cheetah @ git+https://github.com/pluflou/lume-cheetah@patch-1",
+    "lume-cheetah @ git+https://github.com/lume-science/lume-cheetah@main",
     "lume-pva @ git+https://github.com/lume-science/lume-pva@main",
     "lume-impact @ git+https://github.com/ChristopherMayes/lume-impact"
 ]
