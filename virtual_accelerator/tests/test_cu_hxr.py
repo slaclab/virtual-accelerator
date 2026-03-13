@@ -1,3 +1,6 @@
+import os
+
+from pathlib import Path
 from virtual_accelerator.models.cu_hxr import (
     get_cu_hxr_bmad_model,
     get_cu_hxr_cheetah_model,
@@ -8,15 +11,21 @@ class TestCUHXRBmad:
     def test_cu_hxr_twiss(self):
         model = get_cu_hxr_bmad_model()
 
+        beam_path = os.path.join(Path(__file__).parent, "../bmad", "test_beam")
+        model.tao.cmd(f"set beam_init position_file = {beam_path}")
+
         outputs = model.get(["a.beta", "b.beta", "name"])
 
-        assert len(outputs["a.beta"]) == 3322
-        assert len(outputs["b.beta"]) == 3322
+        assert len(outputs["a.beta"]) == len(model.tao.lat_list("*", "ele.name"))
+        assert len(outputs["b.beta"]) == len(model.tao.lat_list("*", "ele.name"))
         assert outputs["name"][0] == "BEGINNING"
         assert outputs["name"][-1] == "END"
 
     def test_cu_hxr_screen(self):
         model = get_cu_hxr_bmad_model()
+
+        beam_path = os.path.join(Path(__file__).parent, "../bmad", "test_beam")
+        model.tao.cmd(f"set beam_init position_file = {beam_path}")
 
         # set tracking
         model.set({"track_type": 1})
