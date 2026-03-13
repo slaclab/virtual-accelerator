@@ -13,35 +13,34 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        python-version: ["3.11", "3.12", "3.13", "3.14"]
+        python-version: ["3.11", "3.12", "3.13"]
+    defaults:
+      run:
+        shell: bash -el {0}
     steps:
       - uses: actions/checkout@v4
         with:
           fetch-depth: 1
-      - name: Install uv
-        uses: astral-sh/setup-uv@v4
-        with:
-          enable-cache: true
-          cache-dependency-glob: "**/pyproject.toml"
-      - name: Set up Python ${{ matrix.python-version }}
-        uses: actions/setup-python@v5
-        with:
-          python-version: ${{ matrix.python-version }}
-      - name: Install libtao
-        run: conda install -y -c conda-forge pytao
       - name: Checkout lcls-lattice
         uses: actions/checkout@v4
         with:
           repository: slaclab/lcls-lattice
           path: lcls-lattice
-      - name: Install dependencies and package
-        run: |
-          uv sync --extra dev
+      - name: Set up conda environment
+        uses: conda-incubator/setup-miniconda@v3
+        with:
+          miniforge-version: latest
+          python-version: ${{ matrix.python-version }}
+          channels: conda-forge
+          channel-priority: strict
+          activate-environment: va-env
+      - name: Install pytao (includes bmad)
+        run: conda install -y pytao
+      - name: Install package and remaining dependencies
+        run: pip install ".[dev]"
       - name: List Python package versions
-        run: uv pip list
+        run: pip list
       - name: Run tests
         env:
           LCLS_LATTICE: ${{ github.workspace }}/lcls-lattice
-          LD_LIBRARY_PATH: ${{ env.CONDA }}/../../lib:${{ env.LD_LIBRARY_PATH }}
-        run: |
-          uv run pytest virtual_accelerator/tests
+        run: pytest virtual_accelerator/tests
