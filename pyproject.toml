@@ -7,7 +7,7 @@ name = "virtual-accelerator"
 dynamic = ["version"]
 description = "SLAC Specific implementation of virtual accelerators for SLAC beamlines"
 readme = "README.md"
-requires-python = ">=3.10"
+requires-python = ">=3.11"
 license = {text = "Apache-2.0"}
 authors = [
     {name = "SLAC National Accelerator Laboratory"}
@@ -17,7 +17,6 @@ classifiers = [
     "Intended Audience :: Science/Research",
     "License :: OSI Approved :: Apache Software License",
     "Programming Language :: Python :: 3",
-    "Programming Language :: Python :: 3.10",
     "Programming Language :: Python :: 3.11",
     "Programming Language :: Python :: 3.12",
     "Programming Language :: Python :: 3.13",
@@ -31,7 +30,7 @@ dependencies = [
     "lume-bmad @ git+https://github.com/lume-science/lume-bmad@main",
     "lume-cheetah @ git+https://github.com/lume-science/lume-cheetah@main",
     "lume-pva @ git+https://github.com/lume-science/lume-pva@main",
-    "lume-impact @ git+https://github.com/ChristopherMayes/lume-impact",
+    "lume-impact @ git+https://github.com/ChristopherMayes/lume-impact"
 ]
 
 [project.urls]

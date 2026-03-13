@@ -1,0 +1,54 @@
+name: Run tests
+
+on:
+  pull_request:
+  push:
+  release:
+    types:
+      - published
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        python-version: ["3.11", "3.12", "3.13"]
+    defaults:
+      run:
+        shell: bash -el {0}
+    steps:
+      - name: Free disk space
+        run: |
+          df -h
+          sudo rm -rf /usr/share/dotnet /usr/local/lib/android /opt/ghc /opt/hostedtoolcache/CodeQL
+          sudo docker image prune --all --force
+          df -h
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 1
+      - name: Checkout lcls-lattice
+        uses: actions/checkout@v4
+        with:
+          repository: slaclab/lcls-lattice
+          path: lcls-lattice
+      - name: Set up conda environment
+        uses: conda-incubator/setup-miniconda@v3
+        with:
+          miniforge-version: latest
+          python-version: ${{ matrix.python-version }}
+          channels: conda-forge
+          channel-priority: strict
+          activate-environment: va-env
+      - name: Install pytao (includes bmad)
+        run: conda install -y pytao
+      - name: Install CPU-only PyTorch
+        run: pip install --upgrade --index-url https://download.pytorch.org/whl/cpu torch
+      - name: Install package and remaining dependencies
+        run: pip install ".[dev]"
+      - name: List Python package versions
+        run: pip list
+      - name: Run tests
+        env:
+          LCLS_LATTICE: ${{ github.workspace }}/lcls-lattice
+        run: pytest virtual_accelerator/tests

@@ -5,15 +5,14 @@ from pytao import Tao
 
 from lume_bmad.model import LUMEBmadModel
 from lume.variables import NDVariable
-from lume_cheetah import LUMECheetahModel,CheetahSimulator
+from lume_cheetah import LUMECheetahModel, CheetahSimulator
 from virtual_accelerator.cheetah.transformer import SLACCheetahTransformer
 from virtual_accelerator.cheetah.variables import get_variables_from_segment
 from virtual_accelerator.bmad.variables import get_variables_from_tao
 from virtual_accelerator.utils.variables import (
     get_epics_to_name_mapping,
     split_control_and_observable,
-    get_cu_hxr_screen_variables
-    )
+)
 from cheetah.accelerator import Segment
 from cheetah.particles import ParticleBeam
 import torch
@@ -46,7 +45,8 @@ def get_cu_hxr_bmad_model():
     control_variables, screen_attributes = get_cu_hxr_screen_variables(control_variables, ["OTR4"])
     
     transformer = CUBmadTransformer(
-        control_name_to_bmad=control_name_to_element_name, screen_attributes=screen_attributes
+        control_name_to_bmad=control_name_to_element_name,
+        screen_attributes=screen_attributes,
     )
 
     model = LUMEBmadModel(
@@ -61,6 +61,7 @@ def get_cu_hxr_bmad_model():
     model.tao.cmd(f"set beam_init position_file = {beam_path}")
 
     return model
+
 
 def get_cu_hxr_cheetah_model():
     """
@@ -89,15 +90,15 @@ def get_cu_hxr_cheetah_model():
     incoming_beam.particle_charges = torch.tensor(1.0)
 
     # Get path to lattice files
-    lcls_lattice = os.environ.get('LCLS_LATTICE')
+    lcls_lattice = os.environ.get("LCLS_LATTICE")
 
     # Create lattice from file
     segment = Segment.from_lattice_json(
         os.path.join(lcls_lattice, "cheetah/nc_hxr.json")
     )
 
-    #Set end destination from full lattice
-    segment = segment.subcell(end='otr2')
+    # Set end destination from full lattice
+    segment = segment.subcell(end="otr2")
 
     # Define the simulator using lattice and particle beam
     simulator = CheetahSimulator(
@@ -106,10 +107,14 @@ def get_cu_hxr_cheetah_model():
     )
 
     # get control system device to cheetah mapping
-    control_name_to_element_name = {k: v.lower() for k,v in get_epics_to_name_mapping().items()}
+    control_name_to_element_name = {
+        k: v.lower() for k, v in get_epics_to_name_mapping().items()
+    }
 
     # Create transformer that handles maps get/set calls
-    transformer = SLACCheetahTransformer(control_name_to_cheetah=control_name_to_element_name)
+    transformer = SLACCheetahTransformer(
+        control_name_to_cheetah=control_name_to_element_name
+    )
 
     # Get supported control system variables
     # for the model

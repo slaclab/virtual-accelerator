@@ -2,6 +2,8 @@ import pandas as pd
 import torch
 import os
 from pathlib import Path
+
+
 class NoSetMethodError(Exception):
     pass
 
@@ -24,7 +26,7 @@ class FieldAccessor:
             return self.get(element, energy)
         else:
             if self.set is None:
-                raise NoSetMethodError(f"Cannot set value for this attribute")
+                raise NoSetMethodError("Cannot set value for this attribute")
             self.set(element, energy, value)
 
 
@@ -124,7 +126,7 @@ SCREEN_MAPPING = {
     "N_OF_COL": FieldAccessor(lambda e, energy: e.resolution[1]),
 }
 
-#CHEETAH ELEMENT MAPPINGS
+# CHEETAH ELEMENT MAPPINGS
 MAPPINGS = {
     "Quadrupole": QUADRUPOLE_MAPPING,
     "Solenoid": SOLENOID_MAPPING,
@@ -139,6 +141,7 @@ LCLS_ELEMENTS = os.path.join(
     Path(__file__).parent.resolve(),
     "lcls_elements.csv",
 )
+
 
 def access_cheetah_attribute(element, pv_attribute, energy, set_value=None):
     """
@@ -206,10 +209,11 @@ def get_mad_control_mapping(fname: str | None = None):
         fname = str(LCLS_ELEMENTS)
     mapping = (
         pd.read_csv(fname, dtype=str)
-        .set_index("Element")
-        ['Control System Name'].to_dict()
+        .set_index("Element")["Control System Name"]
+        .to_dict()
     )
     return mapping
+
 
 def get_control_mad_mapping(fname: str | None = None):
     """
@@ -229,5 +233,3 @@ def get_control_mad_mapping(fname: str | None = None):
         .T.to_dict()
     )
     return mapping
-
-
