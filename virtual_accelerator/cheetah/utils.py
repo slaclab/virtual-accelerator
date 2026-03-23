@@ -143,21 +143,143 @@ LCLS_ELEMENTS = os.path.join(
 )
 
 
+def handle_quadrupole_composite(elements, pv_attribute, energy, set_value):
+    """
+    Handle composite quadrupole devices split into multiple subelements.
+
+    Quadrupoles require special handling because their control system
+    variables (e.g., BCTRL, BDES) represent integrated magnetic strength.
+
+    For a composite quadrupole:
+        - The total strength depends on the *sum of subelement lengths*
+        - All subelements share the same normalized strength (k1)
+
+    Behavior:
+        - GET:
+            Returns the integrated strength using total length.
+        - SET:
+            Computes a single k1 using total length and applies it to all subelements.
+
+    Args:
+        elements (list[Quadrupole]):
+            List of quadrupole subelements.
+
+        pv_attribute (str):
+            Attribute name (e.g., 'BCTRL', 'BDES', 'BACT').
+
+        energy (torch.Tensor or float):
+            Beam energy for magnetic rigidity calculation.
+
+        set_value (torch.Tensor or float or None):
+            Value to set, if performing a set operation.
+
+    Returns:
+        torch.Tensor or float or None:
+            Attribute value if getting, otherwise None.
+    """
+    total_length = sum(e.length for e in elements)
+
+    if set_value is not None and pv_attribute in {"BCTRL", "BDES"}:
+        new_k1 = set_value / get_magnetic_rigidity(energy) / total_length
+
+        for e in elements:
+            print(e.k1, ' ', new_k1)
+            e.k1 = new_k1
+        return
+
+    if pv_attribute in {"BCTRL", "BACT", "BDES"}:
+        return elements[0].k1 * total_length * get_magnetic_rigidity(energy)
+
+    # fallback behavior
+    return default_composite_handler(elements, pv_attribute, energy, set_value)
+
+def default_composite_handler(elements, pv_attribute, energy, set_value):
+    """
+    Default handler for composite devices.
+    Assumes all subelements share identical attributes.
+
+    Behavior:
+        - GET:
+            Returns the attribute from the first subelement.
+        - SET:
+            Applies the value to all subelements.
+
+    Args:
+        elements (list[object]):
+            List of subelements of the same type.
+
+        pv_attribute (str):
+            Attribute name.
+
+        energy (torch.Tensor or float):
+            Beam energy.
+
+        set_value (torch.Tensor or float or None):
+            Value to set, if performing a set operation.
+
+    Returns:
+        torch.Tensor or float or None:
+            Attribute value if getting, otherwise None.
+    """
+
+    if set_value is not None:
+        for e in elements:
+            access_cheetah_attribute(e, pv_attribute, energy, set_value)
+        return
+
+    return access_cheetah_attribute(elements[0], pv_attribute, energy)
+
+COMPOSITE_HANDLERS = {
+    "Quadrupole": handle_quadrupole_composite,
+    "TransverseDeflectingCavity": default_composite_handler
+}
+
 def access_cheetah_attribute(element, pv_attribute, energy, set_value=None):
     """
 
     Return or set a Cheetah element attribute based on the PV attribute.
     If `set_value` is provided, it sets the value of the Cheetah attribute.
+    
+    
+    This function supports both single elements and composite devices
+    represented as lists of subelements (e.g., split quadrupoles or TCAVs).
+
+    For composite devices, behavior is delegated to a device-specific handler.
 
     Args:
-        element (Element): The name of the Cheetah element.
+        element (element or list[element]):
+        A single Cheetah element or a list of subelements representing
+        a single logical device.
+
         pv_attribute (str): The process variable attribute to map.
+
         energy (float): The beam energy in eV.
+
         set_value (optional): If provided, sets the value of the Cheetah attribute.
 
     Returns:
         value: The corresponding Cheetah attribute value if `set_value` is None, otherwise sets the value and returns None.
     """
+
+
+
+    # implementing fix for quads, will rethink for tcavs
+    # simplest case, each subelement has sub_length = length/len(sub_elements)
+    # handling composite elements
+
+    if isinstance(element, list):
+        if len(element) == 0:
+            raise ValueError("Cannot access attribute on empty element list")
+        element_type = type(element[0]).__name__
+        if any(type(sub).__name__ != element_type for sub in element):
+            raise ValueError("All subelements in element list must have same type")
+        
+        handler = COMPOSITE_HANDLERS.get(element_type, default_composite_handler)
+        return handler(element, pv_attribute, energy, set_value)
+
+
+
+    # handling for normal elements
 
     element_type = type(element).__name__
     if element_type not in MAPPINGS:
