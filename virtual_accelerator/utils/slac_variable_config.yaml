@@ -119,3 +119,14 @@ Screen:
     unit: pixel/mm
     read_only: true
     variable_class: ScalarVariable
+
+TransverseDeflectingCavity:
+  AREQ:
+    unit: degrees
+    read_only: false
+    variable_class: ScalarVariable
+  PREQ:
+    unit: MV
+    read_only: false
+    variable_class: ScalarVariable
+
