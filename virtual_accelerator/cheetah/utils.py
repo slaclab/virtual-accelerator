@@ -183,7 +183,6 @@ def handle_quadrupole_composite(elements, pv_attribute, energy, set_value):
         new_k1 = set_value / get_magnetic_rigidity(energy) / total_length
 
         for e in elements:
-            print(e.k1, ' ', new_k1)
             e.k1 = new_k1
         return
 
@@ -192,6 +191,7 @@ def handle_quadrupole_composite(elements, pv_attribute, energy, set_value):
 
     # fallback behavior
     return default_composite_handler(elements, pv_attribute, energy, set_value)
+
 
 def default_composite_handler(elements, pv_attribute, energy, set_value):
     """
@@ -229,18 +229,20 @@ def default_composite_handler(elements, pv_attribute, energy, set_value):
 
     return access_cheetah_attribute(elements[0], pv_attribute, energy)
 
+
 COMPOSITE_HANDLERS = {
     "Quadrupole": handle_quadrupole_composite,
-    "TransverseDeflectingCavity": default_composite_handler
+    "TransverseDeflectingCavity": default_composite_handler,
 }
+
 
 def access_cheetah_attribute(element, pv_attribute, energy, set_value=None):
     """
 
     Return or set a Cheetah element attribute based on the PV attribute.
     If `set_value` is provided, it sets the value of the Cheetah attribute.
-    
-    
+
+
     This function supports both single elements and composite devices
     represented as lists of subelements (e.g., split quadrupoles or TCAVs).
 
@@ -261,8 +263,6 @@ def access_cheetah_attribute(element, pv_attribute, energy, set_value=None):
         value: The corresponding Cheetah attribute value if `set_value` is None, otherwise sets the value and returns None.
     """
 
-
-
     # implementing fix for quads, will rethink for tcavs
     # simplest case, each subelement has sub_length = length/len(sub_elements)
     # handling composite elements
@@ -273,11 +273,9 @@ def access_cheetah_attribute(element, pv_attribute, energy, set_value=None):
         element_type = type(element[0]).__name__
         if any(type(sub).__name__ != element_type for sub in element):
             raise ValueError("All subelements in element list must have same type")
-        
+
         handler = COMPOSITE_HANDLERS.get(element_type, default_composite_handler)
         return handler(element, pv_attribute, energy, set_value)
-
-
 
     # handling for normal elements
 

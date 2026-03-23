@@ -129,4 +129,3 @@ TransverseDeflectingCavity:
     unit: MV
     read_only: false
     variable_class: ScalarVariable
-

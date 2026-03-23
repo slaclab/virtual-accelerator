@@ -1,11 +1,10 @@
 import os
-from pathlib import Path
 from lume_cheetah import LUMECheetahModel, CheetahSimulator
 from virtual_accelerator.cheetah.transformer import SLACCheetahTransformer
 from virtual_accelerator.cheetah.variables import get_variables_from_segment
 from virtual_accelerator.utils.variables import (
     get_epics_to_name_mapping,
-    split_control_and_observable
+    split_control_and_observable,
 )
 from cheetah.accelerator import Segment
 from cheetah.particles import ParticleBeam
@@ -40,7 +39,6 @@ def get_sc_diag0_cheetah_model():
     segment = Segment.from_lattice_json(
         os.path.join(lcls_lattice, "cheetah/sc_diag0.json")
     )
-
 
     # Define the simulator using lattice and particle beam
     simulator = CheetahSimulator(
