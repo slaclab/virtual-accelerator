@@ -112,14 +112,17 @@ class CUBmadTransformer(BmadTransformer):
                 )  # um / pixel
                 range = bins * resolution / 2
 
-                beam = get_particle_group_at_element(tao, element_name)
-                H, _ = beam.histogramdd(
-                    "x",
-                    "y",
-                    bins=bins,
-                    range=np.stack(((-range[0], range[0]), (-range[1], range[1]))),
-                )
-                return H
+                if tao.tao_global()["track_type"] != "beam":
+                    return np.zeros((bins[0], bins[1]))
+                else:
+                    beam = get_particle_group_at_element(tao, element_name)
+                    H, _ = beam.histogramdd(
+                        "x",
+                        "y",
+                        bins=bins,
+                        range=np.stack(((-range[0], range[0]), (-range[1], range[1]))),
+                    )
+                    return H
             elif attr == "Image:ArraySize1_RBV":
                 return self.screen_attributes[element_name]["bins"][0]
             elif attr == "Image:ArraySize0_RBV":
