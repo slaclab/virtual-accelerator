@@ -209,7 +209,6 @@ def get_variables_from_element_name(
                 1,
             )
         # default shape for NDVariables, should be updated after instantiation
-
         # create a variable instance using the specified variable class
         # and additional configuration parameters
         variables[variable_name] = variable_class(
@@ -289,7 +288,7 @@ def get_cu_hxr_screen_variables(control_variables, element_list):
             "bit_depth": screen_data[element]["bitdepth"],
             "orient": np.array(
                 [screen_data[element]["orientX"],
-                 screen_data[element]["orientY"]]
+                 screen_data[element]["orientY"]],
             ),
         }
     return control_variables, screen_attributes
