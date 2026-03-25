@@ -7,7 +7,7 @@ BPM:
   Y:
     unit: mm
     read_only: true
-    variable_class: ScalarVariable
+    variable_class: ScalarVariable 
 
 Quadrupole:
   BCTRL:
@@ -119,3 +119,18 @@ Screen:
     unit: pixel/mm
     read_only: true
     variable_class: ScalarVariable
+
+Lcavity_Overlay:
+  ENLD:
+    unit: MeV
+    read_only: false
+    variable_class: ScalarVariable
+  PHAS:
+    unit: Deg_S
+    read_only: false
+    variable_class: ScalarVariable    
+  BEAMCODE1_STAT:
+    unit: Boolean
+    read_only: false
+    variable_class: ScalarVariable    
+

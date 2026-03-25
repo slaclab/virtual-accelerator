@@ -36,6 +36,28 @@ def get_name_to_epics_mapping():
     )
 
 
+
+def get_name_or_overlay_to_epics_mapping():
+    """
+    Get the mapping from element name or bmad overlay to control system PV prefix from file 
+    generated
+    """
+    fpath = os.path.join(
+        Path(__file__).parent.resolve(),
+        "cu_hxr_elements_to_device",
+    )
+    mapping = {}
+    with Path(fpath).open() as fh:
+        for line in fh:
+            line = line.strip()
+            if not line:
+                continue
+            key, *rest = line.split()
+            mapping[key] = rest[0] if rest else ""
+    return mapping
+
+
+
 def get_epics_to_name_mapping():
     """
     Get the mapping from control system PV prefix to element name for LCLS elements.
@@ -45,7 +67,7 @@ def get_epics_to_name_mapping():
     dict[str, str]
         Mapping of control-system PV prefix -> lattice element name.
     """
-    return {v: k for k, v in get_name_to_epics_mapping().items()}
+    return {v: k for k, v in get_name_or_overlay_to_epics_mapping().items()}
 
 
 def get_element_attr_mapping():
