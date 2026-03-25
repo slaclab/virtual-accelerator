@@ -6,7 +6,7 @@ from lume_bmad.model import LUMEBmadModel
 from lume_cheetah import LUMECheetahModel, CheetahSimulator
 from virtual_accelerator.cheetah.transformer import SLACCheetahTransformer
 from virtual_accelerator.cheetah.variables import get_variables_from_segment
-from virtual_accelerator.bmad.variables import get_variables_from_tao, get_variables
+from virtual_accelerator.bmad.variables import get_variables
 from virtual_accelerator.utils.variables import (
     get_epics_to_name_mapping,
     split_control_and_observable,
@@ -37,10 +37,11 @@ def get_cu_hxr_bmad_model():
 
     control_name_to_element_name = get_epics_to_name_mapping()
     variables = get_variables(tao)
-    #variables = get_variables_from_tao(tao)
+    # variables = get_variables_from_tao(tao)
 
     # Define the controllable and observable variables
-    control_variables, observable_variables = split_control_and_observable(variables)
+    control_variables, observable_variables = \
+        split_control_and_observable(variables)
     # handle Profile Monitors
     screens = ["OTR3", "OTR4", "OTR11", "OTR12", "OTR21", "OTRDMP"]
     control_variables, screen_attributes = get_cu_hxr_screen_variables(
@@ -60,7 +61,8 @@ def get_cu_hxr_bmad_model():
         dump_locations=screens,
     )
 
-    beam_path = os.path.join(Path(__file__).parent, "../bmad", "bmad_set_beam2000_pg")
+    beam_path = os.path.join(Path(__file__).parent, "../bmad",
+                             "bmad_set_beam2000_pg")
     model.tao.cmd(f"set beam_init position_file = {beam_path}")
 
     return model
@@ -78,10 +80,11 @@ def get_cu_hxr_cheetah_model():
     # Get path to beam distributions
     # beam_dist = os.environ.get(
     #    'BEAM_DISTRIBUTION',
-    #    '/sdf/group/ad/sw/machine-learning/Linac-Simulation-Server/simulation_server/beams'
+    #    '/sdf/group/ad/sw/machine-learning/
+    # Linac-Simulation-Server/simulation_server/beams'
     # )
     # Create Cheetah particle Beam from file
-    
+
     incoming_beam = ParticleBeam.from_twiss(
         beta_x=torch.tensor(9.34),
         alpha_x=torch.tensor(-1.6946),
@@ -125,7 +128,8 @@ def get_cu_hxr_cheetah_model():
     variables = get_variables_from_segment(segment)
 
     # Define the controllable and observable variables
-    control_variables, observable_variables = split_control_and_observable(variables)
+    control_variables, observable_variables = \
+        split_control_and_observable(variables)
 
     # Create model
     model = LUMECheetahModel(
