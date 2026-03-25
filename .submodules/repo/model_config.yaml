@@ -5,7 +5,7 @@ input_variables:
     default_value: 423.867825
     is_constant: false
     value_range: [210.21247820852545, 499.9996083265339]
-    units: mm
+    units: um
   Pulse_length:
     variable_class: ScalarVariable
     default_value: 1.8550514181818183
