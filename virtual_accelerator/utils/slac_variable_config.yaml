@@ -120,6 +120,7 @@ Screen:
     read_only: true
     variable_class: ScalarVariable
 
+
 Lcavity_Overlay:
   ENLD:
     unit: MeV
@@ -133,4 +134,15 @@ Lcavity_Overlay:
     unit: Boolean
     read_only: false
     variable_class: ScalarVariable    
+
+
+TransverseDeflectingCavity:
+  AREQ:
+    unit: degrees
+    read_only: false
+    variable_class: ScalarVariable
+  PREQ:
+    unit: MV
+    read_only: false
+    variable_class: ScalarVariable
 
