@@ -40,8 +40,7 @@ def get_cu_hxr_bmad_model():
     # variables = get_variables_from_tao(tao)
 
     # Define the controllable and observable variables
-    control_variables, observable_variables = \
-        split_control_and_observable(variables)
+    control_variables, observable_variables = split_control_and_observable(variables)
     # handle Profile Monitors
     screens = ["OTR3", "OTR4", "OTR11", "OTR12", "OTR21", "OTRDMP"]
     control_variables, screen_attributes = get_cu_hxr_screen_variables(
@@ -61,8 +60,7 @@ def get_cu_hxr_bmad_model():
         dump_locations=screens,
     )
 
-    beam_path = os.path.join(Path(__file__).parent, "../bmad",
-                             "bmad_set_beam2000_pg")
+    beam_path = os.path.join(Path(__file__).parent, "../bmad", "bmad_set_beam2000_pg")
     model.tao.cmd(f"set beam_init position_file = {beam_path}")
 
     return model
@@ -128,8 +126,7 @@ def get_cu_hxr_cheetah_model():
     variables = get_variables_from_segment(segment)
 
     # Define the controllable and observable variables
-    control_variables, observable_variables = \
-        split_control_and_observable(variables)
+    control_variables, observable_variables = split_control_and_observable(variables)
 
     # Create model
     model = LUMECheetahModel(

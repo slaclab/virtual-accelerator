@@ -83,8 +83,7 @@ def get_element_attr_mapping():
         their variable specifications.
     """
     with open(
-        os.path.join(Path(__file__).parent.resolve(),
-                     "slac_variable_config.yaml"), "r"
+        os.path.join(Path(__file__).parent.resolve(), "slac_variable_config.yaml"), "r"
     ) as f:
         return yaml.safe_load(f)
 
@@ -267,8 +266,7 @@ def get_cu_hxr_screen_variables(control_variables, element_list):
     """
 
     with open(
-        os.path.join(Path(__file__).parent.resolve(),
-                     "cu_hxr_profmon_info.yaml"), "r"
+        os.path.join(Path(__file__).parent.resolve(), "cu_hxr_profmon_info.yaml"), "r"
     ) as f:
         screen_data = yaml.safe_load(f)
 
@@ -287,8 +285,7 @@ def get_cu_hxr_screen_variables(control_variables, element_list):
             "resolution": screen_data[element]["res"],
             "bit_depth": screen_data[element]["bitdepth"],
             "orient": np.array(
-                [screen_data[element]["orientX"],
-                 screen_data[element]["orientY"]],
+                [screen_data[element]["orientX"], screen_data[element]["orientY"]],
             ),
         }
     return control_variables, screen_attributes

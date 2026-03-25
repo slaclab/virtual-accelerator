@@ -9,7 +9,7 @@ from virtual_accelerator.utils.variables import (
 
 
 def get_variables(
-    tao: Tao,    
+    tao: Tao,
     device_mapping: dict[str, str] = None,
     element_attr_mapping: dict[str, dict[str, dict[str, Any]]] = None,
 ):
@@ -51,10 +51,10 @@ def get_variables(
         element_type = tao.ele_head(element_name)["key"]
         control_name = device_mapping[element_name]
         if element_type == "VKicker":
-            element_type =  "VerticalCorrector"
+            element_type = "VerticalCorrector"
         if element_type == "HKicker":
-            element_type =  "HorizontalCorrector"
-        if element_type == "Overlay" and control_name.split(':')[0] == 'KLYS':
+            element_type = "HorizontalCorrector"
+        if element_type == "Overlay" and control_name.split(":")[0] == "KLYS":
             element_type = "Lcavity_Overlay"
         element_variables = get_variables_from_element_name(
             element_type, control_name, element_attr_mapping
@@ -107,16 +107,15 @@ def get_variables_from_tao(
     device_mapping = device_mapping or get_name_or_overlay_to_epics_mapping()
     element_attr_mapping = element_attr_mapping or get_element_attr_mapping()
     # get element names
-    #element_names = tao.lat_list("*", "ele.name")
-    #element_types = tao.lat_list("*", "ele.key")
+    # element_names = tao.lat_list("*", "ele.name")
+    # element_types = tao.lat_list("*", "ele.key")
     element_names = tao.cmd("pipe lat_list -array_out -no_slaves @>>*|model ele.name")
     element_types = tao.cmd("pipe lat_list -array_out -no_slaves @>>*|model ele.key")
-
 
     # map element types to standards
     element_types = [
         "HorizontalCorrector" if etype == "HKicker" else etype
-        for etype in element_types 
+        for etype in element_types
     ]
     element_types = [
         "VerticalCorrector" if etype == "VKicker" else etype for etype in element_types
@@ -131,9 +130,9 @@ def get_variables_from_tao(
 
         if element_type in ["Drift", "Marker", "Cavity", "BPM", "Lcavity"]:
             continue
-        if element_type == "Overlay" and element_name.startswith('K'):
+        if element_type == "Overlay" and element_name.startswith("K"):
             element_type = "Lcavity_Overlay"
-            control_name = f'KLYS:LI{element_name[1:3]}:{element_name[4:]}1'
+            control_name = f"KLYS:LI{element_name[1:3]}:{element_name[4:]}1"
         elif element_name in device_mapping:
             control_name = device_mapping[element_name.upper()]
         else:
