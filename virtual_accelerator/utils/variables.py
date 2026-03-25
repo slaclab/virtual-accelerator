@@ -17,7 +17,8 @@ VARIABLE_CLASS_MAP = {
 
 def get_name_to_epics_mapping():
     """
-    Get the mapping from element name to control system PV prefix for LCLS elements.
+    Get the mapping from element name to control system PV prefix for
+    LCLS elements.
 
     Returns
     -------
@@ -36,11 +37,10 @@ def get_name_to_epics_mapping():
     )
 
 
-
 def get_name_or_overlay_to_epics_mapping():
     """
-    Get the mapping from element name or bmad overlay to control system PV prefix from file 
-    generated
+    Get the mapping from element name or bmad overlay to control system
+    PV prefix from file
     """
     fpath = os.path.join(
         Path(__file__).parent.resolve(),
@@ -57,10 +57,10 @@ def get_name_or_overlay_to_epics_mapping():
     return mapping
 
 
-
 def get_epics_to_name_mapping():
     """
-    Get the mapping from control system PV prefix to element name for LCLS elements.
+    Get the mapping from control system PV prefix to element name for
+    LCLS elements.
 
     Returns
     -------
@@ -72,16 +72,19 @@ def get_epics_to_name_mapping():
 
 def get_element_attr_mapping():
     """
-    Get the mapping from element type to PV attributes and variable specifications.
+    Get the mapping from element type to PV attributes and variable
+    specifications.
 
     Returns
     -------
     dict[str, dict[str, dict[str, Any]]]
-        Nested dictionary containing a mapping of cheetah element types to PV attributes and
+        Nested dictionary containing a mapping of cheetah element types to
+    PV attributes and
         their variable specifications.
     """
     with open(
-        os.path.join(Path(__file__).parent.resolve(), "slac_variable_config.yaml"), "r"
+        os.path.join(Path(__file__).parent.resolve(),
+                     "slac_variable_config.yaml"), "r"
     ) as f:
         return yaml.safe_load(f)
 
@@ -104,22 +107,24 @@ def get_variables_from_element_name(
       - The configured `variable_class` is instantiated.
       - Additional keyword arguments from the configuration are passed through.
 
-    Special handling is necessary for NDVariables whose shape must be determined
-    from the lattice element (e.g. screen image arrays). This should be handled
-    by setting the shape of the variable AFTER calling this function.
+    Special handling is necessary for NDVariables whose shape must be
+    determined from the lattice element (e.g. screen image arrays).
+    This should be handled by setting the shape of the variable
+    AFTER calling this function.
 
     Parameters
     ----------
     element_class_name : str
-        Name of the Cheetah lattice element class (e.g. "Screen", "BPM", "Quadrupole").
+        Name of the Cheetah lattice element class (e.g. "Screen", "BPM",
+    "Quadrupole").
 
     control_name : str
         Control-system PV prefix for this device
         (e.g. "QUAD:IN20:425").
 
     element_attr_mapping : dict[str, dict[str, Any]]
-        Nested dictionary containing a mapping of cheetah element types to PV attributes and
-        their variable specifications.
+        Nested dictionary containing a mapping of cheetah element types to PV
+    attributes and their variable specifications.
 
     Returns
     -------
@@ -162,17 +167,20 @@ def get_variables_from_element_name(
 
     variables = {}
 
-    # determine the cheetah element type as a string to look up in the config mapping
+    # determine the cheetah element type as a string to look up in the config
+    # mapping
     element_type = element_class_name
     element_attributes = element_attr_mapping.get(element_type)
 
     if element_attributes is None:
         warnings.warn(
-            f"No variable configuration found for element type {element_type!r}"
+            f"No variable configuration found for element type \
+            {element_type!r}"
         )
         return variables
 
-    # iterate over the configured attributes for this element type and instantiate variables
+    # iterate over the configured attributes for this element type and
+    # instantiate variables
     for attr, var_config in element_attributes.items():
         # create the variable name by combining the control name and attribute
         # (e.g. "QUAD:IN20:425:BCTRL")
@@ -199,7 +207,8 @@ def get_variables_from_element_name(
             variable_info["shape"] = (
                 1,
                 1,
-            )  # default shape for NDVariables, should be updated after instantiation
+            )
+        # default shape for NDVariables, should be updated after instantiation
 
         # create a variable instance using the specified variable class
         # and additional configuration parameters
@@ -259,7 +268,8 @@ def get_cu_hxr_screen_variables(control_variables, element_list):
     """
 
     with open(
-        os.path.join(Path(__file__).parent.resolve(), "cu_hxr_profmon_info.yaml"), "r"
+        os.path.join(Path(__file__).parent.resolve(),
+                     "cu_hxr_profmon_info.yaml"), "r"
     ) as f:
         screen_data = yaml.safe_load(f)
 
@@ -278,7 +288,8 @@ def get_cu_hxr_screen_variables(control_variables, element_list):
             "resolution": screen_data[element]["res"],
             "bit_depth": screen_data[element]["bitdepth"],
             "orient": np.array(
-                [screen_data[element]["orientX"], screen_data[element]["orientY"]]
+                [screen_data[element]["orientX"],
+                 screen_data[element]["orientY"]]
             ),
         }
     return control_variables, screen_attributes
