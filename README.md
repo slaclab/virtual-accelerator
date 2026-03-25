@@ -12,3 +12,8 @@ dependencies via the flag `-no-deps`.
 
 Creating the model instances requires the `$LCLS_LATTICE` environment variable to be set to a location containing the
 contents of the lcls-lattice repo https://github.com/slaclab/lcls-lattice.
+
+
+#### Note
+To pull latest changes from the Cu Inj repo 
+``` git subtree pull --prefix=.submodules/repo https://github.com/slaclab/lcls_cu_injector_ml_model main --squash```

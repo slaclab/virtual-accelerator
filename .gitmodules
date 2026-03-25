@@ -1,3 +1,0 @@
-[submodule ".submodules/repo1"]
-	path = .submodules/repo1
-	url = https://github.com/slaclab/lcls_cu_injector_ml_model
