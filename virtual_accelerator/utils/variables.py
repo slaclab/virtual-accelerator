@@ -57,6 +57,9 @@ def get_name_or_overlay_to_epics_mapping():
     return mapping
 
 
+def get_epics_to_name_or_overlay_mapping():
+        return {v: k for k, v in get_name_or_overlay_to_epics_mapping().items()}
+
 def get_epics_to_name_mapping():
     """
     Get the mapping from control system PV prefix to element name for
@@ -67,7 +70,7 @@ def get_epics_to_name_mapping():
     dict[str, str]
         Mapping of control-system PV prefix -> lattice element name.
     """
-    return {v: k for k, v in get_name_or_overlay_to_epics_mapping().items()}
+    return {v: k for k, v in get_name_to_epics_mapping().items()}
 
 
 def get_element_attr_mapping():

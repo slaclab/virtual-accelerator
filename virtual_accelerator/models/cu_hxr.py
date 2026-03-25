@@ -8,6 +8,7 @@ from virtual_accelerator.cheetah.transformer import SLACCheetahTransformer
 from virtual_accelerator.cheetah.variables import get_variables_from_segment
 from virtual_accelerator.bmad.variables import get_variables
 from virtual_accelerator.utils.variables import (
+    get_epics_to_name_or_overlay_mapping,
     get_epics_to_name_mapping,
     split_control_and_observable,
     get_cu_hxr_screen_variables,
@@ -35,7 +36,7 @@ def get_cu_hxr_bmad_model():
     init_file = os.path.join(LCLS_LATTICE, "bmad/models/cu_hxr/tao.init")
     tao = Tao(f"-init {init_file} -noplot")
 
-    control_name_to_element_name = get_epics_to_name_mapping()
+    control_name_to_element_name = get_epics_to_name_or_overlay_mapping()
     variables = get_variables(tao)
     # variables = get_variables_from_tao(tao)
 
