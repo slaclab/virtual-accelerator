@@ -135,7 +135,6 @@ Lcavity_Overlay:
     read_only: false
     variable_class: ScalarVariable    
 
-
 TransverseDeflectingCavity:
   AREQ:
     unit: degrees
@@ -145,4 +144,3 @@ TransverseDeflectingCavity:
     unit: MV
     read_only: false
     variable_class: ScalarVariable
-
