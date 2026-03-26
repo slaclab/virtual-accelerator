@@ -1,0 +1,110 @@
+model_class: TorchModel
+input_variables:
+  CAMR:IN20:186:R_DIST:
+    variable_class: ScalarVariable
+    default_value: 423.867825
+    is_constant: false
+    value_range: [210.21247820852545, 499.9996083265339]
+    units: um
+  Pulse_length:
+    variable_class: ScalarVariable
+    default_value: 1.8550514181818183
+    is_constant: false
+    value_range: [1.8181822778856414, 7.2718604921302035]
+    units: ps
+  FBCK:BCI0:1:CHRG_S:
+    variable_class: ScalarVariable
+    default_value: 0.25
+    is_constant: true
+    value_range: [0.25, 0.25]
+    units: pC
+  SOLN:IN20:121:BCTRL:
+    variable_class: ScalarVariable
+    default_value: 0.4779693455075814
+    is_constant: false
+    value_range: [0.3774080152672698, 0.4983800018349345]
+    units: kG*m
+  QUAD:IN20:121:BCTRL:
+    variable_class: ScalarVariable
+    default_value: -0.001499227120199691
+    is_constant: false
+    value_range: [-0.02098429469554406, 0.020999198106589838]
+    units: kG
+  QUAD:IN20:122:BCTRL:
+    variable_class: ScalarVariable
+    default_value: -0.0006872989433749197
+    is_constant: false
+    value_range: [-0.020998830517503037, 0.020998929132148195]
+    units: kG
+  ACCL:IN20:300:L0A_ADES:
+    variable_class: ScalarVariable
+    default_value: 58.0
+    is_constant: true
+    value_range: [58.0, 58.0]
+    units: MV
+  ACCL:IN20:300:L0A_PDES:
+    variable_class: ScalarVariable
+    default_value: -9.53597349
+    is_constant: false
+    value_range: [-24.998714513984325, 9.991752397382681]
+    units: deg
+  ACCL:IN20:400:L0B_ADES:
+    variable_class: ScalarVariable
+    default_value: 70.0
+    is_constant: true
+    value_range: [70.0, 70.0]
+    units: MV
+  ACCL:IN20:400:L0B_PDES:
+    variable_class: ScalarVariable
+    default_value: 9.85566222
+    is_constant: false
+    value_range: [-24.99972566363747, 9.998904767155892]
+    units: deg
+  QUAD:IN20:361:BCTRL:
+    variable_class: ScalarVariable
+    default_value: -2.0005920106399526
+    is_constant: false
+    value_range: [-4.318053641915576, -1.0800430432494976]
+    units: kG
+  QUAD:IN20:371:BCTRL:
+    variable_class: ScalarVariable
+    default_value: 2.0005920106399526
+    is_constant: false
+    value_range: [1.0913525514575348, 4.30967984810423]
+    units: kG
+  QUAD:IN20:425:BCTRL:
+    variable_class: ScalarVariable
+    default_value: -1.0807627139393465
+    is_constant: false
+    value_range: [-7.559759590824369, -1.080762695815712]
+    units: kG
+  QUAD:IN20:441:BCTRL:
+    variable_class: ScalarVariable
+    default_value: -0.17938799998564897
+    is_constant: false
+    value_range: [-1.0782202690353522, 7.559878303179915]
+    units: kG
+  QUAD:IN20:511:BCTRL:
+    variable_class: ScalarVariable
+    default_value: 2.852171999771826
+    is_constant: false
+    value_range: [-1.0792451325247663, 7.5582919025608595]
+    units: kG
+  QUAD:IN20:525:BCTRL:
+    variable_class: ScalarVariable
+    default_value: -3.218399988942528
+    is_constant: false
+    value_range: [-7.557932980106783, -1.0800286565992732]
+    units: kG
+output_variables:
+  OTRS:IN20:571:XRMS: {variable_class: ScalarVariable}
+  OTRS:IN20:571:YRMS: {variable_class: ScalarVariable}
+  sigma_z: {variable_class: ScalarVariable}
+  norm_emit_x: {variable_class: ScalarVariable}
+  norm_emit_y: {variable_class: ScalarVariable}
+model: resources/model.pt
+input_transformers: [resources/input_pv_to_sim.pt, resources/input_sim_to_nn.pt]
+output_transformers: [resources/output_sim_to_nn.pt, resources/output_pv_to_sim.pt]
+output_format: tensor
+device: cpu
+fixed_model: true

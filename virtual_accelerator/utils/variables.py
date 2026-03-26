@@ -7,11 +7,14 @@ import warnings
 import numpy as np
 
 from lume.variables import Variable, ScalarVariable, NDVariable
+from lume_torch.variables import TorchScalarVariable, TorchNDVariable
 import yaml
 
 VARIABLE_CLASS_MAP = {
     "ScalarVariable": ScalarVariable,
     "NDVariable": NDVariable,
+    "TorchScalarVariable": TorchScalarVariable,
+    "TorchNDVariable": TorchNDVariable,
 }
 
 
@@ -215,6 +218,62 @@ def split_control_and_observable(
     control_vars = {k: v for k, v in all_vars.items() if not v.read_only}
     observable_vars = {k: v for k, v in all_vars.items() if v.read_only}
     return control_vars, observable_vars
+
+
+def convert_to_torch_variables(
+    variables: dict[str, Variable],
+) -> dict[str, Variable]:
+    """
+    Convert a dictionary of Variable instances into their corresponding Torch-based variants.
+
+    For each Variable instance, this function:
+    - Determines its concrete class (e.g., ScalarVariable, NDVariable)
+    - Constructs the corresponding Torch class name by prepending "Torch"
+      (e.g., ScalarVariable -> TorchScalarVariable)
+    - Looks up the Torch class in `VARIABLE_CLASS_MAP`
+    - Instantiates the Torch class using the same field values as the original
+      Variable via Pydantic serialization
+
+    Args:
+        variables (dict[str, Variable]):
+            Mapping of variable names to Variable instances (Pydantic models).
+
+    Returns:
+        dict[str, Variable]:
+            Mapping of variable names to instantiated TorchVariable objects.
+
+    Raises:
+        KeyError:
+            If the corresponding Torch class (e.g., "TorchScalarVariable") is not
+            found in `VARIABLE_CLASS_MAP`.
+        pydantic.ValidationError:
+            If the Torch class cannot be instantiated with the provided data.
+
+    Notes:
+        - Assumes Torch class names follow the convention: "Torch" + <BaseClassName>.
+        - Assumes field compatibility between base and Torch classes.
+        - Uses `variable.dict()` for serialization (Pydantic v1). Replace with
+          `model_dump()` if using Pydantic v2.
+    """
+    torch_variables: dict[str, Variable] = {}
+
+    for name, variable in variables.items():
+        cls = type(variable)
+        kwargs = variable.model_dump()
+
+        torch_class_name = "Torch" + cls.__name__
+
+        try:
+            torch_class = VARIABLE_CLASS_MAP[torch_class_name]
+        except KeyError as e:
+            raise KeyError(
+                f"No torch variable class registered for {cls.__name__!r} "
+                f"(expected key {torch_class_name!r})"
+            ) from e
+
+        torch_variables[name] = torch_class(**kwargs)
+
+    return torch_variables
 
 
 def get_cu_hxr_screen_variables(control_variables, element_list):

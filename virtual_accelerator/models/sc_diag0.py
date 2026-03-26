@@ -2,9 +2,11 @@ import os
 from lume_cheetah import LUMECheetahModel, CheetahSimulator
 from virtual_accelerator.cheetah.transformer import SLACCheetahTransformer
 from virtual_accelerator.cheetah.variables import get_variables_from_segment
+
 from virtual_accelerator.utils.variables import (
     get_epics_to_name_mapping,
     split_control_and_observable,
+    convert_to_torch_variables,
 )
 from cheetah.accelerator import Segment
 from cheetah.particles import ParticleBeam
@@ -40,6 +42,12 @@ def get_sc_diag0_cheetah_model():
         os.path.join(lcls_lattice, "cheetah/sc_diag0.json")
     )
 
+    # Ensure screen elements can support vectorization
+    for element in segment.elements:
+        element_type = type(element).__name__
+        if element_type == "Screen":
+            element.method = "kde"
+
     # Define the simulator using lattice and particle beam
     simulator = CheetahSimulator(
         segment=segment,
@@ -59,9 +67,11 @@ def get_sc_diag0_cheetah_model():
     # Get supported control system variables
     # for the model
     variables = get_variables_from_segment(segment)
-
+    torch_variables = convert_to_torch_variables(variables)
     # Define the controllable and observable variables
-    control_variables, observable_variables = split_control_and_observable(variables)
+    control_variables, observable_variables = split_control_and_observable(
+        torch_variables
+    )
 
     # Create model
     model = LUMECheetahModel(
