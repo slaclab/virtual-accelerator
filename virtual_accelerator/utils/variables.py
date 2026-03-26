@@ -58,7 +58,8 @@ def get_name_or_overlay_to_epics_mapping():
 
 
 def get_epics_to_name_or_overlay_mapping():
-        return {v: k for k, v in get_name_or_overlay_to_epics_mapping().items()}
+    return {v: k for k, v in get_name_or_overlay_to_epics_mapping().items()}
+
 
 def get_epics_to_name_mapping():
     """
@@ -292,4 +293,3 @@ def get_cu_hxr_screen_variables(control_variables, element_list):
             ),
         }
     return control_variables, screen_attributes
-

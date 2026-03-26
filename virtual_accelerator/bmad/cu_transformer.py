@@ -6,6 +6,7 @@ from beamphysics.interfaces.bmad import write_bmad
 from os import getcwd
 import numpy as np
 
+
 class CUBmadTransformer(BmadTransformer):
     """
     Attributes
