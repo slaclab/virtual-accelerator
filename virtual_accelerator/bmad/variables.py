@@ -106,9 +106,6 @@ def get_variables_from_tao(
     all_variables = {}
     device_mapping = device_mapping or get_name_or_overlay_to_epics_mapping()
     element_attr_mapping = element_attr_mapping or get_element_attr_mapping()
-    # get element names
-    # element_names = tao.lat_list("*", "ele.name")
-    # element_types = tao.lat_list("*", "ele.key")
     element_names = tao.cmd("pipe lat_list -array_out -no_slaves @>>*|model ele.name")
     element_types = tao.cmd("pipe lat_list -array_out -no_slaves @>>*|model ele.key")
 

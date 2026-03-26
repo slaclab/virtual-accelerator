@@ -292,3 +292,4 @@ def get_cu_hxr_screen_variables(control_variables, element_list):
             ),
         }
     return control_variables, screen_attributes
+

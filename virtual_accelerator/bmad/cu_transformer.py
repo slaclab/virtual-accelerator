@@ -1,7 +1,7 @@
 from typing import Any
 from lume_bmad.transformer import BmadTransformer
 from pytao import Tao
-from lume_bmad.utils import get_beam_info, get_particle_group_at_element
+from lume_bmad.utils import get_beam_info
 from beamphysics.interfaces.bmad import write_bmad
 from os import getcwd
 import numpy as np
@@ -114,7 +114,7 @@ class CUBmadTransformer(BmadTransformer):
                 if tao.tao_global()["track_type"] != "beam":
                     return np.zeros((bins[0], bins[1]))
                 else:
-                    beam = get_particle_group_at_element(tao, element_name)
+                    beam = tao.particles(element_name)
                     H, _ = beam.histogramdd(
                         "x",
                         "y",
