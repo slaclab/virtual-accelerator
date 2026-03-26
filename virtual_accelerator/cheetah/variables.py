@@ -1,5 +1,5 @@
 from typing import Any
-from cheetah.accelerator import Screen, Segment
+from cheetah.accelerator import Screen, Segment, SuperimposedElement
 import warnings
 from lume.variables import Variable
 from virtual_accelerator.utils.variables import (
@@ -61,9 +61,34 @@ def get_variables_from_segment(
             warnings.warn(f"Element {element.name} not found in device mapping")
             continue
 
-        element_variables = get_variables_from_element_name(
-            type(element).__name__, control_name, element_attr_mapping
-        )
+        if isinstance(element, SuperimposedElement):
+            element_variables = get_variables_from_element_name(
+                type(element.base_element).__name__,
+                control_name,
+                element_attr_mapping,
+            )
+
+            # iterate through the superimposed elements and get variables for each
+            for sub_element in element.superimposed_element.elements:
+                if type(sub_element).__name__ in ["Drift", "Marker", "Cavity"]:
+                    continue
+                elif sub_element.name.upper() in device_mapping:
+                    sub_control_name = device_mapping[sub_element.name.upper()]
+                else:
+                    warnings.warn(f"Element {sub_element.name} not found in device mapping")
+                    continue
+
+                sub_element_variables = get_variables_from_element_name(
+                    type(sub_element).__name__,
+                    sub_control_name,
+                    element_attr_mapping,
+                )
+                element_variables.update(sub_element_variables)
+
+        else:
+            element_variables = get_variables_from_element_name(
+                type(element).__name__, control_name, element_attr_mapping
+            )
 
         # if element type is a screen then modify the output variable
         if isinstance(element, Screen):

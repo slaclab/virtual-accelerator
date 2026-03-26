@@ -2,6 +2,7 @@ import os
 from lume_cheetah import LUMECheetahModel, CheetahSimulator
 from virtual_accelerator.cheetah.transformer import SLACCheetahTransformer
 from virtual_accelerator.cheetah.variables import get_variables_from_segment
+from virtual_accelerator.cheetah.diag0 import get_diag0_beamline
 from virtual_accelerator.utils.variables import (
     get_epics_to_name_mapping,
     split_control_and_observable,
@@ -32,13 +33,8 @@ def get_sc_diag0_cheetah_model():
     )
     incoming_beam.particle_charges = torch.tensor(1.0)
 
-    # Get path to lattice files
-    lcls_lattice = os.environ.get("LCLS_LATTICE")
-
     # Create lattice from file
-    segment = Segment.from_lattice_json(
-        os.path.join(lcls_lattice, "cheetah/sc_diag0.json")
-    )
+    segment = get_diag0_beamline()
 
     # Define the simulator using lattice and particle beam
     simulator = CheetahSimulator(
