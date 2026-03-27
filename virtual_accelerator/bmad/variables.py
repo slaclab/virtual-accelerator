@@ -1,5 +1,4 @@
 from typing import Any
-import warnings
 from pytao import Tao
 from virtual_accelerator.utils.variables import (
     get_element_attr_mapping,
@@ -63,5 +62,3 @@ def get_variables(
         all_variables.update(element_variables)
 
     return all_variables
-
-
