@@ -50,15 +50,17 @@ class TestCUHXRBmad:
 
     def test_cu_hxr_lcavity(self):
         model = get_cu_hxr_bmad_model()
-        
+
         beam_path = os.path.join(Path(__file__).parent, "../bmad", "test_beam")
         model.tao.cmd(f"set beam_init position_file = {beam_path}")
 
         enld = model.get(["KLYS:LI21:31:ENLD"])["KLYS:LI21:31:ENLD"]
-        enld = enld+5
-        model.set({"KLYS:LI21:31:ENLD":enld})
+        enld = enld + 5
+        model.set({"KLYS:LI21:31:ENLD": enld})
         ampl = model.get(["KLYS:LI21:31:ENLD"])
-        assert(ampl["KLYS:LI21:31:ENLD"] == enld)
+        assert ampl["KLYS:LI21:31:ENLD"] == enld
+
+
 class TestCUHXRCheetah:
     def test_initialization(self):
         model = get_cu_hxr_cheetah_model()
