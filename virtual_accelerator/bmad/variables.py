@@ -21,9 +21,10 @@ def get_variables(
 
     Parameters
     ----------
+    tao : Tao
+        Tao object containing the lattice elements.
     device_mapping : dict[str, str], optional
         Mapping of lattice element name -> control-system PV prefix.
-
     element_attr_mapping : dict[str, dict[str, dict[str, Any]]], optional
         Device-type -> PV attribute -> variable specification mapping
         loaded from the SLAC variable YAML configuration.
