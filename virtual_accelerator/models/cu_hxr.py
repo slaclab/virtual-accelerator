@@ -38,7 +38,6 @@ def get_cu_hxr_bmad_model():
 
     control_name_to_element_name = get_epics_to_name_or_overlay_mapping()
     variables = get_variables(tao)
-    # variables = get_variables_from_tao(tao)
 
     # Define the controllable and observable variables
     control_variables, observable_variables = split_control_and_observable(variables)
