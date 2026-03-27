@@ -6,8 +6,9 @@ from lume_bmad.model import LUMEBmadModel
 from lume_cheetah import LUMECheetahModel, CheetahSimulator
 from virtual_accelerator.cheetah.transformer import SLACCheetahTransformer
 from virtual_accelerator.cheetah.variables import get_variables_from_segment
-from virtual_accelerator.bmad.variables import get_variables_from_tao
+from virtual_accelerator.bmad.variables import get_variables
 from virtual_accelerator.utils.variables import (
+    get_epics_to_name_or_overlay_mapping,
     get_epics_to_name_mapping,
     split_control_and_observable,
     get_cu_hxr_screen_variables,
@@ -35,8 +36,8 @@ def get_cu_hxr_bmad_model():
     init_file = os.path.join(LCLS_LATTICE, "bmad/models/cu_hxr/tao.init")
     tao = Tao(f"-init {init_file} -noplot")
 
-    control_name_to_element_name = get_epics_to_name_mapping()
-    variables = get_variables_from_tao(tao)
+    control_name_to_element_name = get_epics_to_name_or_overlay_mapping()
+    variables = get_variables(tao)
 
     # Define the controllable and observable variables
     control_variables, observable_variables = split_control_and_observable(variables)
@@ -77,9 +78,11 @@ def get_cu_hxr_cheetah_model():
     # Get path to beam distributions
     # beam_dist = os.environ.get(
     #    'BEAM_DISTRIBUTION',
-    #    '/sdf/group/ad/sw/machine-learning/Linac-Simulation-Server/simulation_server/beams'
+    #    '/sdf/group/ad/sw/machine-learning/
+    # Linac-Simulation-Server/simulation_server/beams'
     # )
     # Create Cheetah particle Beam from file
+
     incoming_beam = ParticleBeam.from_twiss(
         beta_x=torch.tensor(9.34),
         alpha_x=torch.tensor(-1.6946),
