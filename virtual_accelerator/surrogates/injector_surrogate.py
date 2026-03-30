@@ -10,6 +10,58 @@ from pathlib import Path
 
 OTR2_BEAM_ENERGY = 135.0e6  # eV
 
+from scipy import constants
+
+def to_openpmd_particlegroup(beam) -> "openpmd.ParticleGroup":  # noqa: F821
+    """
+    Convert the `ParticleBeam` to an openPMD `ParticleGroup` object.
+
+    NOTE: openPMD uses boolean particle status flags, i.e. alive or dead. Cheetah's
+        survival probabilities are converted to status flags by thresholding at 0.5.
+
+    NOTE: At the moment this method only supports non-vectorised particle
+        distributions.
+
+    :return: openPMD `ParticleGroup` object with the `ParticleBeam`'s particles.
+    """
+    try:
+        import pmd_beamphysics as openpmd
+    except ImportError:
+        raise ImportError(
+            """To use the openPMD beam export, openPMD-beamphysics must be
+            installed."""
+        )
+
+    # For now only support non-vectorised particle distributions
+    if len(beam.particles.shape) != 2:
+        raise ValueError(
+            "Only non-vectorised particle distributions are supported."
+        )
+
+    px = beam.px * beam.p0c
+    py = beam.py * beam.p0c
+    p_total = (beam.energies.square() - beam.species.mass_eV.square()).sqrt()
+    pz = (p_total.square() - px.square() - py.square()).sqrt()
+    t = beam.tau / constants.speed_of_light
+    # TODO: To be discussed
+    status = beam.survival_probabilities > 0.5
+
+    data = {
+        "x": beam.x.numpy(), # need detach for all of the coordinates
+        "y": beam.y.numpy(),
+        "z": beam.tau.numpy(),
+        "px": px.numpy(),
+        "py": py.numpy(),
+        "pz": pz.numpy(),
+        "t": t.numpy(),
+        "weight": beam.particle_charges.numpy(), # need to make at least 1d
+        "status": status.int().numpy(), # need int
+        "species": beam.species.name,
+    }
+    particle_group = openpmd.ParticleGroup(data=data)
+
+    return particle_group
+
 def create_beam_distribution_from_state(state, n_particles) -> ParticleBeam:
     sigma_x = torch.tensor(state["OTRS:IN20:571:XRMS"]*1e-6)
     sigma_y = torch.tensor(state["OTRS:IN20:571:YRMS"]*1e-6)
@@ -74,5 +126,5 @@ class InjectorSurrogate(LUMEModel):
 
         # update a outgoing beam distribution
         beam = create_beam_distribution_from_state(self._state, self.n_particles)
-        self._state["output_beam"] = beam.to_openpmd_particlegroup()
+        self._state["output_beam"] = to_openpmd_particlegroup(beam)
 
