@@ -3,6 +3,9 @@ from lume.model import LUMEModel
 from lume.variables.particle_group import ParticleGroupVariable
 from lume.variables.variable import Variable
 
+from virtual_accelerator.surrogates.injector_surrogate import InjectorSurrogate
+from virtual_accelerator.models.cu_hxr import get_cu_hxr_bmad_model
+
 
 class StagedModel(LUMEModel):
     """
@@ -150,9 +153,6 @@ class StagedModel(LUMEModel):
 
 
 # get lume model instances for each stage of the accelerator
-from virtual_accelerator.surrogates.injector_surrogate import InjectorSurrogate
-from virtual_accelerator.models.cu_hxr import get_cu_hxr_bmad_model
-
 def get_cu_hxr_staged_model():
     """
     Returns
@@ -168,7 +168,3 @@ def get_cu_hxr_staged_model():
     staged_model = StagedModel([injector_surrogate, cu_hxr_bmad_model])
 
     return staged_model
-
-
-
-    
