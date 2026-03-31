@@ -6,12 +6,11 @@ from lume_bmad.model import LUMEBmadModel
 from lume_cheetah import LUMECheetahModel, CheetahSimulator
 from virtual_accelerator.cheetah.transformer import SLACCheetahTransformer
 from virtual_accelerator.cheetah.variables import get_variables_from_segment
-from virtual_accelerator.bmad.variables import get_variables
+from virtual_accelerator.bmad.variables import get_variables, get_cu_hxr_screen_variables
 from virtual_accelerator.utils.variables import (
     get_epics_to_name_or_overlay_mapping,
     get_epics_to_name_mapping,
     split_control_and_observable,
-    get_cu_hxr_screen_variables,
 )
 from cheetah.accelerator import Segment
 from cheetah.particles import ParticleBeam
@@ -22,9 +21,9 @@ from virtual_accelerator.bmad.cu_transformer import (
 )
 
 
-def get_cu_hxr_bmad_model():
+def get_cu_hxr_bmad_model(start_element="OTR2", end_element="END", track_beam=False):
     """
-    Get the LUMEBmadModel for the CU_HXR lattice from OTR2 to ENDDMPH_2.
+    Get the LUMEBmadModel for the CU_HXR lattice from OTR2 to END.
 
     Returns
     -------
@@ -34,7 +33,7 @@ def get_cu_hxr_bmad_model():
 
     LCLS_LATTICE = os.environ["LCLS_LATTICE"]
     init_file = os.path.join(LCLS_LATTICE, "bmad/models/cu_hxr/tao.init")
-    tao = Tao(f"-init {init_file} -noplot")
+    tao = Tao(f"-init {init_file} -noplot -slice_lattice {start_element}:{end_element}")
 
     control_name_to_element_name = get_epics_to_name_or_overlay_mapping()
     variables = get_variables(tao)
@@ -42,9 +41,9 @@ def get_cu_hxr_bmad_model():
     # Define the controllable and observable variables
     control_variables, observable_variables = split_control_and_observable(variables)
     # handle Profile Monitors
-    screens = ["OTR3", "OTR4", "OTR11", "OTR12", "OTR21", "OTRDMP"]
+    screens = []#["OTR3", "OTR4", "OTR11", "OTR12", "OTR21"]
     control_variables, screen_attributes = get_cu_hxr_screen_variables(
-        control_variables, screens
+        tao, control_variables, screens
     )
 
     transformer = CUBmadTransformer(
@@ -60,8 +59,13 @@ def get_cu_hxr_bmad_model():
         dump_locations=screens,
     )
 
-    beam_path = os.path.join(Path(__file__).parent, "../bmad", "bmad_set_beam2000_pg")
-    model.tao.cmd(f"set beam_init position_file = {beam_path}")
+    if track_beam:
+        if start_element == "OTR2":
+            beam_path = os.path.join(Path(__file__).parent, "../bmad", "bmad_set_beam2000_pg")
+            model.tao.cmd(f"set beam_init position_file = {beam_path}")
+            model.set({"track_type": 1})
+        else:
+            raise "Cannot have track_beam=True for start_element != OTR2"
 
     return model
 
