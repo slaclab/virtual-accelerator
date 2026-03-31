@@ -1,16 +1,17 @@
-from typing import Any, Iterable, Mapping
+from pathlib import Path
 import os
 import tempfile
+from typing import Any, Iterable, Mapping
+
 import numpy as np
+import torch
 import yaml
-from lume_torch.models.torch_model import TorchModel
-from lume_torch.base import LUMETorchModel
+from cheetah.particles import ParticleBeam
 from lume.model import LUMEModel
 from lume.variables import ParticleGroupVariable
-from cheetah.particles import ParticleBeam
+from lume_torch.base import LUMETorchModel
+from lume_torch.models.torch_model import TorchModel
 from scipy import constants
-import torch
-from pathlib import Path
 
 OTR2_BEAM_ENERGY = 135.0e6  # eV
 
@@ -82,7 +83,9 @@ def to_openpmd_particlegroup(beam) -> "openpmd.ParticleGroup":  # noqa: F821
     return particle_group
 
 
-def create_beam_distribution_from_state(state, n_particles) -> ParticleBeam:
+def create_beam_distribution_from_state(
+    state: Mapping[str, Any], n_particles: int
+) -> ParticleBeam:
     sigma_x = torch.tensor(state["OTRS:IN20:571:XRMS"] * 1e-6)
     sigma_y = torch.tensor(state["OTRS:IN20:571:YRMS"] * 1e-6)
     sigma_z = torch.tensor(state["sigma_z"] * 1e-6)
@@ -108,58 +111,45 @@ def create_beam_distribution_from_state(state, n_particles) -> ParticleBeam:
 class InjectorSurrogate(LUMEModel):
     """LUME wrapper around injector torch surrogate with openPMD beam output."""
 
-    #
-    # #: Config path relative to this file (used when installed as a package).
-    # _INSTALLED_RELATIVE = Path("lcls_cu_injector_model") / "model_config.yaml"
-
-    #: Config path relative to the project root (used when running from source).
+    # Config path relative to the project root (used when running from source)
     _SOURCE_RELATIVE = Path("subtrees") / "lcls_cu_injector_model" / "model_config.yaml"
 
-    #: Config keys whose values are resource paths that need resolving.
+    # Config keys whose values are resource paths that need resolving
     _RESOURCE_KEYS = ("model", "input_transformers", "output_transformers")
 
     @classmethod
-    def _find_config(cls) -> Path:
-        """Locate ``model_config.yaml`` regardless of install mode.
-
-        Checks candidate roots in order:
-
-        1. **Installed package root** (ancestor directories of this file).
-        2. **CI/workspace roots**: ``GITHUB_WORKSPACE`` and current working
-           directory ancestors.
-
-        At each root, looks for ``subtrees/lcls_cu_injector_model/model_config.yaml``.
-
-        Raises
-        ------
-        FileNotFoundError
-            If the config cannot be found in any candidate location.
-        """
+    def _candidate_config_roots(cls) -> list[Path]:
+        """Return candidate root directories used to locate model config."""
         roots: list[Path] = []
 
-        # 1) Location of this module (works for source checkouts and some installs).
+        # Module location (source checkout or installed package layout)
         roots.extend(Path(__file__).resolve().parents)
 
-        # 2) CI workspace hint from GitHub Actions.
+        # GitHub Actions checkout root
         workspace = os.environ.get("GITHUB_WORKSPACE")
         if workspace:
             roots.append(Path(workspace).resolve())
 
-        # 3) Current working directory and its ancestors.
-        roots.extend(Path.cwd().resolve().parents)
-        roots.append(Path.cwd().resolve())
+        # Current working directory and its ancestors
+        cwd = Path.cwd().resolve()
+        roots.append(cwd)
+        roots.extend(cwd.parents)
 
-        # Deduplicate while preserving order.
+        # Deduplicate while preserving order
         seen: set[Path] = set()
-        unique_roots = []
+        unique_roots: list[Path] = []
         for root in roots:
             if root not in seen:
                 seen.add(root)
                 unique_roots.append(root)
+        return unique_roots
 
-        for root in unique_roots:
+    @classmethod
+    def _find_config(cls) -> Path:
+        """Locate ``model_config.yaml`` regardless of install mode."""
+        for root in cls._candidate_config_roots():
             candidate = root / cls._SOURCE_RELATIVE
-            if candidate.exists():
+            if candidate.is_file():
                 return candidate
 
         raise FileNotFoundError(
@@ -186,7 +176,7 @@ class InjectorSurrogate(LUMEModel):
 
     @classmethod
     def _resolve_resource_paths(cls, config: dict, base_dir: Path) -> dict:
-        """Return a copy of *config* with resource paths made absolute."""
+        """Return a copy of config with resource paths made absolute."""
         resolved = dict(config)
         for key in cls._RESOURCE_KEYS:
             if key not in resolved:
@@ -209,13 +199,13 @@ class InjectorSurrogate(LUMEModel):
         config_path = cls._find_config()
         base_dir = config_path.parent
 
-        with open(config_path) as fh:
+        with open(config_path, encoding="utf-8") as fh:
             config = yaml.safe_load(fh)
 
         resolved_config = cls._resolve_resource_paths(config, base_dir)
 
         with tempfile.NamedTemporaryFile(mode="w", suffix=".yaml", delete=False) as tmp:
-            yaml.dump(resolved_config, tmp)
+            yaml.safe_dump(resolved_config, tmp)
             tmp_path = Path(tmp.name)
 
         try:
