@@ -26,8 +26,11 @@ jobs:
           df -h
       - uses: actions/checkout@v4
         with:
+          # For tests-only CI, depth 1 is fine since subtree content is already
+          # committed as normal files. Change to fetch-depth: 0 if you ever
+          # run `git subtree pull` in CI, since git subtree walks the full
+          # commit history to find the previous merge point (the "split").
           fetch-depth: 1
-          submodules: 'true'
       - name: Checkout lcls-lattice
         uses: actions/checkout@v4
         with:

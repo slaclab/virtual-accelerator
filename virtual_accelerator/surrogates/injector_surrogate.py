@@ -107,10 +107,11 @@ def create_beam_distribution_from_state(state, n_particles) -> ParticleBeam:
 class InjectorSurrogate(LUMEModel):
     """LUME wrapper around injector torch surrogate with openPMD beam output."""
 
-    #: Relative path from the project root to the submodule config.
-    _SUBMODULE_RELATIVE = (
-        Path("subtrees") / "lcls_cu_injector_model" / "model_config.yaml"
-    )
+    #: Config path relative to this file (used when installed as a package).
+    _INSTALLED_RELATIVE = Path("lcls_cu_injector_model") / "model_config.yaml"
+
+    #: Config path relative to the project root (used when running from source).
+    _SOURCE_RELATIVE = Path("subtrees") / "lcls_cu_injector_model" / "model_config.yaml"
 
     #: Config keys whose values are resource paths that need resolving.
     _RESOURCE_KEYS = ("model", "input_transformers", "output_transformers")
@@ -119,24 +120,35 @@ class InjectorSurrogate(LUMEModel):
     def _find_config(cls) -> Path:
         """Locate ``model_config.yaml`` regardless of install mode.
 
-        Walks up the directory tree from this file looking for the
-        ``subtrees/lcls_cu_injector_model`` directory so the config is found
-        both when running from the source tree and when the package is
-        installed (e.g. in CI).
+        Checks two locations in order:
+
+        1. **Installed package**: ``lcls_cu_injector_model/model_config.yaml``
+           alongside this file — present when the package is installed via pip
+           because the model data is declared as ``package_data``.
+        2. **Source tree fallback**: walks up ancestor directories looking for
+           ``subtrees/lcls_cu_injector_model/model_config.yaml`` — used during
+           local development directly from the repo.
 
         Raises
         ------
         FileNotFoundError
-            If the config cannot be found in any ancestor directory.
+            If the config cannot be found in either location.
         """
-        search = Path(__file__).resolve().parent
-        for directory in [search, *search.parents]:
-            candidate = directory / cls._SUBMODULE_RELATIVE
+        # 1. Installed package location (next to this file).
+        installed = Path(__file__).resolve().parent / cls._INSTALLED_RELATIVE
+        if installed.exists():
+            return installed
+
+        # 2. Source-tree fallback: walk up looking for the subtrees/ directory.
+        for directory in Path(__file__).resolve().parents:
+            candidate = directory / cls._SOURCE_RELATIVE
             if candidate.exists():
                 return candidate
+
         raise FileNotFoundError(
-            f"Could not find {cls._SUBMODULE_RELATIVE} in any directory above "
-            f"{Path(__file__).resolve().parent}. "
+            f"Could not find model_config.yaml in the installed package location "
+            f"({installed}) or in any ancestor directory as "
+            f"{cls._SOURCE_RELATIVE}. "
             "Ensure the subtree has been added with "
             "'git subtree add --prefix subtrees/lcls_cu_injector_model <remote> <ref>'."
         )

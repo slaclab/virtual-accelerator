@@ -59,7 +59,11 @@ include = [ "virtual_accelerator", ]
 namespaces = false
 
 [tool.setuptools.package-data]
-virtual_accelerator = ["py.typed"]
+virtual_accelerator = [
+    "py.typed",
+    "surrogates/lcls_cu_injector_model/model_config.yaml",
+    "surrogates/lcls_cu_injector_model/resources/*.pt",
+]
 
 [tool.setuptools_scm]
 version_file = "virtual_accelerator/_version.py"
