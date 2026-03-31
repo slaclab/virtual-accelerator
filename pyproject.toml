@@ -57,13 +57,12 @@ docs = [
 [tool.setuptools.packages.find]
 include = [ "virtual_accelerator", ]
 namespaces = false
-follow-links = true
 
 [tool.setuptools.package-data]
 virtual_accelerator = [
     "py.typed",
-    "surrogates/lcls_cu_injector_model/model_config.yaml",
-    "surrogates/lcls_cu_injector_model/resources/*.pt",
+#    "surrogates/lcls_cu_injector_model/model_config.yaml",
+#    "surrogates/lcls_cu_injector_model/resources/*.pt",
 ]
 
 [tool.setuptools_scm]

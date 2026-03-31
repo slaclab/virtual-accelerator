@@ -107,8 +107,9 @@ def create_beam_distribution_from_state(state, n_particles) -> ParticleBeam:
 class InjectorSurrogate(LUMEModel):
     """LUME wrapper around injector torch surrogate with openPMD beam output."""
 
-    #: Config path relative to this file (used when installed as a package).
-    _INSTALLED_RELATIVE = Path("lcls_cu_injector_model") / "model_config.yaml"
+    #
+    # #: Config path relative to this file (used when installed as a package).
+    # _INSTALLED_RELATIVE = Path("lcls_cu_injector_model") / "model_config.yaml"
 
     #: Config path relative to the project root (used when running from source).
     _SOURCE_RELATIVE = Path("subtrees") / "lcls_cu_injector_model" / "model_config.yaml"
