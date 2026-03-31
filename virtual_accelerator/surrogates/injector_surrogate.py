@@ -108,7 +108,7 @@ class InjectorSurrogate(LUMEModel):
     """LUME wrapper around injector torch surrogate with openPMD beam output."""
 
     #: Relative path from the project root to the submodule config.
-    _SUBMODULE_RELATIVE = Path(".submodules") / "repo" / "model_config.yaml"
+    _SUBMODULE_RELATIVE = Path("subtrees") / "lcls_injector_model" / "model_config.yaml"
 
     #: Config keys whose values are resource paths that need resolving.
     _RESOURCE_KEYS = ("model", "input_transformers", "output_transformers")
