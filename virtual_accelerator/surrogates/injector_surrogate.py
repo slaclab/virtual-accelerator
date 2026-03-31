@@ -107,13 +107,36 @@ def create_beam_distribution_from_state(state, n_particles) -> ParticleBeam:
 class InjectorSurrogate(LUMEModel):
     """LUME wrapper around injector torch surrogate with openPMD beam output."""
 
-    #: Path to the submodule config, relative to this file.
-    _SUBMODULE_CONFIG = (
-        Path(__file__).resolve().parent / "../../.submodules/repo/model_config.yaml"
-    )
+    #: Relative path from the project root to the submodule config.
+    _SUBMODULE_RELATIVE = Path(".submodules") / "repo" / "model_config.yaml"
 
     #: Config keys whose values are resource paths that need resolving.
     _RESOURCE_KEYS = ("model", "input_transformers", "output_transformers")
+
+    @classmethod
+    def _find_config(cls) -> Path:
+        """Locate ``model_config.yaml`` regardless of install mode.
+
+        Walks up the directory tree from this file looking for a
+        ``.submodules`` directory so the config is found both when running
+        from the source tree and when the package is installed (e.g. in CI).
+
+        Raises
+        ------
+        FileNotFoundError
+            If the config cannot be found in any ancestor directory.
+        """
+        search = Path(__file__).resolve().parent
+        for directory in [search, *search.parents]:
+            candidate = directory / cls._SUBMODULE_RELATIVE
+            if candidate.exists():
+                return candidate
+        raise FileNotFoundError(
+            f"Could not find {cls._SUBMODULE_RELATIVE} in any directory above "
+            f"{Path(__file__).resolve().parent}. "
+            "Ensure the submodule has been initialised with "
+            "'git submodule update --init'."
+        )
 
     def __init__(self, n_particles: int = 10000) -> None:
         """Initialize surrogate model and internal cache copy.
@@ -152,7 +175,7 @@ class InjectorSurrogate(LUMEModel):
         that ``TorchModel`` can locate them regardless of the working directory.
         The temporary file is removed after loading.
         """
-        config_path = cls._SUBMODULE_CONFIG.resolve()
+        config_path = cls._find_config()
         base_dir = config_path.parent
 
         with open(config_path) as fh:
