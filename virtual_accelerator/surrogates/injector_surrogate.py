@@ -1,12 +1,13 @@
 from typing import Any, Iterable, Mapping
+import tempfile
 import numpy as np
+import yaml
 from lume_torch.models.torch_model import TorchModel
 from lume_torch.base import LUMETorchModel
 from lume.model import LUMEModel
 from lume.variables import ParticleGroupVariable
 from cheetah.particles import ParticleBeam
 from scipy import constants
-import os
 import torch
 from pathlib import Path
 
@@ -106,17 +107,67 @@ def create_beam_distribution_from_state(state, n_particles) -> ParticleBeam:
 class InjectorSurrogate(LUMEModel):
     """LUME wrapper around injector torch surrogate with openPMD beam output."""
 
+    #: Path to the submodule config, relative to this file.
+    _SUBMODULE_CONFIG = (
+        Path(__file__).resolve().parent / "../../.submodules/repo/model_config.yaml"
+    )
+
+    #: Config keys whose values are resource paths that need resolving.
+    _RESOURCE_KEYS = ("model", "input_transformers", "output_transformers")
+
     def __init__(self, n_particles: int = 10000) -> None:
-        """Initialize surrogate model and internal cache copy."""
+        """Initialize surrogate model and internal cache copy.
+
+        Resource paths inside ``model_config.yaml`` are relative to the
+        submodule directory.  A temporary config file with those paths
+        rewritten to absolute paths is passed to ``TorchModel`` so that
+        initialization succeeds regardless of the current working directory.
+        """
         super().__init__()
-        config_path = os.path.join(
-            Path(__file__).parent, "../../.submodules/repo/model_config.yaml"
-        )
-        tm = TorchModel(config_path)
+        tm = self._load_torch_model()
         self.model = LUMETorchModel(tm)
         self.n_particles = n_particles
         self._cache: dict[str, Any] = {}
         self.reset()
+
+    @classmethod
+    def _resolve_resource_paths(cls, config: dict, base_dir: Path) -> dict:
+        """Return a copy of *config* with resource paths made absolute."""
+        resolved = dict(config)
+        for key in cls._RESOURCE_KEYS:
+            if key not in resolved:
+                continue
+            value = resolved[key]
+            if isinstance(value, str):
+                resolved[key] = str((base_dir / value).resolve())
+            elif isinstance(value, list):
+                resolved[key] = [str((base_dir / v).resolve()) for v in value]
+        return resolved
+
+    @classmethod
+    def _load_torch_model(cls) -> TorchModel:
+        """Load :class:`TorchModel` with all resource paths resolved.
+
+        Writes a temporary config YAML whose resource paths are absolute so
+        that ``TorchModel`` can locate them regardless of the working directory.
+        The temporary file is removed after loading.
+        """
+        config_path = cls._SUBMODULE_CONFIG.resolve()
+        base_dir = config_path.parent
+
+        with open(config_path) as fh:
+            config = yaml.safe_load(fh)
+
+        resolved_config = cls._resolve_resource_paths(config, base_dir)
+
+        with tempfile.NamedTemporaryFile(mode="w", suffix=".yaml", delete=False) as tmp:
+            yaml.dump(resolved_config, tmp)
+            tmp_path = Path(tmp.name)
+
+        try:
+            return TorchModel(str(tmp_path))
+        finally:
+            tmp_path.unlink(missing_ok=True)
 
     def _get(self, names: Iterable[str]) -> dict[str, Any]:
         return {name: self._cache[name] for name in names}
