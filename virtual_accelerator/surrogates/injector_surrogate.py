@@ -1,4 +1,5 @@
 from typing import Any, Iterable, Mapping
+import os
 import tempfile
 import numpy as np
 import yaml
@@ -121,35 +122,50 @@ class InjectorSurrogate(LUMEModel):
     def _find_config(cls) -> Path:
         """Locate ``model_config.yaml`` regardless of install mode.
 
-        Checks two locations in order:
+        Checks candidate roots in order:
 
-        1. **Installed package**: ``lcls_cu_injector_model/model_config.yaml``
-           alongside this file — present when the package is installed via pip
-           because the model data is declared as ``package_data``.
-        2. **Source tree fallback**: walks up ancestor directories looking for
-           ``subtrees/lcls_cu_injector_model/model_config.yaml`` — used during
-           local development directly from the repo.
+        1. **Installed package root** (ancestor directories of this file).
+        2. **CI/workspace roots**: ``GITHUB_WORKSPACE`` and current working
+           directory ancestors.
+
+        At each root, looks for ``subtrees/lcls_cu_injector_model/model_config.yaml``.
 
         Raises
         ------
         FileNotFoundError
-            If the config cannot be found in either location.
+            If the config cannot be found in any candidate location.
         """
-        # 1. Installed package location (next to this file).
-        # installed = Path(__file__).resolve().parent / cls._INSTALLED_RELATIVE
-        # if installed.exists():
-        #     return installed
+        roots: list[Path] = []
 
-        # 2. Source-tree fallback: walk up looking for the subtrees/ directory.
-        for directory in Path(__file__).resolve().parents:
-            candidate = directory / cls._SOURCE_RELATIVE
+        # 1) Location of this module (works for source checkouts and some installs).
+        roots.extend(Path(__file__).resolve().parents)
+
+        # 2) CI workspace hint from GitHub Actions.
+        workspace = os.environ.get("GITHUB_WORKSPACE")
+        if workspace:
+            roots.append(Path(workspace).resolve())
+
+        # 3) Current working directory and its ancestors.
+        roots.extend(Path.cwd().resolve().parents)
+        roots.append(Path.cwd().resolve())
+
+        # Deduplicate while preserving order.
+        seen: set[Path] = set()
+        unique_roots = []
+        for root in roots:
+            if root not in seen:
+                seen.add(root)
+                unique_roots.append(root)
+
+        for root in unique_roots:
+            candidate = root / cls._SOURCE_RELATIVE
             if candidate.exists():
                 return candidate
 
         raise FileNotFoundError(
-            f"Could not find model_config.yaml in any ancestor directory as "
-            f"{cls._SOURCE_RELATIVE}. "
-            "Ensure the subtree has been added with "
+            "Could not find model_config.yaml. Looked for "
+            f"{cls._SOURCE_RELATIVE} from module/cwd/workspace roots. "
+            "Ensure the subtree exists in the checkout, e.g. "
             "'git subtree add --prefix subtrees/lcls_cu_injector_model <remote> <ref>'."
         )
 

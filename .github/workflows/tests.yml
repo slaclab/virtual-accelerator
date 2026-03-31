@@ -26,9 +26,7 @@ jobs:
           df -h
       - uses: actions/checkout@v4
         with:
-          fetch-depth: 0
-      - name: Pull in subtree commits
-        run: git subtree pull --prefix subtrees/lcls_cu_injector_model https://github.com/slaclab/lcls_cu_injector_ml_model.git main --squash
+          fetch-depth: 1
       - name: Checkout lcls-lattice
         uses: actions/checkout@v4
         with:
