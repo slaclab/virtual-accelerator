@@ -7,34 +7,34 @@ This script demonstrates how to:
 3. Set inputs and get outputs using the LUME set/get pattern
 """
 
-from lume_torch.base import LUMETorch, LUMETorchModel
+from lume_torch.base import LUMETorchModel
 from lume_torch.models import TorchModel
 
 
 def main():
     # Load the torch model from yaml configuration
     model = TorchModel("model_config.yaml")
-    
+
     # Wrap it in LUMETorchModel
     ltmodel = LUMETorchModel(model)
-    
+
     # Set input values
     print("\nSetting input: QUAD:IN20:121:BCTRL= -0.02")
     ltmodel.set({"QUAD:IN20:121:BCTRL": -0.02})
-    
+
     # Get outputs
     outputs = ltmodel.get(ltmodel.torch_model.output_names)
     print(f"\nOutputs: {outputs}")
-    
+
     # Get inputs (to verify what was set)
     inputs = ltmodel.get(ltmodel.torch_model.input_names)
     print(f"\nInputs: {inputs}")
-    
+
     # Show all supported variables
     print(f"\nSupported variables: {ltmodel.supported_variables}")
     print(f"\nInput variables: {ltmodel.torch_model.input_names}")
     print(f"\nOutput variables: {ltmodel.torch_model.output_names}")
-    
+
     # Test reset functionality
     ltmodel.reset()
     inputs_after_reset = ltmodel.get(ltmodel.torch_model.input_names)

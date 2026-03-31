@@ -47,9 +47,9 @@ NOTE: when not specified, input variables are set to their default values as def
 
 ## Default Input Variables
 
-The default value for `QE01:b1_gradient` in the [simulation variable specification](https://github.com/slaclab/lcls_cu_injector_ml_model/blob/old-deployment/model/sim_variables.yml) 
-has been noticed to lie outside the given value range (likewise for `QUAD:IN20:425:BACT` in the [PV variable specification](https://github.com/slaclab/lcls_cu_injector_ml_model/blob/old-deployment/model/pv_variables.yml)).  
-Thus, a new value was determined by minimizing the model prediction of the transverse beam size within the valid range 
+The default value for `QE01:b1_gradient` in the [simulation variable specification](https://github.com/slaclab/lcls_cu_injector_ml_model/blob/old-deployment/model/sim_variables.yml)
+has been noticed to lie outside the given value range (likewise for `QUAD:IN20:425:BACT` in the [PV variable specification](https://github.com/slaclab/lcls_cu_injector_ml_model/blob/old-deployment/model/pv_variables.yml)).
+Thus, a new value was determined by minimizing the model prediction of the transverse beam size within the valid range
 (documented in [this notebook](https://github.com/slaclab/lcls_cu_injector_ml_model/blob/old-deployment/correct_inconsistent_default_value.ipynb)).
 
 ## Notes about Working with EPICS PV Values

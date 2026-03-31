@@ -112,7 +112,9 @@ class InjectorSurrogate(LUMEModel):
     """LUME wrapper around injector torch surrogate with openPMD beam output."""
 
     # Config path relative to the project root (used when running from source)
-    _SOURCE_RELATIVE = Path("subtrees") / "lcls_cu_injector_model" / "model_config.yaml"
+    _SOURCE_RELATIVE = (
+        Path("subtrees") / "lcls_cu_injector_ml_model" / "model_config.yaml"
+    )
 
     # Config keys whose values are resource paths that need resolving
     _RESOURCE_KEYS = ("model", "input_transformers", "output_transformers")
@@ -156,7 +158,7 @@ class InjectorSurrogate(LUMEModel):
             "Could not find model_config.yaml. Looked for "
             f"{cls._SOURCE_RELATIVE} from module/cwd/workspace roots. "
             "Ensure the subtree exists in the checkout, e.g. "
-            "'git subtree add --prefix subtrees/lcls_cu_injector_model <remote> <ref>'."
+            "'git subtree add --prefix subtrees/lcls_cu_injector_ml_model <remote> <ref>'."
         )
 
     def __init__(self, n_particles: int = 10000) -> None:
