@@ -136,9 +136,9 @@ class InjectorSurrogate(LUMEModel):
             If the config cannot be found in either location.
         """
         # 1. Installed package location (next to this file).
-        installed = Path(__file__).resolve().parent / cls._INSTALLED_RELATIVE
-        if installed.exists():
-            return installed
+        # installed = Path(__file__).resolve().parent / cls._INSTALLED_RELATIVE
+        # if installed.exists():
+        #     return installed
 
         # 2. Source-tree fallback: walk up looking for the subtrees/ directory.
         for directory in Path(__file__).resolve().parents:
@@ -147,8 +147,7 @@ class InjectorSurrogate(LUMEModel):
                 return candidate
 
         raise FileNotFoundError(
-            f"Could not find model_config.yaml in the installed package location "
-            f"({installed}) or in any ancestor directory as "
+            f"Could not find model_config.yaml in any ancestor directory as "
             f"{cls._SOURCE_RELATIVE}. "
             "Ensure the subtree has been added with "
             "'git subtree add --prefix subtrees/lcls_cu_injector_model <remote> <ref>'."
