@@ -108,7 +108,9 @@ class InjectorSurrogate(LUMEModel):
     """LUME wrapper around injector torch surrogate with openPMD beam output."""
 
     #: Relative path from the project root to the submodule config.
-    _SUBMODULE_RELATIVE = Path("subtrees") / "lcls_injector_model" / "model_config.yaml"
+    _SUBMODULE_RELATIVE = (
+        Path("subtrees") / "lcls_cu_injector_model" / "model_config.yaml"
+    )
 
     #: Config keys whose values are resource paths that need resolving.
     _RESOURCE_KEYS = ("model", "input_transformers", "output_transformers")
@@ -117,9 +119,10 @@ class InjectorSurrogate(LUMEModel):
     def _find_config(cls) -> Path:
         """Locate ``model_config.yaml`` regardless of install mode.
 
-        Walks up the directory tree from this file looking for a
-        ``.submodules`` directory so the config is found both when running
-        from the source tree and when the package is installed (e.g. in CI).
+        Walks up the directory tree from this file looking for the
+        ``subtrees/lcls_cu_injector_model`` directory so the config is found
+        both when running from the source tree and when the package is
+        installed (e.g. in CI).
 
         Raises
         ------
@@ -134,8 +137,8 @@ class InjectorSurrogate(LUMEModel):
         raise FileNotFoundError(
             f"Could not find {cls._SUBMODULE_RELATIVE} in any directory above "
             f"{Path(__file__).resolve().parent}. "
-            "Ensure the submodule has been initialised with "
-            "'git submodule update --init'."
+            "Ensure the subtree has been added with "
+            "'git subtree add --prefix subtrees/lcls_cu_injector_model <remote> <ref>'."
         )
 
     def __init__(self, n_particles: int = 10000) -> None:
