@@ -74,6 +74,4 @@ def get_variables_from_segment(
 
         all_variables.update(element_variables)
 
-
-    
     return convert_to_torch_variables(all_variables)
