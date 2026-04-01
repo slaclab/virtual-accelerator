@@ -5,6 +5,7 @@ import pandas as pd
 from typing import Any
 import warnings
 import numpy as np
+import torch
 
 from lume.variables import Variable, ScalarVariable, NDVariable
 from lume_torch.variables import TorchScalarVariable, TorchNDVariable
@@ -254,7 +255,7 @@ def split_control_and_observable(
 
 
 def convert_to_torch_variables(
-    variables: dict[str, Variable],
+    variables: dict[str, Variable], dtype=torch.float32
 ) -> dict[str, Variable]:
     """
     Convert a dictionary of Variable instances into their corresponding Torch-based variants.
@@ -293,6 +294,7 @@ def convert_to_torch_variables(
     for name, variable in variables.items():
         cls = type(variable)
         kwargs = variable.model_dump()
+        kwargs["dtype"] = dtype  # set the dtype for the Torch variable
 
         torch_class_name = "Torch" + cls.__name__
 
