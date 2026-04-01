@@ -8,6 +8,7 @@ from virtual_accelerator.models.cu_hxr import (
 
 TEST_BEAM_PATH = os.path.join(Path(__file__).parent, "../bmad", "test_beam")
 
+
 class TestCUHXRBmad:
     def test_initialization(self):
         model = get_cu_hxr_bmad_model(custom_beam_path=TEST_BEAM_PATH)
@@ -28,12 +29,11 @@ class TestCUHXRBmad:
         assert outputs["name"][-1] == "END"
 
     def test_sub_lattice(self):
-        model = get_cu_hxr_bmad_model("QE04#1","OTR2")
+        model = get_cu_hxr_bmad_model("QE04#1", "OTR2")
         assert len(model.supported_variables) < 40
 
         # test getting partial lattice with beam tracking
         model = get_cu_hxr_bmad_model(end_element="OTR4", track_beam=True)
-
 
     def test_cu_hxr_screen(self):
         model = get_cu_hxr_bmad_model(track_beam=True, custom_beam_path=TEST_BEAM_PATH)

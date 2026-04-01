@@ -4,7 +4,6 @@ from pathlib import Path
 import pandas as pd
 from typing import Any
 import warnings
-import numpy as np
 
 from lume.variables import Variable, ScalarVariable, NDVariable
 from lume_torch.variables import TorchScalarVariable, TorchNDVariable
@@ -307,4 +306,3 @@ def convert_to_torch_variables(
         torch_variables[name] = torch_class(**kwargs)
 
     return torch_variables
-

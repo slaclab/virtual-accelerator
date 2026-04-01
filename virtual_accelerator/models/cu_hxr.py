@@ -6,7 +6,10 @@ from lume_bmad.model import LUMEBmadModel
 from lume_cheetah import LUMECheetahModel, CheetahSimulator
 from virtual_accelerator.cheetah.transformer import SLACCheetahTransformer
 from virtual_accelerator.cheetah.variables import get_variables_from_segment
-from virtual_accelerator.bmad.variables import get_variables, get_cu_hxr_screen_variables
+from virtual_accelerator.bmad.variables import (
+    get_variables,
+    get_cu_hxr_screen_variables,
+)
 from virtual_accelerator.utils.variables import (
     get_epics_to_name_or_overlay_mapping,
     get_epics_to_name_mapping,
@@ -21,7 +24,9 @@ from virtual_accelerator.bmad.cu_transformer import (
 )
 
 
-def get_cu_hxr_bmad_model(start_element="OTR2", end_element="END", track_beam=False, custom_beam_path=None):
+def get_cu_hxr_bmad_model(
+    start_element="OTR2", end_element="END", track_beam=False, custom_beam_path=None
+):
     """
     Get the LUMEBmadModel for the CU_HXR lattice from OTR2 to END.
 
@@ -73,11 +78,15 @@ def get_cu_hxr_bmad_model(start_element="OTR2", end_element="END", track_beam=Fa
 
     if track_beam:
         if start_element == "OTR2" and custom_beam_path is None:
-            beam_path = os.path.join(Path(__file__).parent, "../bmad", "bmad_set_beam2000_pg")
+            beam_path = os.path.join(
+                Path(__file__).parent, "../bmad", "bmad_set_beam2000_pg"
+            )
         elif custom_beam_path is not None:
             beam_path = custom_beam_path
         else:
-            raise ValueError("Cannot have track_beam=True for start_element != OTR2 without providing custom_beam_path")
+            raise ValueError(
+                "Cannot have track_beam=True for start_element != OTR2 without providing custom_beam_path"
+            )
 
         model.tao.cmd(f"set beam_init position_file = {beam_path}")
         model.set({"track_type": 1})

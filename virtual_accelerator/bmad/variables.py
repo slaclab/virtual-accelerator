@@ -4,7 +4,6 @@ import os
 import yaml
 from lume.variables import NDVariable
 from pathlib import Path
-from typing import Any
 import numpy as np
 from virtual_accelerator.utils.variables import (
     get_element_attr_mapping,
@@ -30,8 +29,9 @@ def get_normalized_element_names(tao: Tao):
         if base_element_name not in seen_elements:
             seen_elements.add(base_element_name)
             normalized_elements.append(base_element_name)
-    
+
     return normalized_elements
+
 
 def get_variables(
     tao: Tao,
@@ -94,6 +94,7 @@ def get_variables(
 
     return all_variables
 
+
 def get_cu_hxr_screen_variables(tao, control_variables, screen_list):
     """
     Get screen attributes for cu_hxr from yaml file
@@ -121,7 +122,10 @@ def get_cu_hxr_screen_variables(tao, control_variables, screen_list):
     """
 
     with open(
-        os.path.join(Path(__file__).parent.resolve(), "../utils/cu_hxr_profmon_info.yaml"), "r"
+        os.path.join(
+            Path(__file__).parent.resolve(), "../utils/cu_hxr_profmon_info.yaml"
+        ),
+        "r",
     ) as f:
         screen_data = yaml.safe_load(f)
 
