@@ -6,6 +6,7 @@ from virtual_accelerator.utils.variables import (
     get_variables_from_element_name,
     get_name_to_epics_mapping,
     get_element_attr_mapping,
+    convert_to_torch_variables,
 )
 
 
@@ -73,4 +74,6 @@ def get_variables_from_segment(
 
         all_variables.update(element_variables)
 
-    return all_variables
+
+    
+    return convert_to_torch_variables(all_variables)
