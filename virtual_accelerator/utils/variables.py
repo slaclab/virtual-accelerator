@@ -255,8 +255,7 @@ def split_control_and_observable(
 
 
 def convert_to_torch_variables(
-    variables: dict[str, Variable], 
-    dtype=torch.float32
+    variables: dict[str, Variable], dtype=torch.float32
 ) -> dict[str, Variable]:
     """
     Convert a dictionary of Variable instances into their corresponding Torch-based variants.
