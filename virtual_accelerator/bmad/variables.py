@@ -94,7 +94,7 @@ def get_variables(
 
     return all_variables
 
-def get_cu_hxr_screen_variables(tao, control_variables, element_list):
+def get_cu_hxr_screen_variables(tao, control_variables, screen_list):
     """
     Get screen attributes for cu_hxr from yaml file
 
@@ -104,19 +104,20 @@ def get_cu_hxr_screen_variables(tao, control_variables, element_list):
         The TAO instance.
     control_variables : dict
         Dictionary of control variables.
-    element_list : list
+    screen_list : list
         List of screen elements to include. One or more of: ['OTRH1', 'OTRH2', 'OTR2', 'OTR3', 'OTR4',
                                                              'OTR11', 'OTR12', 'OTR21', 'OTRDMP']
 
     Returns
     -------
-    tuple[dict[str, NDVariable], dict[str, dict[str, any]]]
+    tuple[dict[str, NDVariable], dict[str, dict[str, any]], list[str]]
         - control_variables: Updated dictionary of control variables including screen variables.
         - screen_attributes: Dictionary of screen attributes for each element.
             - number of pixels in x and y
             - resolution um/pixel
             - bit_depth
             - orientation
+        - used_screens: List of screens that were found in the lattice and included in the control variables.
     """
 
     with open(
@@ -127,8 +128,9 @@ def get_cu_hxr_screen_variables(tao, control_variables, element_list):
     normalized_elements = get_normalized_element_names(tao)
 
     screen_attributes = {}
+    used_screens = []
     for element in normalized_elements:
-        if element not in element_list:
+        if element not in screen_list:
             continue
         image_name = screen_data[element]["name"] + ":Image:ArrayData"
         nCol = screen_data[element]["nCol"]
@@ -144,4 +146,7 @@ def get_cu_hxr_screen_variables(tao, control_variables, element_list):
                 [screen_data[element]["orientX"], screen_data[element]["orientY"]],
             ),
         }
-    return control_variables, screen_attributes
+
+        used_screens.append(element)
+
+    return control_variables, screen_attributes, used_screens

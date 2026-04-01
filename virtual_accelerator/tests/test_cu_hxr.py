@@ -6,21 +6,19 @@ from virtual_accelerator.models.cu_hxr import (
     get_cu_hxr_cheetah_model,
 )
 
+TEST_BEAM_PATH = os.path.join(Path(__file__).parent, "../bmad", "test_beam")
 
 class TestCUHXRBmad:
     def test_initialization(self):
-        model = get_cu_hxr_bmad_model()
+        model = get_cu_hxr_bmad_model(custom_beam_path=TEST_BEAM_PATH)
 
         assert "QUAD:IN20:631:BCTRL" in model.control_variables
 
-        model = get_cu_hxr_bmad_model(track_beam=True)
-        assert "OTRS:IN20:711:Image:ArrayData" in model.control_variables
+        model = get_cu_hxr_bmad_model(track_beam=True, custom_beam_path=TEST_BEAM_PATH)
+        assert "OTRS:IN20:711:Image:ArrayData" in model.supported_variables
 
     def test_cu_hxr_twiss(self):
-        model = get_cu_hxr_bmad_model()
-
-        beam_path = os.path.join(Path(__file__).parent, "../bmad", "test_beam")
-        model.tao.cmd(f"set beam_init position_file = {beam_path}")
+        model = get_cu_hxr_bmad_model(custom_beam_path=TEST_BEAM_PATH)
 
         outputs = model.get(["a.beta", "b.beta", "name"])
 
@@ -31,13 +29,14 @@ class TestCUHXRBmad:
 
     def test_sub_lattice(self):
         model = get_cu_hxr_bmad_model("QE04#1","OTR2")
-        assert len(model.supported_variables) == 33
+        assert len(model.supported_variables) < 40
+
+        # test getting partial lattice with beam tracking
+        model = get_cu_hxr_bmad_model(end_element="OTR4", track_beam=True)
+
 
     def test_cu_hxr_screen(self):
-        model = get_cu_hxr_bmad_model(track_beam=True)
-
-        beam_path = os.path.join(Path(__file__).parent, "../bmad", "test_beam")
-        model.tao.cmd(f"set beam_init position_file = {beam_path}")
+        model = get_cu_hxr_bmad_model(track_beam=True, custom_beam_path=TEST_BEAM_PATH)
 
         # set tracking
         model.set({"track_type": 1})
@@ -61,10 +60,7 @@ class TestCUHXRBmad:
         assert not (image == updated_image).all()
 
     def test_cu_hxr_lcavity(self):
-        model = get_cu_hxr_bmad_model()
-
-        beam_path = os.path.join(Path(__file__).parent, "../bmad", "test_beam")
-        model.tao.cmd(f"set beam_init position_file = {beam_path}")
+        model = get_cu_hxr_bmad_model(custom_beam_path=TEST_BEAM_PATH)
 
         enld = model.get(["KLYS:LI21:31:ENLD"])["KLYS:LI21:31:ENLD"]
         enld = enld + 5

@@ -21,9 +21,21 @@ from virtual_accelerator.bmad.cu_transformer import (
 )
 
 
-def get_cu_hxr_bmad_model(start_element="OTR2", end_element="END", track_beam=False):
+def get_cu_hxr_bmad_model(start_element="OTR2", end_element="END", track_beam=False, custom_beam_path=None):
     """
     Get the LUMEBmadModel for the CU_HXR lattice from OTR2 to END.
+
+    Parameters
+    -------------
+    start_element: str, optional
+        The starting element for the model. Default is "OTR2".
+    end_element: str, optional
+        The ending element for the model. Default is "END".
+    track_beam: bool, optional
+        Whether to enable beam tracking in the model. Default is False.
+    custom_beam_path: str, optional
+        Path to custom beam file for tracking. If None, will use default design beam. Default is None.
+
 
     Returns
     -------
@@ -41,8 +53,8 @@ def get_cu_hxr_bmad_model(start_element="OTR2", end_element="END", track_beam=Fa
     # Define the controllable and observable variables
     control_variables, observable_variables = split_control_and_observable(variables)
     # handle Profile Monitors
-    screens = []#["OTR3", "OTR4", "OTR11", "OTR12", "OTR21"]
-    control_variables, screen_attributes = get_cu_hxr_screen_variables(
+    screens = ["OTR3", "OTR4", "OTR11", "OTR12", "OTR21"]
+    control_variables, screen_attributes, used_screens = get_cu_hxr_screen_variables(
         tao, control_variables, screens
     )
 
@@ -56,16 +68,19 @@ def get_cu_hxr_bmad_model(start_element="OTR2", end_element="END", track_beam=Fa
         control_variables=control_variables,
         output_variables=observable_variables,
         transformer=transformer,
-        dump_locations=screens,
+        dump_locations=used_screens,
     )
 
     if track_beam:
-        if start_element == "OTR2":
+        if start_element == "OTR2" and custom_beam_path is None:
             beam_path = os.path.join(Path(__file__).parent, "../bmad", "bmad_set_beam2000_pg")
-            model.tao.cmd(f"set beam_init position_file = {beam_path}")
-            model.set({"track_type": 1})
+        elif custom_beam_path is not None:
+            beam_path = custom_beam_path
         else:
-            raise "Cannot have track_beam=True for start_element != OTR2"
+            raise ValueError("Cannot have track_beam=True for start_element != OTR2 without providing custom_beam_path")
+
+        model.tao.cmd(f"set beam_init position_file = {beam_path}")
+        model.set({"track_type": 1})
 
     return model
 
