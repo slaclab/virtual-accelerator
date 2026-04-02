@@ -153,6 +153,7 @@ class StagedModel(LUMEModel):
 from virtual_accelerator.surrogates.injector_surrogate import InjectorSurrogate
 from virtual_accelerator.models.cu_hxr import get_cu_hxr_bmad_model
 
+
 def get_cu_hxr_staged_model():
     """
     Returns
@@ -168,7 +169,3 @@ def get_cu_hxr_staged_model():
     staged_model = StagedModel([injector_surrogate, cu_hxr_bmad_model])
 
     return staged_model
-
-
-
-    

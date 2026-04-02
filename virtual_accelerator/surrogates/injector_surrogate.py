@@ -10,7 +10,6 @@ from pathlib import Path
 
 OTR2_BEAM_ENERGY = 135.0e6  # eV
 
-from scipy import constants
 
 def to_openpmd_particlegroup(beam) -> "openpmd.ParticleGroup":  # noqa: F821
     """
@@ -34,9 +33,7 @@ def to_openpmd_particlegroup(beam) -> "openpmd.ParticleGroup":  # noqa: F821
 
     # For now only support non-vectorised particle distributions
     if len(beam.particles.shape) != 2:
-        raise ValueError(
-            "Only non-vectorised particle distributions are supported."
-        )
+        raise ValueError("Only non-vectorised particle distributions are supported.")
 
     px = beam.px * beam.p0c
     py = beam.py * beam.p0c
@@ -47,47 +44,50 @@ def to_openpmd_particlegroup(beam) -> "openpmd.ParticleGroup":  # noqa: F821
     status = beam.survival_probabilities > 0.5
 
     data = {
-        "x": beam.x.numpy(), # need detach for all of the coordinates
+        "x": beam.x.numpy(),  # need detach for all of the coordinates
         "y": beam.y.numpy(),
         "z": beam.tau.numpy(),
         "px": px.numpy(),
         "py": py.numpy(),
         "pz": pz.numpy(),
         "t": t.numpy(),
-        "weight": beam.particle_charges.numpy(), # need to make at least 1d
-        "status": status.int().numpy(), # need int
+        "weight": beam.particle_charges.numpy(),  # need to make at least 1d
+        "status": status.int().numpy(),  # need int
         "species": beam.species.name,
     }
     particle_group = openpmd.ParticleGroup(data=data)
 
     return particle_group
 
+
 def create_beam_distribution_from_state(state, n_particles) -> ParticleBeam:
-    sigma_x = torch.tensor(state["OTRS:IN20:571:XRMS"]*1e-6)
-    sigma_y = torch.tensor(state["OTRS:IN20:571:YRMS"]*1e-6)
-    sigma_z = torch.tensor(state["sigma_z"]*1e-6)
-    normalized_emittance_x = torch.tensor(state["norm_emit_x"]*1e-6)
-    normalized_emittance_y = torch.tensor(state["norm_emit_y"]*1e-6)
+    sigma_x = torch.tensor(state["OTRS:IN20:571:XRMS"] * 1e-6)
+    sigma_y = torch.tensor(state["OTRS:IN20:571:YRMS"] * 1e-6)
+    sigma_z = torch.tensor(state["sigma_z"] * 1e-6)
+    normalized_emittance_x = torch.tensor(state["norm_emit_x"] * 1e-6)
+    normalized_emittance_y = torch.tensor(state["norm_emit_y"] * 1e-6)
     energy = OTR2_BEAM_ENERGY
-    relativistic_gamma = energy / (constants.value("electron mass energy equivalent in MeV") * 1e6)
+    relativistic_gamma = energy / (
+        constants.value("electron mass energy equivalent in MeV") * 1e6
+    )
     beam = ParticleBeam.from_twiss(
         num_particles=n_particles,
         beta_x=sigma_x**2 / (normalized_emittance_x / relativistic_gamma),
         beta_y=sigma_y**2 / (normalized_emittance_y / relativistic_gamma),
-        emittance_x = normalized_emittance_x / relativistic_gamma,
-        emittance_y = normalized_emittance_y / relativistic_gamma,
+        emittance_x=normalized_emittance_x / relativistic_gamma,
+        emittance_y=normalized_emittance_y / relativistic_gamma,
         sigma_tau=sigma_z,
-        energy = torch.tensor(energy),
+        energy=torch.tensor(energy),
     )
     beam.particles = beam.particles.squeeze()
     return beam
+
 
 class InjectorSurrogate(LUMEModel):
     def __init__(self, n_particles=10000):
         super().__init__()
         config_path = os.path.join(
-            Path(__file__).parent, 
-            "../../.submodules/repo/model_config.yaml"
+            Path(__file__).parent, "../../.submodules/repo/model_config.yaml"
         )
         tm = TorchModel(config_path)
         self.model = LUMETorchModel(tm)
@@ -98,7 +98,7 @@ class InjectorSurrogate(LUMEModel):
 
     def _get(self, names):
         return {name: self._state[name] for name in names}
-    
+
     def _set(self, values):
         for name, value in values.items():
             self._state[name] = value
@@ -110,7 +110,9 @@ class InjectorSurrogate(LUMEModel):
     @property
     def supported_variables(self):
         v = self.model.supported_variables
-        v.update({"output_beam": ParticleGroupVariable(name="output_beam", read_only=True)})
+        v.update(
+            {"output_beam": ParticleGroupVariable(name="output_beam", read_only=True)}
+        )
         return v
 
     def reset(self):
@@ -127,4 +129,3 @@ class InjectorSurrogate(LUMEModel):
         # update a outgoing beam distribution
         beam = create_beam_distribution_from_state(self._state, self.n_particles)
         self._state["output_beam"] = to_openpmd_particlegroup(beam)
-
