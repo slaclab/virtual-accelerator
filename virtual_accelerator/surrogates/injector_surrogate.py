@@ -51,7 +51,7 @@ def to_openpmd_particlegroup(beam) -> "openpmd.ParticleGroup":  # noqa: F821
         "py": py.numpy(),
         "pz": pz.numpy(),
         "t": t.numpy(),
-        "weight": beam.particle_charges.numpy(),  # need to make at least 1d
+        "weight": -beam.particle_charges.numpy(),  # need to make at least 1d
         "status": status.int().numpy(),  # need int
         "species": beam.species.name,
     }
