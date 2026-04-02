@@ -1,9 +1,7 @@
-
 import os
 from pathlib import Path
 import pytest
 from lume.variables.particle_group import ParticleGroupVariable
-from lume.variables import ScalarVariable, NDVariable
 
 from virtual_accelerator.models.staged_model import (
     StagedModel,
@@ -70,7 +68,7 @@ class TestStagedModelVariables:
     def test_supported_variables_aggregation(self, staged_model):
         """Test that supported_variables combines all model variables."""
         supported_vars = staged_model.supported_variables
-        
+
         # Check for variables from injector
         injector_vars = staged_model.lume_model_instances[0].supported_variables
         for var_name in injector_vars:
@@ -93,10 +91,7 @@ class TestStagedModelVariables:
             assert injector_vars[0] in result
 
     def test_get_cu_hxr_variables(self, staged_model):
-
         """Test getting variables from the cu_hxr stage."""
-        cu_hxr = staged_model.lume_model_instances[1]
-
         # Get cu_hxr-specific observable
         cu_hxr_vars = ["a.beta", "b.beta"]
         result = staged_model.get(cu_hxr_vars)
@@ -118,7 +113,6 @@ class TestStagedModelStaging:
         assert b["norm_emit_y"] is not None
 
     def test_get_cu_hxr_observable(self, staged_model):
-
         """Test retrieving cu_hxr observable variables."""
         # Try to get an observable variable
         result = staged_model.get(["a.beta"])
@@ -128,10 +122,10 @@ class TestStagedModelStaging:
     def test_beam_propagation_output(self, staged_model_with_tracking):
         """Test that beams propagate through stages with tracking enabled."""
         model = staged_model_with_tracking
-        
+
         # Set a quad and verify output beam exists
         model.set({"QUAD:IN20:631:BCTRL": -5.0})
-        
+
         # Get tracked screen beam at OTR4
         result = model.get("OTR4_beam")
         assert result is not None
@@ -139,7 +133,6 @@ class TestStagedModelStaging:
         assert "ParticleGroup" in str(type(result))
 
     def test_multiple_observable_get(self, staged_model):
-
         """Test getting multiple observables from different stages."""
         # Get multiple lattice parameters
         result = staged_model.get(["a.beta", "b.beta"])
@@ -153,14 +146,14 @@ class TestStagedModelFactory:
     def test_get_cu_hxr_staged_model_basic(self):
         """Test factory function creates valid StagedModel."""
         model = get_cu_hxr_staged_model(custom_beam_path=TEST_BEAM_PATH)
-        
+
         assert isinstance(model, StagedModel)
         assert len(model.lume_model_instances) == 2
 
     def test_get_cu_hxr_staged_model_with_track_beam(self):
         """Test factory function with track_beam=True."""
         model = get_cu_hxr_staged_model(track_beam=True, end_element="OTR4")
-        
+
         assert isinstance(model, StagedModel)
         cu_hxr = model.lume_model_instances[1]
         # Verify tracking is enabled
@@ -169,7 +162,7 @@ class TestStagedModelFactory:
     def test_get_cu_hxr_staged_model_with_end_element(self):
         """Test factory function with custom end_element."""
         model = get_cu_hxr_staged_model(end_element="OTR2")
-        
+
         assert isinstance(model, StagedModel)
         cu_hxr = model.lume_model_instances[1]
         # Model should be created successfully with custom end_element
