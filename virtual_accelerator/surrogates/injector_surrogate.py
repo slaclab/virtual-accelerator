@@ -93,15 +93,16 @@ class InjectorSurrogate(LUMEModel):
         self.model = LUMETorchModel(tm)
         self.n_particles = n_particles
 
-        self._state = self.model._state
+        self._cache = self.model._cache
+        self.set({})
         self.update_state()
 
     def _get(self, names):
-        return {name: self._state[name] for name in names}
+        return {name: self._cache[name] for name in names}
 
     def _set(self, values):
         for name, value in values.items():
-            self._state[name] = value
+            self._cache[name] = value
 
         self.model.set(values)
 
@@ -119,13 +120,13 @@ class InjectorSurrogate(LUMEModel):
         self.model.reset()
 
     def update_state(self):
-        self._state.update(self.model.get(list(self.model.supported_variables.keys())))
+        self._cache.update(self.model.get(list(self.model.supported_variables.keys())))
 
         # replace torch tensors with floats
-        for key, value in self._state.items():
+        for key, value in self._cache.items():
             if isinstance(value, torch.Tensor):
-                self._state[key] = value.item()
+                self._cache[key] = value.item()
 
         # update a outgoing beam distribution
-        beam = create_beam_distribution_from_state(self._state, self.n_particles)
-        self._state["output_beam"] = to_openpmd_particlegroup(beam)
+        beam = create_beam_distribution_from_state(self._cache, self.n_particles)
+        self._cache["output_beam"] = to_openpmd_particlegroup(beam)
