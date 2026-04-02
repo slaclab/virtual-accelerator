@@ -241,3 +241,14 @@ class InjectorSurrogate(LUMEModel):
     def reset(self):
         self.model.reset()
         self._cache = {}
+    def update_state(self):
+        self._cache.update(self.model.get(list(self.model.supported_variables.keys())))
+
+        # replace torch tensors with floats
+        for key, value in self._cache.items():
+            if isinstance(value, torch.Tensor):
+                self._cache[key] = value.item()
+
+        # update a outgoing beam distribution
+        beam = create_beam_distribution_from_state(self._cache, self.n_particles)
+        self._cache["output_beam"] = to_openpmd_particlegroup(beam)
