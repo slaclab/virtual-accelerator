@@ -31,6 +31,8 @@ jobs:
         uses: actions/checkout@v4
         with:
           repository: slaclab/lcls-lattice
+          # temp change branch to address bmad bug TODO: should remove when bug is resolved
+          ref: temp_remove_fixers
           path: lcls-lattice
       - name: Set up conda environment
         uses: conda-incubator/setup-miniconda@v3
