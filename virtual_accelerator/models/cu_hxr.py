@@ -6,11 +6,14 @@ from lume_bmad.model import LUMEBmadModel
 from lume_cheetah import LUMECheetahModel, CheetahSimulator
 from virtual_accelerator.cheetah.transformer import SLACCheetahTransformer
 from virtual_accelerator.cheetah.variables import get_variables_from_segment
-from virtual_accelerator.bmad.variables import get_variables_from_tao
+from virtual_accelerator.bmad.variables import (
+    get_variables,
+    get_cu_hxr_screen_variables,
+)
 from virtual_accelerator.utils.variables import (
+    get_epics_to_name_or_overlay_mapping,
     get_epics_to_name_mapping,
     split_control_and_observable,
-    get_cu_hxr_screen_variables,
 )
 from cheetah.accelerator import Segment
 from cheetah.particles import ParticleBeam
@@ -21,9 +24,23 @@ from virtual_accelerator.bmad.cu_transformer import (
 )
 
 
-def get_cu_hxr_bmad_model():
+def get_cu_hxr_bmad_model(
+    start_element="OTR2", end_element="END", track_beam=False, custom_beam_path=None
+):
     """
-    Get the LUMEBmadModel for the CU_HXR lattice from OTR2 to ENDDMPH_2.
+    Get the LUMEBmadModel for the CU_HXR lattice from OTR2 to END.
+
+    Parameters
+    -------------
+    start_element: str, optional
+        The starting element for the model. Default is "OTR2".
+    end_element: str, optional
+        The ending element for the model. Default is "END".
+    track_beam: bool, optional
+        Whether to enable beam tracking in the model. Default is False.
+    custom_beam_path: str, optional
+        Path to custom beam file for tracking. If None, will use default design beam. Default is None.
+
 
     Returns
     -------
@@ -34,20 +51,20 @@ def get_cu_hxr_bmad_model():
     # create Tao instance
     LCLS_LATTICE = os.environ["LCLS_LATTICE"]
     init_file = os.path.join(LCLS_LATTICE, "bmad/models/cu_hxr/tao.init")
-    tao = Tao(f"-init {init_file} -noplot")
+    tao = Tao(f"-init {init_file} -noplot -slice_lattice {start_element}:{end_element}")
 
     # get supported variables from tao lattice and get mapping from control 
     # system device names to bmad element names
-    control_name_to_element_name = get_epics_to_name_mapping()
-    variables = get_variables_from_tao(tao)
+    control_name_to_element_name = get_epics_to_name_or_overlay_mapping()
+    variables = get_variables(tao)
 
     # Define the controllable and observable variables
     control_variables, observable_variables = split_control_and_observable(variables)
 
     # handle Profile Monitors
-    screens = ["OTR3", "OTR4", "OTR11", "OTR12", "OTR21", "OTRDMP"]
-    control_variables, screen_attributes = get_cu_hxr_screen_variables(
-        control_variables, screens
+    screens = ["OTR3", "OTR4", "OTR11", "OTR12", "OTR21"]
+    control_variables, screen_attributes, used_screens = get_cu_hxr_screen_variables(
+        tao, control_variables, screens
     )
 
     # Create transformer that handles maps get/set calls and updates the beam distribution
@@ -61,11 +78,23 @@ def get_cu_hxr_bmad_model():
         control_variables=control_variables,
         output_variables=observable_variables,
         transformer=transformer,
-        dump_locations=screens,
+        dump_locations=used_screens,
     )
 
-    beam_path = os.path.join(Path(__file__).parent, "../bmad", "bmad_set_beam2000_pg")
-    model.tao.cmd(f"set beam_init position_file = {beam_path}")
+    if track_beam:
+        if start_element == "OTR2" and custom_beam_path is None:
+            beam_path = os.path.join(
+                Path(__file__).parent, "../bmad", "bmad_set_beam2000_pg"
+            )
+        elif custom_beam_path is not None:
+            beam_path = custom_beam_path
+        else:
+            raise ValueError(
+                "Cannot have track_beam=True for start_element != OTR2 without providing custom_beam_path"
+            )
+
+        model.tao.cmd(f"set beam_init position_file = {beam_path}")
+        model.set({"track_type": 1})
 
     return model
 
@@ -82,9 +111,11 @@ def get_cu_hxr_cheetah_model():
     # Get path to beam distributions
     # beam_dist = os.environ.get(
     #    'BEAM_DISTRIBUTION',
-    #    '/sdf/group/ad/sw/machine-learning/Linac-Simulation-Server/simulation_server/beams'
+    #    '/sdf/group/ad/sw/machine-learning/
+    # Linac-Simulation-Server/simulation_server/beams'
     # )
     # Create Cheetah particle Beam from file
+
     incoming_beam = ParticleBeam.from_twiss(
         beta_x=torch.tensor(9.34),
         alpha_x=torch.tensor(-1.6946),
