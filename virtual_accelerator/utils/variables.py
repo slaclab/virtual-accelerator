@@ -4,7 +4,6 @@ from pathlib import Path
 import pandas as pd
 from typing import Any
 import warnings
-import numpy as np
 import torch
 
 from lume.variables import Variable, ScalarVariable, NDVariable
