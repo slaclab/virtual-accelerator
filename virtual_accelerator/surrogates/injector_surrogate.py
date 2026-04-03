@@ -244,7 +244,6 @@ class InjectorSurrogate(LUMEModel):
     def update_state(self):
         self._cache.update(self.model.get(list(self.model.supported_variables.keys())))
 
-        scalarized_cache = {k: _to_python_scalar(v, k) for k, v in self._cache.items()}
-        beam = create_beam_distribution_from_state(scalarized_cache, self.n_particles)
-        scalarized_cache["output_beam"] = to_openpmd_particlegroup(beam)
-        self._cache = scalarized_cache
+        self._cache = {k: _to_python_scalar(v, k) for k, v in self._cache.items()}
+        beam = create_beam_distribution_from_state(self._cache, self.n_particles)
+        self._cache["output_beam"] = to_openpmd_particlegroup(beam)
