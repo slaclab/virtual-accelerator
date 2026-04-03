@@ -19,5 +19,5 @@ The Cu Injector model is present in subtrees/lcls_cu_injector_ml_model.
 To pull latest changes from the Cu Inj repo
 
 ```
-git subtree pull --prefix subtrees/lcls_cu_injector_model https://github.com/slaclab/lcls_cu_injector_ml_model.git main --squash
+git subtree pull --prefix subtrees/lcls_cu_injector_ml_model https://github.com/slaclab/lcls_cu_injector_ml_model.git main --squash
 ```
