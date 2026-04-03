@@ -6,7 +6,6 @@ from virtual_accelerator.cheetah.diag0 import get_diag0_beamline
 from virtual_accelerator.utils.variables import (
     get_epics_to_name_mapping,
     split_control_and_observable,
-    convert_to_torch_variables,
 )
 from cheetah.particles import ParticleBeam
 import torch
@@ -60,8 +59,8 @@ def get_sc_diag0_cheetah_model():
 
     # Get supported control system variables
     # for the model
-    variables = get_variables_from_segment(segment)
-    torch_variables = convert_to_torch_variables(variables)
+    torch_variables = get_variables_from_segment(segment)
+
     # Define the controllable and observable variables
     control_variables, observable_variables = split_control_and_observable(
         torch_variables
