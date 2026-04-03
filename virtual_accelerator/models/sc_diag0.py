@@ -1,4 +1,3 @@
-import os
 from lume_cheetah import LUMECheetahModel, CheetahSimulator
 from virtual_accelerator.cheetah.transformer import SLACCheetahTransformer
 from virtual_accelerator.cheetah.variables import get_variables_from_segment
@@ -9,7 +8,6 @@ from virtual_accelerator.utils.variables import (
     split_control_and_observable,
     convert_to_torch_variables,
 )
-from cheetah.accelerator import Segment
 from cheetah.particles import ParticleBeam
 import torch
 

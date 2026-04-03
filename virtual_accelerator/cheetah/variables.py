@@ -75,7 +75,9 @@ def get_variables_from_segment(
                 elif sub_element.name.upper() in device_mapping:
                     sub_control_name = device_mapping[sub_element.name.upper()]
                 else:
-                    warnings.warn(f"Element {sub_element.name} not found in device mapping")
+                    warnings.warn(
+                        f"Element {sub_element.name} not found in device mapping"
+                    )
                     continue
 
                 sub_element_variables = get_variables_from_element_name(
