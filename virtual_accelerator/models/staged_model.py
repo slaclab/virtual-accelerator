@@ -5,9 +5,6 @@ from lume.variables.variable import Variable
 from virtual_accelerator.surrogates.injector_surrogate import InjectorSurrogate
 from virtual_accelerator.models.cu_hxr import get_cu_hxr_bmad_model
 
-from virtual_accelerator.surrogates.injector_surrogate import InjectorSurrogate
-from virtual_accelerator.models.cu_hxr import get_cu_hxr_bmad_model
-
 
 class StagedModel(LUMEModel):
     """

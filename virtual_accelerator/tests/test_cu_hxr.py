@@ -40,9 +40,6 @@ class TestCUHXRBmad:
     def test_cu_hxr_screen(self):
         model = get_cu_hxr_bmad_model(track_beam=True, custom_beam_path=TEST_BEAM_PATH)
 
-        # set tracking
-        model.set({"track_type": 1})
-
         # get initial OTR4 image
         image = model.get(["OTRS:IN20:711:Image:ArrayData"])[
             "OTRS:IN20:711:Image:ArrayData"

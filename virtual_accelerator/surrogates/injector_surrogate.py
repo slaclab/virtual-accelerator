@@ -74,7 +74,9 @@ def to_openpmd_particlegroup(beam) -> "openpmd.ParticleGroup":  # noqa: F821
         "py": _tensor_to_numpy(py),
         "pz": _tensor_to_numpy(pz),
         "t": _tensor_to_numpy(t),
-        "weight": _tensor_to_numpy(beam.particle_charges),  # need to make at least 1d
+        "weight": _tensor_to_numpy(
+            -beam.particle_charges
+        ),  # need to make at least 1d and negate
         "status": _tensor_to_numpy(status.int()),  # need int
         "species": beam.species.name,
     }
@@ -174,7 +176,8 @@ class InjectorSurrogate(LUMEModel):
         self.model = LUMETorchModel(tm)
         self.n_particles = n_particles
         self._cache: dict[str, Any] = {}
-        self.reset()
+        self.set({})  # Initializing with defaults of NN model
+        self.update_state()
 
     @classmethod
     def _resolve_resource_paths(cls, config: dict, base_dir: Path) -> dict:
@@ -207,7 +210,7 @@ class InjectorSurrogate(LUMEModel):
         resolved_config = cls._resolve_resource_paths(config, base_dir)
 
         with tempfile.NamedTemporaryFile(mode="w", suffix=".yaml", delete=False) as tmp:
-            yaml.safe_dump(resolved_config, tmp)
+            yaml.safe_dump(resolved_config, tmp, sort_keys=False)
             tmp_path = Path(tmp.name)
 
         try:
@@ -220,14 +223,10 @@ class InjectorSurrogate(LUMEModel):
 
     def _set(self, values: Mapping[str, Any]) -> None:
         """Update model state and regenerate exported output beam."""
+        for name, value in values.items():
+            self._cache[name] = value
         self.model.set(dict(values))
-
-        model_cache = getattr(self.model, "_cache", {})
-        scalarized_cache = {k: _to_python_scalar(v, k) for k, v in model_cache.items()}
-
-        beam = create_beam_distribution_from_state(scalarized_cache, self.n_particles)
-        scalarized_cache["output_beam"] = to_openpmd_particlegroup(beam)
-        self._cache = scalarized_cache
+        self.update_state()
 
     @property
     def supported_variables(self) -> dict[str, Any]:
@@ -241,14 +240,11 @@ class InjectorSurrogate(LUMEModel):
     def reset(self):
         self.model.reset()
         self._cache = {}
+
     def update_state(self):
         self._cache.update(self.model.get(list(self.model.supported_variables.keys())))
 
-        # replace torch tensors with floats
-        for key, value in self._cache.items():
-            if isinstance(value, torch.Tensor):
-                self._cache[key] = value.item()
-
-        # update a outgoing beam distribution
-        beam = create_beam_distribution_from_state(self._cache, self.n_particles)
-        self._cache["output_beam"] = to_openpmd_particlegroup(beam)
+        scalarized_cache = {k: _to_python_scalar(v, k) for k, v in self._cache.items()}
+        beam = create_beam_distribution_from_state(scalarized_cache, self.n_particles)
+        scalarized_cache["output_beam"] = to_openpmd_particlegroup(beam)
+        self._cache = scalarized_cache
