@@ -17,3 +17,30 @@ def test_injector_surrogate():
     updated_beam = surrogate.get(["output_beam"])["output_beam"]
     assert not (initial_beam.x == updated_beam.x).all()
     assert surrogate.get(["QUAD:IN20:525:BCTRL"])["QUAD:IN20:525:BCTRL"] == -5.0
+
+
+def test_injector_surrogate_outputs_are_physical():
+    "Avoids bugs due to YAML/loading errors that can be silent"
+    surrogate = InjectorSurrogate(n_particles=1000)
+
+    outputs = surrogate.get(
+        [
+            "OTRS:IN20:571:XRMS",
+            "OTRS:IN20:571:YRMS",
+            "sigma_z",
+            "norm_emit_x",
+            "norm_emit_y",
+        ]
+    )
+
+    xrms = outputs["OTRS:IN20:571:XRMS"]
+    yrms = outputs["OTRS:IN20:571:YRMS"]
+    sigma_z = outputs["sigma_z"]
+    norm_emit_x = outputs["norm_emit_x"]
+    norm_emit_y = outputs["norm_emit_y"]
+
+    assert 0.0 < xrms < 1.0e4
+    assert 0.0 < yrms < 1.0e4
+    assert 0.0 < sigma_z < 1.0e2
+    assert 0.0 < norm_emit_x < 1.0e-3
+    assert 0.0 < norm_emit_y < 1.0e-3
