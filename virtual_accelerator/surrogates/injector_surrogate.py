@@ -91,8 +91,8 @@ def create_beam_distribution_from_state(
     sigma_x = torch.tensor(state["OTRS:IN20:571:XRMS"] * 1e-6)
     sigma_y = torch.tensor(state["OTRS:IN20:571:YRMS"] * 1e-6)
     sigma_z = torch.tensor(state["sigma_z"] * 1e-6)
-    normalized_emittance_x = torch.tensor(state["norm_emit_x"] * 1e-6)
-    normalized_emittance_y = torch.tensor(state["norm_emit_y"] * 1e-6)
+    normalized_emittance_x = torch.tensor(state["norm_emit_x"])
+    normalized_emittance_y = torch.tensor(state["norm_emit_y"])
     energy = OTR2_BEAM_ENERGY
     relativistic_gamma = energy / (
         constants.value("electron mass energy equivalent in MeV") * 1e6
@@ -101,6 +101,8 @@ def create_beam_distribution_from_state(
         num_particles=n_particles,
         beta_x=sigma_x**2 / (normalized_emittance_x / relativistic_gamma),
         beta_y=sigma_y**2 / (normalized_emittance_y / relativistic_gamma),
+        alpha_x=torch.tensor(0.1333896),
+        alpha_y=torch.tensor(0.1333896),
         emittance_x=normalized_emittance_x / relativistic_gamma,
         emittance_y=normalized_emittance_y / relativistic_gamma,
         sigma_tau=sigma_z,
