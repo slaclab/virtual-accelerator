@@ -11,11 +11,15 @@ TEST_BEAM_PATH = os.path.join(Path(__file__).parent, "../bmad", "test_beam")
 
 class TestCUHXRBmad:
     def test_initialization(self):
-        model = get_cu_hxr_bmad_model(custom_beam_path=TEST_BEAM_PATH)
+        model = get_cu_hxr_bmad_model(
+            end_element="OTR4", custom_beam_path=TEST_BEAM_PATH
+        )
 
         assert "QUAD:IN20:631:BCTRL" in model.control_variables
 
-        model = get_cu_hxr_bmad_model(track_beam=True, custom_beam_path=TEST_BEAM_PATH)
+        model = get_cu_hxr_bmad_model(
+            end_element="OTR4", track_beam=True, custom_beam_path=TEST_BEAM_PATH
+        )
         assert "OTRS:IN20:711:Image:ArrayData" in model.supported_variables
 
     def test_cu_hxr_twiss(self):
@@ -38,7 +42,9 @@ class TestCUHXRBmad:
         )
 
     def test_cu_hxr_screen(self):
-        model = get_cu_hxr_bmad_model(track_beam=True, custom_beam_path=TEST_BEAM_PATH)
+        model = get_cu_hxr_bmad_model(
+            end_element="OTR4", track_beam=True, custom_beam_path=TEST_BEAM_PATH
+        )
 
         # set tracking
         model.set({"track_type": 1})
