@@ -52,6 +52,8 @@ def get_cu_hxr_bmad_model(
     init_file = os.path.join(LCLS_LATTICE, "bmad/models/cu_hxr/tao.init")
     tao = Tao(f"-init {init_file} -noplot -slice_lattice {start_element}:{end_element}")
 
+    # get supported variables from tao lattice and get mapping from control
+    # system device names to bmad element names
     control_name_to_element_name = get_epics_to_name_or_overlay_mapping()
     variables = get_variables(tao)
 

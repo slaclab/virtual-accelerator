@@ -33,7 +33,9 @@ class TestCUHXRBmad:
         assert len(model.supported_variables) < 40
 
         # test getting partial lattice with beam tracking
-        model = get_cu_hxr_bmad_model(end_element="OTR4", track_beam=True)
+        model = get_cu_hxr_bmad_model(
+            end_element="OTR4", track_beam=True, custom_beam_path=TEST_BEAM_PATH
+        )
 
     def test_cu_hxr_screen(self):
         model = get_cu_hxr_bmad_model(track_beam=True, custom_beam_path=TEST_BEAM_PATH)
