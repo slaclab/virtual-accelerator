@@ -1,6 +1,7 @@
 import os
 from pathlib import Path
 from pytao import Tao
+import h5py
 
 from lume_bmad.model import LUMEBmadModel
 from lume_cheetah import LUMECheetahModel, CheetahSimulator
@@ -94,7 +95,6 @@ def get_cu_hxr_bmad_model(
             )
 
         model.tao.cmd(f"set beam_init position_file = {beam_path}")
-        model.tao.cmd("set beam_init n_particle = 2000")
         model.set({"track_type": 1})
 
     return model
