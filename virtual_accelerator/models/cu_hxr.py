@@ -94,6 +94,7 @@ def get_cu_hxr_bmad_model(
             )
 
         model.tao.cmd(f"set beam_init position_file = {beam_path}")
+        model.tao.cmd("set beam_init n_particle = 2000")
         model.set({"track_type": 1})
 
     return model
