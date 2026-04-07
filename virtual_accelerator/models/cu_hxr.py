@@ -1,7 +1,6 @@
 import os
 from pathlib import Path
 from pytao import Tao
-import h5py
 
 from lume_bmad.model import LUMEBmadModel
 from lume_cheetah import LUMECheetahModel, CheetahSimulator
