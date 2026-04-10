@@ -48,21 +48,26 @@ def get_cu_hxr_bmad_model(
         Instance of the LUMEBmadModel for the CU_HXR lattice.
     """
 
+    # create Tao instance
     LCLS_LATTICE = os.environ["LCLS_LATTICE"]
     init_file = os.path.join(LCLS_LATTICE, "bmad/models/cu_hxr/tao.init")
     tao = Tao(f"-init {init_file} -noplot -slice_lattice {start_element}:{end_element}")
 
+    # get supported variables from tao lattice and get mapping from control
+    # system device names to bmad element names
     control_name_to_element_name = get_epics_to_name_or_overlay_mapping()
     variables = get_variables(tao)
 
     # Define the controllable and observable variables
     control_variables, observable_variables = split_control_and_observable(variables)
+
     # handle Profile Monitors
     screens = ["OTR3", "OTR4", "OTR11", "OTR12", "OTR21"]
     control_variables, screen_attributes, used_screens = get_cu_hxr_screen_variables(
         tao, control_variables, screens
     )
 
+    # Create transformer that handles maps get/set calls and updates the beam distribution
     transformer = CUBmadTransformer(
         control_name_to_bmad=control_name_to_element_name,
         screen_attributes=screen_attributes,

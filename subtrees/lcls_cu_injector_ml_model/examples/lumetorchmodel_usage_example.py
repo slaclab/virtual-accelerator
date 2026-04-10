@@ -19,8 +19,8 @@ def main():
     ltmodel = LUMETorchModel(model)
 
     # Set input values
-    print("\nSetting input: QUAD:IN20:121:BACT= -0.02")
-    ltmodel.set({"QUAD:IN20:121:BACT": -0.02})
+    print("\nSetting input: QUAD:IN20:121:BCTRL= -0.02")
+    ltmodel.set({"QUAD:IN20:121:BCTRL": -0.02})
 
     # Get outputs
     outputs = ltmodel.get(ltmodel.torch_model.output_names)
