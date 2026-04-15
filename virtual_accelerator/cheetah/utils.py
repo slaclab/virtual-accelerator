@@ -108,21 +108,23 @@ TRANSVERSE_DEFLECTING_CAVITY_MAPPING = {
 }
 
 BPM_MAPPING = {
-    "X": FieldAccessor(lambda e, energy: e.reading[0]),
-    "Y": FieldAccessor(lambda e, energy: e.reading[1]),
-    "XSCDT1H": FieldAccessor(lambda e, energy: e.reading[0]),
-    "YSCDT1H": FieldAccessor(lambda e, energy: e.reading[1]),
+    "X": FieldAccessor(lambda e, energy: e.reading[..., 0]),
+    "Y": FieldAccessor(lambda e, energy: e.reading[..., 1]),
+    "XSCDT1H": FieldAccessor(lambda e, energy: e.reading[..., 0]),
+    "YSCDT1H": FieldAccessor(lambda e, energy: e.reading[..., 1]),
     "TMIT": FieldAccessor(lambda e, energy: 1.0),
 }
 
 # multiply image intensity by 16 bit number range (is similar to real machine?)
 SCREEN_MAPPING = {
-    "Image:ArrayData": FieldAccessor(lambda e, energy: e.reading.T * 65535),
+    "Image:ArrayData": FieldAccessor(
+        lambda e, energy: e.reading.transpose(-2, -1) * 65535
+    ),
     "PNEUMATIC": "is_active",
     "Image:ArraySize1_RBV": FieldAccessor(lambda e, energy: e.resolution[0]),
     "Image:ArraySize0_RBV": FieldAccessor(lambda e, energy: e.resolution[1]),
     "RESOLUTION": FieldAccessor(lambda e, energy: e.pixel_size[0] * 1e6),
-    "IMAGE": FieldAccessor(lambda e, energy: e.reading.T * 65535),
+    "IMAGE": FieldAccessor(lambda e, energy: e.reading.transpose(-2, -1) * 65535),
     "N_OF_ROW": FieldAccessor(lambda e, energy: e.resolution[0]),
     "N_OF_COL": FieldAccessor(lambda e, energy: e.resolution[1]),
 }
@@ -180,6 +182,7 @@ def handle_quadrupole_composite(element, pv_attribute, energy, set_value):
             Attribute value if getting, otherwise None.
     """
     length = element.base_element.length
+    # if length is vectorized need tests for broadcasting set_values/ length
 
     if set_value is not None and pv_attribute in {"BCTRL", "BACT", "BDES"}:
         new_k1 = set_value / get_magnetic_rigidity(energy) / length
