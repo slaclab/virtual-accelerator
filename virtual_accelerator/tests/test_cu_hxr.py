@@ -17,6 +17,7 @@ def _has_module(name: str) -> bool:
 
 HAS_BMAD_DEPS = _has_module("pytao") and _has_module("lume_bmad")
 HAS_CHEETAH_DEPS = _has_module("cheetah") and _has_module("lume_cheetah")
+HAS_LCLS_LATTICE = bool(os.environ.get("LCLS_LATTICE"))
 
 
 @pytest.mark.skipif(not HAS_BMAD_DEPS, reason="requires bmad optional dependencies")
@@ -86,7 +87,8 @@ class TestCUHXRBmad:
 
 
 @pytest.mark.skipif(
-    not HAS_CHEETAH_DEPS, reason="requires cheetah optional dependencies"
+    (not HAS_CHEETAH_DEPS) or (not HAS_LCLS_LATTICE),
+    reason="requires cheetah optional dependencies and LCLS_LATTICE",
 )
 class TestCUHXRCheetah:
     def test_initialization(self):
