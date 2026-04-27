@@ -33,7 +33,6 @@ pytestmark = pytest.mark.skipif(
             "lume_bmad",
             "cheetah",
             "lume_cheetah",
-            "pmd_beamphysics",
         )
     ),
     reason="requires staged-model optional dependencies",

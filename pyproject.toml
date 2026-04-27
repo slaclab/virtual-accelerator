@@ -28,7 +28,6 @@ dependencies = [
     "scipy",
     "pyyaml",
     "lume-base @ git+https://github.com/slaclab/lume-base",
-    "pmd-beamphysics",
 ]
 
 [project.urls]
