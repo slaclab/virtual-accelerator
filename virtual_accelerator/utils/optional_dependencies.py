@@ -18,4 +18,13 @@ def import_optional_symbol(
 ) -> Any:
     """Import a symbol from an optional module with a clear install hint."""
     module = import_optional(module_name, feature=feature, extra=extra)
-    return getattr(module, symbol_name)
+    try:
+        return getattr(module, symbol_name)
+    except AttributeError as exc:
+        raise ImportError(
+            f"{feature} requires symbol '{symbol_name}' from optional dependency "
+            f"'{module_name}', but it was not found. Install it with: "
+            f"pip install virtual-accelerator[{extra}]. "
+            f"If it is already installed, check that you have a compatible version "
+            f"that provides '{symbol_name}'."
+        ) from exc
