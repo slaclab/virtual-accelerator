@@ -1,24 +1,18 @@
 import os
-from importlib import import_module
 from pathlib import Path
 
+from virtual_accelerator.utils.optional_dependencies import import_optional
 from virtual_accelerator.utils.variables import (
     get_epics_to_name_or_overlay_mapping,
     get_epics_to_name_mapping,
     split_control_and_observable,
 )
 
-def _import_optional_symbol(
-    module_name: str, symbol_name: str, feature: str, extra: str
-):
-    try:
-        module = import_module(module_name)
-    except ImportError as exc:
-        raise ImportError(
-            f"{feature} requires optional dependency '{module_name}'. "
-            f"Install it with: pip install virtual-accelerator[{extra}]"
-        ) from exc
-    return getattr(module, symbol_name)
+
+def _check_optional_modules(module_names: list[str], feature: str, extra: str) -> None:
+    """Validate all optional modules for a feature in a single gate check."""
+    for module_name in module_names:
+        import_optional(module_name, feature=feature, extra=extra)
 
 
 def get_cu_hxr_bmad_model(
@@ -45,35 +39,23 @@ def get_cu_hxr_bmad_model(
         Instance of the LUMEBmadModel for the CU_HXR lattice.
     """
 
-    Tao = _import_optional_symbol(
-        "pytao",
-        "Tao",
+    _check_optional_modules(
+        [
+            "pytao",
+            "lume_bmad.model",
+            "virtual_accelerator.bmad.cu_transformer",
+            "virtual_accelerator.bmad.variables",
+        ],
         feature="CU HXR Bmad model",
         extra="bmad",
     )
-    LUMEBmadModel = _import_optional_symbol(
-        "lume_bmad.model",
-        "LUMEBmadModel",
-        feature="CU HXR Bmad model",
-        extra="bmad",
-    )
-    CUBmadTransformer = _import_optional_symbol(
-        "virtual_accelerator.bmad.cu_transformer",
-        "CUBmadTransformer",
-        feature="CU HXR Bmad model",
-        extra="bmad",
-    )
-    get_variables = _import_optional_symbol(
-        "virtual_accelerator.bmad.variables",
-        "get_variables",
-        feature="CU HXR Bmad model",
-        extra="bmad",
-    )
-    get_cu_hxr_screen_variables = _import_optional_symbol(
-        "virtual_accelerator.bmad.variables",
-        "get_cu_hxr_screen_variables",
-        feature="CU HXR Bmad model",
-        extra="bmad",
+
+    from pytao import Tao
+    from lume_bmad.model import LUMEBmadModel
+    from virtual_accelerator.bmad.cu_transformer import CUBmadTransformer
+    from virtual_accelerator.bmad.variables import (
+        get_variables,
+        get_cu_hxr_screen_variables,
     )
 
     # create Tao instance
@@ -136,43 +118,23 @@ def get_cu_hxr_cheetah_model():
     LUMECheetahModel
         Instance of the LUMECheetahModel for the CU_HXR lattice.
     """
-    LUMECheetahModel = _import_optional_symbol(
-        "lume_cheetah",
-        "LUMECheetahModel",
+    _check_optional_modules(
+        [
+            "lume_cheetah",
+            "cheetah.accelerator",
+            "cheetah.particles",
+            "virtual_accelerator.cheetah.transformer",
+            "virtual_accelerator.cheetah.variables",
+        ],
         feature="CU HXR Cheetah model",
         extra="cheetah",
     )
-    CheetahSimulator = _import_optional_symbol(
-        "lume_cheetah",
-        "CheetahSimulator",
-        feature="CU HXR Cheetah model",
-        extra="cheetah",
-    )
-    Segment = _import_optional_symbol(
-        "cheetah.accelerator",
-        "Segment",
-        feature="CU HXR Cheetah model",
-        extra="cheetah",
-    )
-    ParticleBeam = _import_optional_symbol(
-        "cheetah.particles",
-        "ParticleBeam",
-        feature="CU HXR Cheetah model",
-        extra="cheetah",
-    )
-    SLACCheetahTransformer = _import_optional_symbol(
-        "virtual_accelerator.cheetah.transformer",
-        "SLACCheetahTransformer",
-        feature="CU HXR Cheetah model",
-        extra="cheetah",
-    )
-    get_variables_from_segment = _import_optional_symbol(
-        "virtual_accelerator.cheetah.variables",
-        "get_variables_from_segment",
-        feature="CU HXR Cheetah model",
-        extra="cheetah",
-    )
-    
+
+    from lume_cheetah import LUMECheetahModel, CheetahSimulator
+    from cheetah.accelerator import Segment
+    from cheetah.particles import ParticleBeam
+    from virtual_accelerator.cheetah.transformer import SLACCheetahTransformer
+    from virtual_accelerator.cheetah.variables import get_variables_from_segment
     import torch
 
     # Get path to beam distributions

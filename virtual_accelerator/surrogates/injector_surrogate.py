@@ -86,9 +86,7 @@ def to_openpmd_particlegroup(beam) -> "openpmd.ParticleGroup":  # noqa: F821
     return particle_group
 
 
-def create_beam_distribution_from_state(
-    state: Mapping[str, Any], n_particles: int
-) -> "ParticleBeam":
+def create_beam_distribution_from_state(state: Mapping[str, Any], n_particles: int):
     ParticleBeam = import_optional_symbol(
         "cheetah.particles",
         "ParticleBeam",
