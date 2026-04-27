@@ -5,7 +5,6 @@ name: Test core install (no optional extras)
 # backend-specific tests should be skipped, not errored.
 
 on:
-  pull_request:
   push:
 
 jobs:

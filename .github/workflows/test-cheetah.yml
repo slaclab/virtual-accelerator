@@ -4,7 +4,6 @@ name: Test cheetah extra
 # TestCUHXRCheetah runs; bmad, surrogate, and staged-model tests skip.
 
 on:
-  pull_request:
   push:
 
 jobs:

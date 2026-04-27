@@ -5,7 +5,6 @@ name: Test surrogate extra
 # Does not require LCLS_LATTICE — the injector surrogate is self-contained.
 
 on:
-  pull_request:
   push:
 
 jobs:
