@@ -1,17 +1,12 @@
 import os
 from importlib import import_module
 from pathlib import Path
-from virtual_accelerator.bmad.variables import (
-    get_variables,
-    get_cu_hxr_screen_variables,
-)
+
 from virtual_accelerator.utils.variables import (
     get_epics_to_name_or_overlay_mapping,
     get_epics_to_name_mapping,
     split_control_and_observable,
 )
-import torch
-
 
 def _import_optional_symbol(
     module_name: str, symbol_name: str, feature: str, extra: str
@@ -62,6 +57,10 @@ def get_cu_hxr_bmad_model(
         extra="bmad",
     )
     from virtual_accelerator.bmad.cu_transformer import CUBmadTransformer
+    from virtual_accelerator.bmad.variables import (
+        get_variables,
+        get_cu_hxr_screen_variables,
+    )
 
     # create Tao instance
     LCLS_LATTICE = os.environ["LCLS_LATTICE"]
@@ -149,6 +148,7 @@ def get_cu_hxr_cheetah_model():
     )
     from virtual_accelerator.cheetah.transformer import SLACCheetahTransformer
     from virtual_accelerator.cheetah.variables import get_variables_from_segment
+    import torch
 
     # Get path to beam distributions
     # beam_dist = os.environ.get(
