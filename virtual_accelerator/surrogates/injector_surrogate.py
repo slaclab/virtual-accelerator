@@ -12,7 +12,7 @@ from lume_torch.base import LUMETorchModel
 from lume_torch.models.torch_model import TorchModel
 from scipy import constants
 
-from ..utils.optional_dependencies import import_optional_symbol
+from virtual_accelerator.utils.optional_dependencies import import_optional_symbol
 
 OTR2_BEAM_ENERGY = 135.0e6  # eV
 
