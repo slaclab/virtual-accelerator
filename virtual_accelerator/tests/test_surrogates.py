@@ -16,7 +16,7 @@ def _has_module(name: str) -> bool:
 
 
 pytestmark = pytest.mark.skipif(
-    not (_has_module("cheetah") and _has_module("pmd_beamphysics")),
+    not (_has_module("cheetah") and _has_module("beamphysics")),
     reason="requires surrogate optional dependencies: pip install virtual-accelerator[surrogate,cheetah]",
 )
 
