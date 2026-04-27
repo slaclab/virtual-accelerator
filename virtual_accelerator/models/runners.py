@@ -21,6 +21,7 @@ def main():
         feature="virtual accelerator runner CLI",
         extra="pva",
     )
+
     from virtual_accelerator.models.cu_hxr import (
         get_cu_hxr_bmad_model,
         get_cu_hxr_cheetah_model,

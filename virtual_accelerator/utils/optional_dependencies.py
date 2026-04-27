@@ -2,11 +2,20 @@ from importlib import import_module
 from typing import Any
 
 
+def _is_missing_requested_module(module_name: str, exc: ModuleNotFoundError) -> bool:
+    """Return True only when the missing module matches the requested import path."""
+    if exc.name is None:
+        return False
+    return exc.name == module_name or module_name.startswith(f"{exc.name}.")
+
+
 def import_optional(module_name: str, feature: str, extra: str) -> Any:
     """Import an optional module with an actionable error for missing extras."""
     try:
         return import_module(module_name)
-    except ImportError as exc:
+    except ModuleNotFoundError as exc:
+        if not _is_missing_requested_module(module_name, exc):
+            raise
         raise ImportError(
             f"{feature} requires optional dependency '{module_name}'. "
             f"Install it with: pip install virtual-accelerator[{extra}]"

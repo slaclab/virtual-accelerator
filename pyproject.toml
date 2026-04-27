@@ -41,6 +41,7 @@ bmad = [
     "lume-bmad @ git+https://github.com/lume-science/lume-bmad",
 ]
 cheetah = [
+    "torch",
     "lume-cheetah @ git+https://github.com/lume-science/lume-cheetah",
     "lume-torch @ git+https://github.com/lume-science/lume-torch",
 ]
@@ -51,10 +52,12 @@ pva = [
     "lume-pva @ git+https://github.com/lume-science/lume-pva"
 ]
 surrogate = [
+    "torch",
     "lume-torch @ git+https://github.com/lume-science/lume-torch",
     "lume-cheetah @ git+https://github.com/lume-science/lume-cheetah"
 ]
 all = [
+    "torch",
     "lume-bmad @ git+https://github.com/lume-science/lume-bmad",
     "lume-cheetah @ git+https://github.com/lume-science/lume-cheetah",
     "lume-impact @ git+https://github.com/ChristopherMayes/lume-impact",

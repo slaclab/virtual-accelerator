@@ -47,6 +47,8 @@ def get_variables_from_segment(
     See `get_variables_from_element_name` for details on the specification of `element_attr_mapping`.
 
     """
+    from cheetah.accelerator import Screen
+
     #
     all_variables = {}
     device_mapping = device_mapping or get_name_to_epics_mapping()
@@ -66,7 +68,7 @@ def get_variables_from_segment(
         )
 
         # if element type is a screen then modify the output variable
-        if type(element).__name__ == "Screen":
+        if isinstance(element, Screen):
             element_variables[
                 f"{control_name}:Image:ArrayData"
             ].shape = element.resolution
