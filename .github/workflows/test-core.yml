@@ -1,0 +1,50 @@
+name: Test core install (no optional extras)
+
+# Verifies that importing the package and running the test suite does NOT raise
+# ImportErrors when no simulation backend extras are installed.  All
+# backend-specific tests should be skipped, not errored.
+
+on:
+  pull_request:
+  push:
+
+jobs:
+  test-core:
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        python-version: ["3.11", "3.12", "3.13"]
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          submodules: recursive
+          fetch-depth: 1
+
+      - name: Set up Python ${{ matrix.python-version }}
+        uses: actions/setup-python@v5
+        with:
+          python-version: ${{ matrix.python-version }}
+
+      - name: Install CPU-only PyTorch
+        run: pip install --upgrade --index-url https://download.pytorch.org/whl/cpu torch
+
+      - name: Install core package and dev dependencies (no extras)
+        run: pip install ".[dev]"
+
+      - name: List installed packages
+        run: pip list
+
+      - name: Verify package imports without any optional backends
+        run: |
+          python - <<'PY'
+          import virtual_accelerator
+          import virtual_accelerator.models.cu_hxr
+          import virtual_accelerator.models.sc_diag0
+          import virtual_accelerator.models.staged_model
+          import virtual_accelerator.models.runners
+          print("All core imports succeeded without optional backends.")
+          PY
+
+      - name: Run tests (backend tests should skip, not error)
+        run: pytest virtual_accelerator/tests -v --tb=short

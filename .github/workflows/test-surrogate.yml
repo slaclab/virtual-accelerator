@@ -1,0 +1,50 @@
+name: Test surrogate extra
+
+# Verifies the [surrogate] optional extra installs and runs correctly.
+# test_surrogates.py runs in full; bmad/cheetah model tests skip.
+# Does not require LCLS_LATTICE — the injector surrogate is self-contained.
+
+on:
+  pull_request:
+  push:
+
+jobs:
+  test-surrogate:
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        python-version: ["3.11", "3.12", "3.13"]
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          submodules: recursive
+          fetch-depth: 1
+
+      - name: Set up Python ${{ matrix.python-version }}
+        uses: actions/setup-python@v5
+        with:
+          python-version: ${{ matrix.python-version }}
+
+      - name: Install CPU-only PyTorch
+        run: pip install --upgrade --index-url https://download.pytorch.org/whl/cpu torch
+
+      - name: Install package with surrogate and cheetah extras
+        # surrogate provides lume-torch (LUMETorchModel)
+        # cheetah provides cheetah.particles.ParticleBeam used to build beam distributions
+        run: pip install ".[surrogate,cheetah,dev]"
+
+      - name: List installed packages
+        run: pip list
+
+      - name: Verify surrogate imports work
+        run: |
+          python - <<'PY'
+          from lume_torch.base import LUMETorchModel
+          from cheetah.particles import ParticleBeam
+          from virtual_accelerator.surrogates.injector_surrogate import InjectorSurrogate
+          print("Surrogate imports OK")
+          PY
+
+      - name: Run tests (test_surrogates runs; bmad/staged tests skip)
+        run: pytest virtual_accelerator/tests -v --tb=short

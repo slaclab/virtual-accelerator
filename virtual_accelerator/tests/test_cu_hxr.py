@@ -1,6 +1,8 @@
 import os
+import importlib.util
 
 from pathlib import Path
+import pytest
 from virtual_accelerator.models.cu_hxr import (
     get_cu_hxr_bmad_model,
     get_cu_hxr_cheetah_model,
@@ -9,6 +11,15 @@ from virtual_accelerator.models.cu_hxr import (
 TEST_BEAM_PATH = os.path.join(Path(__file__).parent, "../bmad", "test_beam")
 
 
+def _has_module(name: str) -> bool:
+    return importlib.util.find_spec(name) is not None
+
+
+HAS_BMAD_DEPS = _has_module("pytao") and _has_module("lume_bmad")
+HAS_CHEETAH_DEPS = _has_module("cheetah") and _has_module("lume_cheetah")
+
+
+@pytest.mark.skipif(not HAS_BMAD_DEPS, reason="requires bmad optional dependencies")
 class TestCUHXRBmad:
     def test_initialization(self):
         model = get_cu_hxr_bmad_model(
@@ -74,6 +85,9 @@ class TestCUHXRBmad:
         assert ampl["KLYS:LI21:31:ENLD"] == enld
 
 
+@pytest.mark.skipif(
+    not HAS_CHEETAH_DEPS, reason="requires cheetah optional dependencies"
+)
 class TestCUHXRCheetah:
     def test_initialization(self):
         model = get_cu_hxr_cheetah_model()

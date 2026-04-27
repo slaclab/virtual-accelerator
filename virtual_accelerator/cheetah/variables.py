@@ -1,5 +1,4 @@
 from typing import Any
-from cheetah.accelerator import Screen, Segment
 import warnings
 from lume.variables import Variable
 from virtual_accelerator.utils.variables import (
@@ -11,7 +10,7 @@ from virtual_accelerator.utils.variables import (
 
 
 def get_variables_from_segment(
-    segment: Segment,
+    segment,
     device_mapping: dict[str, str] = None,
     element_attr_mapping: dict[str, dict[str, dict[str, Any]]] = None,
 ) -> dict[str, Variable]:
@@ -67,7 +66,7 @@ def get_variables_from_segment(
         )
 
         # if element type is a screen then modify the output variable
-        if isinstance(element, Screen):
+        if type(element).__name__ == "Screen":
             element_variables[
                 f"{control_name}:Image:ArrayData"
             ].shape = element.resolution

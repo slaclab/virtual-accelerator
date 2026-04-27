@@ -6,12 +6,13 @@ from typing import Any, Iterable, Mapping
 import numpy as np
 import torch
 import yaml
-from cheetah.particles import ParticleBeam
 from lume.model import LUMEModel
 from lume.variables import ParticleGroupVariable
 from lume_torch.base import LUMETorchModel
 from lume_torch.models.torch_model import TorchModel
 from scipy import constants
+
+from ..utils.optional_dependencies import import_optional_symbol
 
 OTR2_BEAM_ENERGY = 135.0e6  # eV
 
@@ -47,10 +48,10 @@ def to_openpmd_particlegroup(beam) -> "openpmd.ParticleGroup":  # noqa: F821
     :return: openPMD `ParticleGroup` object with the `ParticleBeam`'s particles.
     """
     try:
-        import pmd_beamphysics as openpmd
+        import beamphysics as openpmd
     except ImportError:
         raise ImportError(
-            """To use the openPMD beam export, openPMD-beamphysics must be
+            """To use the openPMD beam export, beamphysics must be
             installed."""
         )
 
@@ -87,7 +88,14 @@ def to_openpmd_particlegroup(beam) -> "openpmd.ParticleGroup":  # noqa: F821
 
 def create_beam_distribution_from_state(
     state: Mapping[str, Any], n_particles: int
-) -> ParticleBeam:
+) -> "ParticleBeam":
+    ParticleBeam = import_optional_symbol(
+        "cheetah.particles",
+        "ParticleBeam",
+        feature="injector surrogate beam generation",
+        extra="cheetah",
+    )
+
     sigma_x = torch.tensor(state["OTRS:IN20:571:XRMS"] * 1e-6)
     sigma_y = torch.tensor(state["OTRS:IN20:571:YRMS"] * 1e-6)
     sigma_z = torch.tensor(state["sigma_z"] * 1e-6)
