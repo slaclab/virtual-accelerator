@@ -29,10 +29,9 @@ jobs:
       - name: Install CPU-only PyTorch
         run: pip install --upgrade --index-url https://download.pytorch.org/whl/cpu torch
 
-      - name: Install package with surrogate and cheetah extras
+      - name: Install package with surrogate extras
         # surrogate provides lume-torch (LUMETorchModel)
-        # cheetah provides cheetah.particles.ParticleBeam used to build beam distributions
-        run: pip install ".[surrogate,cheetah,dev]"
+        run: pip install ".[surrogate,dev]"
 
       - name: List installed packages
         run: pip list
@@ -41,7 +40,6 @@ jobs:
         run: |
           python - <<'PY'
           from lume_torch.base import LUMETorchModel
-          from cheetah.particles import ParticleBeam
           from virtual_accelerator.surrogates.injector_surrogate import InjectorSurrogate
           print("Surrogate imports OK")
           PY

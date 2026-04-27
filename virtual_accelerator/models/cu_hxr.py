@@ -20,6 +20,7 @@ def _import_optional_symbol(
         ) from exc
     return getattr(module, symbol_name)
 
+
 def get_cu_hxr_bmad_model(
     start_element="OTR2", end_element="END", track_beam=False, custom_beam_path=None
 ):
@@ -56,10 +57,23 @@ def get_cu_hxr_bmad_model(
         feature="CU HXR Bmad model",
         extra="bmad",
     )
-    from virtual_accelerator.bmad.cu_transformer import CUBmadTransformer
-    from virtual_accelerator.bmad.variables import (
-        get_variables,
-        get_cu_hxr_screen_variables,
+    CUBmadTransformer = _import_optional_symbol(
+        "virtual_accelerator.bmad.cu_transformer",
+        "CUBmadTransformer",
+        feature="CU HXR Bmad model",
+        extra="bmad",
+    )
+    get_variables = _import_optional_symbol(
+        "virtual_accelerator.bmad.variables",
+        "get_variables",
+        feature="CU HXR Bmad model",
+        extra="bmad",
+    )
+    get_cu_hxr_screen_variables = _import_optional_symbol(
+        "virtual_accelerator.bmad.variables",
+        "get_cu_hxr_screen_variables",
+        feature="CU HXR Bmad model",
+        extra="bmad",
     )
 
     # create Tao instance
@@ -146,8 +160,19 @@ def get_cu_hxr_cheetah_model():
         feature="CU HXR Cheetah model",
         extra="cheetah",
     )
-    from virtual_accelerator.cheetah.transformer import SLACCheetahTransformer
-    from virtual_accelerator.cheetah.variables import get_variables_from_segment
+    SLACCheetahTransformer = _import_optional_symbol(
+        "virtual_accelerator.cheetah.transformer",
+        "SLACCheetahTransformer",
+        feature="CU HXR Cheetah model",
+        extra="cheetah",
+    )
+    get_variables_from_segment = _import_optional_symbol(
+        "virtual_accelerator.cheetah.variables",
+        "get_variables_from_segment",
+        feature="CU HXR Cheetah model",
+        extra="cheetah",
+    )
+    
     import torch
 
     # Get path to beam distributions

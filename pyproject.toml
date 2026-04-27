@@ -50,7 +50,8 @@ pva = [
     "lume-pva @ git+https://github.com/lume-science/lume-pva"
 ]
 surrogate = [
-    "lume-torch @ git+https://github.com/lume-science/lume-torch"
+    "lume-torch @ git+https://github.com/lume-science/lume-torch",
+    "lume-cheetah @ git+https://github.com/lume-science/lume-cheetah"
 ]
 all = [
     "lume-bmad @ git+https://github.com/lume-science/lume-bmad",

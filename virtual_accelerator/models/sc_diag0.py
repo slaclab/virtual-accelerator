@@ -7,7 +7,7 @@ from virtual_accelerator.utils.variables import (
 )
 import torch
 
-from ..utils.optional_dependencies import import_optional_symbol
+from ..utils.optional_dependencies import import_optional_symbol as _import_optional_symbol
 
 
 def get_sc_diag0_cheetah_model():
@@ -20,32 +20,42 @@ def get_sc_diag0_cheetah_model():
         Instance of the LUMECheetahModel for the SC_DIAG0 lattice.
     """
 
-    LUMECheetahModel = import_optional_symbol(
+    LUMECheetahModel = _import_optional_symbol(
         "lume_cheetah",
         "LUMECheetahModel",
         feature="SC DIAG0 Cheetah model",
         extra="cheetah",
     )
-    CheetahSimulator = import_optional_symbol(
+    CheetahSimulator = _import_optional_symbol(
         "lume_cheetah",
         "CheetahSimulator",
         feature="SC DIAG0 Cheetah model",
         extra="cheetah",
     )
-    Segment = import_optional_symbol(
+    Segment = _import_optional_symbol(
         "cheetah.accelerator",
         "Segment",
         feature="SC DIAG0 Cheetah model",
         extra="cheetah",
     )
-    ParticleBeam = import_optional_symbol(
+    ParticleBeam = _import_optional_symbol(
         "cheetah.particles",
         "ParticleBeam",
         feature="SC DIAG0 Cheetah model",
         extra="cheetah",
     )
-    from virtual_accelerator.cheetah.transformer import SLACCheetahTransformer
-    from virtual_accelerator.cheetah.variables import get_variables_from_segment
+    SLACCheetahTransformer = _import_optional_symbol(
+        "virtual_accelerator.cheetah.transformer",
+        "SLACCheetahTransformer",
+        feature="SC DIAG0 Cheetah model",
+        extra="cheetah",
+    )
+    get_variables_from_segment = _import_optional_symbol(
+        "virtual_accelerator.cheetah.variables",
+        "get_variables_from_segment",
+        feature="SC DIAG0 Cheetah model",
+        extra="cheetah",
+    )
 
     incoming_beam = ParticleBeam.from_twiss(
         beta_x=torch.tensor(9.34),
