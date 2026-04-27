@@ -4,17 +4,13 @@ from pathlib import Path
 import pandas as pd
 from typing import Any
 import warnings
-import torch
 
 from lume.variables import Variable, ScalarVariable, NDVariable
-from lume_torch.variables import TorchScalarVariable, TorchNDVariable
 import yaml
 
 VARIABLE_CLASS_MAP = {
     "ScalarVariable": ScalarVariable,
     "NDVariable": NDVariable,
-    "TorchScalarVariable": TorchScalarVariable,
-    "TorchNDVariable": TorchNDVariable,
 }
 
 
@@ -254,7 +250,7 @@ def split_control_and_observable(
 
 
 def convert_to_torch_variables(
-    variables: dict[str, Variable], dtype=torch.float32
+    variables: dict[str, Variable], dtype="float32"
 ) -> dict[str, Variable]:
     """
     Convert a dictionary of Variable instances into their corresponding Torch-based variants.
@@ -288,6 +284,16 @@ def convert_to_torch_variables(
         - Uses `variable.dict()` for serialization (Pydantic v1). Replace with
           `model_dump()` if using Pydantic v2.
     """
+
+    from lume_torch.variables import TorchScalarVariable, TorchNDVariable
+
+    VARIABLE_CLASS_MAP = {
+        "ScalarVariable": ScalarVariable,
+        "NDVariable": NDVariable,
+        "TorchScalarVariable": TorchScalarVariable,
+        "TorchNDVariable": TorchNDVariable,
+    }
+
     torch_variables: dict[str, Variable] = {}
 
     for name, variable in variables.items():
