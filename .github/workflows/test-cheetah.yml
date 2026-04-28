@@ -43,7 +43,7 @@ jobs:
       - name: Verify cheetah import works
         run: python -c "from lume_cheetah import LUMECheetahModel; print('lume_cheetah imported OK')"
 
-      - name: Run tests (TestCUHXRCheetah runs; bmad/surrogate/staged tests skip)
+      - name: Run tests (TestCUHXRCheetah runs; bmad/staged tests skip)
         env:
           LCLS_LATTICE: ${{ github.workspace }}/lcls-lattice
         run: pytest virtual_accelerator/tests -v --tb=short
