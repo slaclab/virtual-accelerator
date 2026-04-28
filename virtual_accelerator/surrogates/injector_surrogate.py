@@ -4,17 +4,47 @@ import tempfile
 from typing import Any, Iterable, Mapping
 
 import numpy as np
-import torch
 import yaml
 from lume.model import LUMEModel
 from lume.variables import ParticleGroupVariable
-from lume_torch.base import LUMETorchModel
-from lume_torch.models.torch_model import TorchModel
 from scipy import constants
 
-from virtual_accelerator.utils.optional_dependencies import import_optional_symbol
+from virtual_accelerator.utils.optional_dependencies import (
+    import_optional,
+    import_optional_symbol,
+)
 
 OTR2_BEAM_ENERGY = 135.0e6  # eV
+
+torch = import_optional(
+    "torch",
+    feature="injector surrogate",
+    extra="surrogate",
+)
+LUMETorchModel = import_optional_symbol(
+    "lume_torch.base",
+    "LUMETorchModel",
+    feature="injector surrogate",
+    extra="surrogate",
+)
+TorchModel = import_optional_symbol(
+    "lume_torch.models.torch_model",
+    "TorchModel",
+    feature="injector surrogate",
+    extra="surrogate",
+)
+
+ParticleBeam = import_optional_symbol(
+    "cheetah.particles",
+    "ParticleBeam",
+    feature="injector surrogate",
+    extra="surrogate",
+)
+beamphysics = import_optional(
+    "beamphysics",
+    feature="openPMD beam export for injector surrogate",
+    extra="surrogate",
+)
 
 
 def _tensor_to_numpy(value: Any) -> np.ndarray:
@@ -35,7 +65,7 @@ def _to_python_scalar(value: Any, key: str) -> Any:
     return value.item()
 
 
-def to_openpmd_particlegroup(beam) -> "openpmd.ParticleGroup":  # noqa: F821
+def to_openpmd_particlegroup(beam) -> Any:
     """
     Convert the `ParticleBeam` to an openPMD `ParticleGroup` object.
 
@@ -47,14 +77,6 @@ def to_openpmd_particlegroup(beam) -> "openpmd.ParticleGroup":  # noqa: F821
 
     :return: openPMD `ParticleGroup` object with the `ParticleBeam`'s particles.
     """
-    try:
-        import beamphysics as openpmd
-    except ImportError:
-        raise ImportError(
-            """To use the openPMD beam export, beamphysics must be
-            installed."""
-        )
-
     # For now only support non-vectorised particle distributions
     if len(beam.particles.shape) != 2:
         raise ValueError("Only non-vectorised particle distributions are supported.")
@@ -81,19 +103,12 @@ def to_openpmd_particlegroup(beam) -> "openpmd.ParticleGroup":  # noqa: F821
         "status": _tensor_to_numpy(status.int()),  # need int
         "species": beam.species.name,
     }
-    particle_group = openpmd.ParticleGroup(data=data)
+    particle_group = beamphysics.ParticleGroup(data=data)
 
     return particle_group
 
 
 def create_beam_distribution_from_state(state: Mapping[str, Any], n_particles: int):
-    ParticleBeam = import_optional_symbol(
-        "cheetah.particles",
-        "ParticleBeam",
-        feature="injector surrogate beam generation",
-        extra="cheetah",
-    )
-
     sigma_x = torch.tensor(state["OTRS:IN20:571:XRMS"] * 1e-6)
     sigma_y = torch.tensor(state["OTRS:IN20:571:YRMS"] * 1e-6)
     sigma_z = torch.tensor(state["sigma_z"] * 1e-6)
@@ -202,7 +217,7 @@ class InjectorSurrogate(LUMEModel):
         return resolved
 
     @classmethod
-    def _load_torch_model(cls) -> TorchModel:
+    def _load_torch_model(cls) -> Any:
         """Load :class:`TorchModel` with all resource paths resolved.
 
         Writes a temporary config YAML whose resource paths are absolute so
