@@ -1,27 +1,18 @@
 import os
 from pathlib import Path
-from pytao import Tao
 
-from lume_bmad.model import LUMEBmadModel
-from lume_cheetah import LUMECheetahModel, CheetahSimulator
-from virtual_accelerator.cheetah.transformer import SLACCheetahTransformer
-from virtual_accelerator.cheetah.variables import get_variables_from_segment
-from virtual_accelerator.bmad.variables import (
-    get_variables,
-    get_cu_hxr_screen_variables,
-)
+from virtual_accelerator.utils.optional_dependencies import import_optional
 from virtual_accelerator.utils.variables import (
     get_epics_to_name_or_overlay_mapping,
     get_epics_to_name_mapping,
     split_control_and_observable,
 )
-from cheetah.accelerator import Segment
-from cheetah.particles import ParticleBeam
-import torch
 
-from virtual_accelerator.bmad.cu_transformer import (
-    CUBmadTransformer,
-)
+
+def _check_optional_modules(module_names: list[str], feature: str, extra: str) -> None:
+    """Validate all optional modules for a feature in a single gate check."""
+    for module_name in module_names:
+        import_optional(module_name, feature=feature, extra=extra)
 
 
 def get_cu_hxr_bmad_model(
@@ -47,6 +38,25 @@ def get_cu_hxr_bmad_model(
     LUMEBmadModel
         Instance of the LUMEBmadModel for the CU_HXR lattice.
     """
+
+    _check_optional_modules(
+        [
+            "pytao",
+            "lume_bmad.model",
+            "virtual_accelerator.bmad.cu_transformer",
+            "virtual_accelerator.bmad.variables",
+        ],
+        feature="CU HXR Bmad model",
+        extra="bmad",
+    )
+
+    from pytao import Tao
+    from lume_bmad.model import LUMEBmadModel
+    from virtual_accelerator.bmad.cu_transformer import CUBmadTransformer
+    from virtual_accelerator.bmad.variables import (
+        get_variables,
+        get_cu_hxr_screen_variables,
+    )
 
     # create Tao instance
     LCLS_LATTICE = os.environ["LCLS_LATTICE"]
@@ -108,6 +118,25 @@ def get_cu_hxr_cheetah_model():
     LUMECheetahModel
         Instance of the LUMECheetahModel for the CU_HXR lattice.
     """
+    _check_optional_modules(
+        [
+            "lume_cheetah",
+            "cheetah.accelerator",
+            "cheetah.particles",
+            "virtual_accelerator.cheetah.transformer",
+            "virtual_accelerator.cheetah.variables",
+        ],
+        feature="CU HXR Cheetah model",
+        extra="cheetah",
+    )
+
+    from lume_cheetah import LUMECheetahModel, CheetahSimulator
+    from cheetah.accelerator import Segment
+    from cheetah.particles import ParticleBeam
+    from virtual_accelerator.cheetah.transformer import SLACCheetahTransformer
+    from virtual_accelerator.cheetah.variables import get_variables_from_segment
+    import torch
+
     # Get path to beam distributions
     # beam_dist = os.environ.get(
     #    'BEAM_DISTRIBUTION',

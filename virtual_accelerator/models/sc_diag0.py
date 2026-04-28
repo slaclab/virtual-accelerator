@@ -1,14 +1,16 @@
-from lume_cheetah import LUMECheetahModel, CheetahSimulator
-from virtual_accelerator.cheetah.transformer import SLACCheetahTransformer
-from virtual_accelerator.cheetah.variables import get_variables_from_segment
-from virtual_accelerator.cheetah.diag0 import get_diag0_beamline
+import os
 
+from virtual_accelerator.utils.optional_dependencies import import_optional
 from virtual_accelerator.utils.variables import (
     get_epics_to_name_mapping,
     split_control_and_observable,
 )
-from cheetah.particles import ParticleBeam
-import torch
+
+
+def _check_optional_modules(module_names: list[str], feature: str, extra: str) -> None:
+    """Validate all optional modules for a feature in a single gate check."""
+    for module_name in module_names:
+        import_optional(module_name, feature=feature, extra=extra)
 
 
 def get_sc_diag0_cheetah_model():
@@ -20,6 +22,26 @@ def get_sc_diag0_cheetah_model():
     LUMECheetahModel
         Instance of the LUMECheetahModel for the SC_DIAG0 lattice.
     """
+
+    _check_optional_modules(
+        [
+            "lume_cheetah",
+            "cheetah.accelerator",
+            "cheetah.particles",
+            "virtual_accelerator.cheetah.transformer",
+            "virtual_accelerator.cheetah.variables",
+            "torch",
+        ],
+        feature="SC DIAG0 Cheetah model",
+        extra="cheetah",
+    )
+
+    from lume_cheetah import LUMECheetahModel, CheetahSimulator
+    from cheetah.accelerator import Segment
+    from cheetah.particles import ParticleBeam
+    from virtual_accelerator.cheetah.transformer import SLACCheetahTransformer
+    from virtual_accelerator.cheetah.variables import get_variables_from_segment
+    import torch
 
     incoming_beam = ParticleBeam.from_twiss(
         beta_x=torch.tensor(9.34),
@@ -59,12 +81,9 @@ def get_sc_diag0_cheetah_model():
 
     # Get supported control system variables
     # for the model
-    torch_variables = get_variables_from_segment(segment)
-
+    variables = get_variables_from_segment(segment)
     # Define the controllable and observable variables
-    control_variables, observable_variables = split_control_and_observable(
-        torch_variables
-    )
+    control_variables, observable_variables = split_control_and_observable(variables)
 
     # Create model
     model = LUMECheetahModel(

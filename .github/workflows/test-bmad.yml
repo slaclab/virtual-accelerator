@@ -1,14 +1,13 @@
-name: Run tests
+name: Test bmad extra
+
+# Verifies the [bmad] optional extra installs and runs correctly.
+# TestCUHXRBmad runs; cheetah, surrogate, and staged-model tests skip.
 
 on:
-  pull_request:
   push:
-  release:
-    types:
-      - published
 
 jobs:
-  test:
+  test-bmad:
     runs-on: ubuntu-latest
     strategy:
       fail-fast: false
@@ -20,20 +19,21 @@ jobs:
     steps:
       - name: Free disk space
         run: |
-          df -h
           sudo rm -rf /usr/share/dotnet /usr/local/lib/android /opt/ghc /opt/hostedtoolcache/CodeQL
           sudo docker image prune --all --force
-          df -h
+
       - uses: actions/checkout@v4
         with:
+          submodules: recursive
           fetch-depth: 1
+
       - name: Checkout lcls-lattice
         uses: actions/checkout@v4
         with:
           repository: slaclab/lcls-lattice
-          # temp change branch to address bmad bug TODO: should remove when bug is resolved
           ref: temp_remove_fixers
           path: lcls-lattice
+
       - name: Set up conda environment
         uses: conda-incubator/setup-miniconda@v3
         with:
@@ -42,15 +42,23 @@ jobs:
           channels: conda-forge
           channel-priority: strict
           activate-environment: va-env
+
       - name: Install pytao (includes bmad)
         run: conda install -y pytao
+
       - name: Install CPU-only PyTorch
         run: pip install --upgrade --index-url https://download.pytorch.org/whl/cpu torch
-      - name: Install package and remaining dependencies
-        run: pip install ".[all,dev]"
-      - name: List Python package versions
+
+      - name: Install package with bmad extra
+        run: pip install ".[bmad,dev]"
+
+      - name: List installed packages
         run: pip list
-      - name: Run tests
+
+      - name: Verify bmad import works
+        run: python -c "from lume_bmad.model import LUMEBmadModel; print('lume_bmad imported OK')"
+
+      - name: Run tests (TestCUHXRBmad runs; cheetah/surrogate/staged tests skip)
         env:
           LCLS_LATTICE: ${{ github.workspace }}/lcls-lattice
-        run: pytest virtual_accelerator/tests
+        run: pytest virtual_accelerator/tests -v --tb=short

@@ -1,9 +1,6 @@
 import argparse
-from virtual_accelerator.models.cu_hxr import (
-    get_cu_hxr_bmad_model,
-    get_cu_hxr_cheetah_model,
-)
-from lume_pva.runner import Runner
+
+from ..utils.optional_dependencies import import_optional_symbol
 
 
 def main():
@@ -17,6 +14,18 @@ def main():
     )
 
     args = parser.parse_args()
+
+    Runner = import_optional_symbol(
+        "lume_pva.runner",
+        "Runner",
+        feature="virtual accelerator runner CLI",
+        extra="pva",
+    )
+
+    from virtual_accelerator.models.cu_hxr import (
+        get_cu_hxr_bmad_model,
+        get_cu_hxr_cheetah_model,
+    )
 
     # Get the appropriate model based on user input
     if args.model == "cu_hxr_bmad":

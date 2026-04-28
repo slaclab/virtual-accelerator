@@ -1,4 +1,24 @@
-from virtual_accelerator.surrogates.injector_surrogate import InjectorSurrogate
+import importlib.util
+import pytest
+
+# Skip entire module at collection time when lume_torch is absent — avoids
+# an ImportError inside injector_surrogate.py before any skip logic fires.
+pytest.importorskip(
+    "lume_torch",
+    reason="requires lume-torch: pip install virtual-accelerator[surrogate]",
+)
+
+from virtual_accelerator.surrogates.injector_surrogate import InjectorSurrogate  # noqa: E402
+
+
+def _has_module(name: str) -> bool:
+    return importlib.util.find_spec(name) is not None
+
+
+pytestmark = pytest.mark.skipif(
+    not _has_module("cheetah"),
+    reason="requires surrogate optional dependencies: pip install virtual-accelerator[surrogate,cheetah]",
+)
 
 
 def test_injector_surrogate():
