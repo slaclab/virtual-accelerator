@@ -1,0 +1,49 @@
+name: Test cheetah extra
+
+# Verifies the [cheetah] optional extra installs and runs correctly.
+# TestCUHXRCheetah runs; bmad, surrogate, and staged-model tests skip.
+
+on:
+  push:
+
+jobs:
+  test-cheetah:
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        python-version: ["3.11", "3.12", "3.13"]
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          submodules: recursive
+          fetch-depth: 1
+
+      - name: Checkout lcls-lattice
+        uses: actions/checkout@v4
+        with:
+          repository: slaclab/lcls-lattice
+          ref: temp_remove_fixers
+          path: lcls-lattice
+
+      - name: Set up Python ${{ matrix.python-version }}
+        uses: actions/setup-python@v5
+        with:
+          python-version: ${{ matrix.python-version }}
+
+      - name: Install CPU-only PyTorch
+        run: pip install --upgrade --index-url https://download.pytorch.org/whl/cpu torch
+
+      - name: Install package with cheetah extra
+        run: pip install ".[cheetah,dev]"
+
+      - name: List installed packages
+        run: pip list
+
+      - name: Verify cheetah import works
+        run: python -c "from lume_cheetah import LUMECheetahModel; print('lume_cheetah imported OK')"
+
+      - name: Run tests (TestCUHXRCheetah runs; bmad/staged tests skip)
+        env:
+          LCLS_LATTICE: ${{ github.workspace }}/lcls-lattice
+        run: pytest virtual_accelerator/tests -v --tb=short

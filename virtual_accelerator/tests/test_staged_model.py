@@ -1,16 +1,42 @@
 import os
+import importlib.util
 from pathlib import Path
 import pytest
 from lume.variables.particle_group import ParticleGroupVariable
 
-from virtual_accelerator.models.staged_model import (
+# Guard collection: lume_torch is required by InjectorSurrogate at import
+# time; skip the whole module instead of raising an ImportError.
+pytest.importorskip(
+    "lume_torch",
+    reason="requires lume-torch: pip install virtual-accelerator[surrogate]",
+)
+
+from virtual_accelerator.models.staged_model import (  # noqa: E402
     StagedModel,
     get_cu_hxr_staged_model,
 )
-from virtual_accelerator.models.cu_hxr import get_cu_hxr_bmad_model
-from virtual_accelerator.surrogates.injector_surrogate import InjectorSurrogate
+from virtual_accelerator.models.cu_hxr import get_cu_hxr_bmad_model  # noqa: E402
+from virtual_accelerator.surrogates.injector_surrogate import InjectorSurrogate  # noqa: E402
 
 TEST_BEAM_PATH = os.path.join(Path(__file__).parent, "../bmad", "test_beam")
+
+
+def _has_module(name: str) -> bool:
+    return importlib.util.find_spec(name) is not None
+
+
+pytestmark = pytest.mark.skipif(
+    not all(
+        _has_module(module_name)
+        for module_name in (
+            "pytao",
+            "lume_bmad",
+            "cheetah",
+            "lume_cheetah",
+        )
+    ),
+    reason="requires staged-model optional dependencies",
+)
 
 
 # Fixtures for model initialization
@@ -97,6 +123,12 @@ class TestStagedModelVariables:
         result = staged_model.get(cu_hxr_vars)
         assert "a.beta" in result
         assert "b.beta" in result
+
+    def test_staged_model_edge_case(self):
+        model = get_cu_hxr_staged_model(track_beam=True, end_element="TD11")
+        model.set({"QUAD:IN20:525:BCTRL": 10})
+        b = model.get("x.beta")
+        assert b is not None
 
 
 class TestStagedModelStaging:

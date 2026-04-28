@@ -2,8 +2,6 @@ from typing import Any
 from lume.model import LUMEModel
 from lume.variables.particle_group import ParticleGroupVariable
 from lume.variables.variable import Variable
-from virtual_accelerator.surrogates.injector_surrogate import InjectorSurrogate
-from virtual_accelerator.models.cu_hxr import get_cu_hxr_bmad_model
 
 
 class StagedModel(LUMEModel):
@@ -167,6 +165,9 @@ def get_cu_hxr_staged_model(n_particles: int = 1000, **kwargs) -> StagedModel:
     StagedModel
         Instance of the StagedModel for the CU_HXR lattice.
     """
+
+    from virtual_accelerator.surrogates.injector_surrogate import InjectorSurrogate
+    from virtual_accelerator.models.cu_hxr import get_cu_hxr_bmad_model
 
     injector_surrogate = InjectorSurrogate(n_particles=n_particles)
     cu_hxr_bmad_model = get_cu_hxr_bmad_model(**kwargs)
