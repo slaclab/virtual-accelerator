@@ -54,13 +54,8 @@ def get_sc_diag0_cheetah_model():
     )
     incoming_beam.particle_charges = torch.tensor(1.0)
 
-    # Get path to lattice files
-    lcls_lattice = os.environ.get("LCLS_LATTICE")
-
     # Create lattice from file
-    segment = Segment.from_lattice_json(
-        os.path.join(lcls_lattice, "cheetah/sc_diag0.json")
-    )
+    segment = get_diag0_beamline()
 
     # Ensure screen elements can support vectorization
     for element in segment.elements:

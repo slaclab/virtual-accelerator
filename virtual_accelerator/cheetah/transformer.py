@@ -52,10 +52,18 @@ class SLACCheetahTransformer(CheetahTransformer):
                 f"No mapping found for control variable '{control_variable_name}'"
             )
 
-        element = getattr(simulator.segment, element_name)
-        beam_energy_at_element = simulator.energies[element_name]
-        # due to getting beam energy this calc is very slow, maybe some list format should
-        # be passable for args.
+        try:
+            element = getattr(simulator.segment, element_name)
+            beam_energy_at_element = simulator.energies[element_name]
+        except AttributeError:
+            try:
+                flat_segment = simulator.segment.flattened()
+                element = getattr(flat_segment, element_name)
+                beam_energy_at_element = simulator.energies_flattened[element_name]
+            except AttributeError:
+                raise ValueError(
+                    f"Element '{element_name}' not found in simulator.segment"
+                )
         return access_cheetah_attribute(element, attribute, beam_energy_at_element)
 
     def set_cheetah_property(self, simulator, control_variable_name, value):
@@ -79,9 +87,18 @@ class SLACCheetahTransformer(CheetahTransformer):
             raise ValueError(
                 f"No mapping found for control variable '{control_variable_name}'"
             )
-
-        element = getattr(simulator.segment, element_name)
-        beam_energy_at_element = simulator.energies[element_name]
+        try:
+            element = getattr(simulator.segment, element_name)
+            beam_energy_at_element = simulator.energies[element_name]
+        except AttributeError:
+            try:
+                flat_segment = simulator.segment.flattened()
+                element = getattr(flat_segment, element_name)
+                beam_energy_at_element = simulator.energies_flattened[element_name]
+            except AttributeError:
+                raise ValueError(
+                    f"Element '{element_name}' not found in simulator.segment"
+                )
         access_cheetah_attribute(
             element, attribute, beam_energy_at_element, set_value=value
         )

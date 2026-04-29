@@ -2,6 +2,7 @@ import pandas as pd
 import torch
 import os
 from pathlib import Path
+from cheetah.accelerator.superimposed import SuperimposedElement
 
 
 class NoSetMethodError(Exception):
@@ -107,21 +108,23 @@ TRANSVERSE_DEFLECTING_CAVITY_MAPPING = {
 }
 
 BPM_MAPPING = {
-    "X": FieldAccessor(lambda e, energy: e.reading[0]),
-    "Y": FieldAccessor(lambda e, energy: e.reading[1]),
-    "XSCDT1H": FieldAccessor(lambda e, energy: e.reading[0]),
-    "YSCDT1H": FieldAccessor(lambda e, energy: e.reading[1]),
+    "X": FieldAccessor(lambda e, energy: e.reading[..., 0]),
+    "Y": FieldAccessor(lambda e, energy: e.reading[..., 1]),
+    "XSCDT1H": FieldAccessor(lambda e, energy: e.reading[..., 0]),
+    "YSCDT1H": FieldAccessor(lambda e, energy: e.reading[..., 1]),
     "TMIT": FieldAccessor(lambda e, energy: 1.0),
 }
 
 # multiply image intensity by 16 bit number range (is similar to real machine?)
 SCREEN_MAPPING = {
-    "Image:ArrayData": FieldAccessor(lambda e, energy: e.reading.T * 65535),
+    "Image:ArrayData": FieldAccessor(
+        lambda e, energy: e.reading.transpose(-2, -1) * 65535
+    ),
     "PNEUMATIC": "is_active",
     "Image:ArraySize1_RBV": FieldAccessor(lambda e, energy: e.resolution[0]),
     "Image:ArraySize0_RBV": FieldAccessor(lambda e, energy: e.resolution[1]),
     "RESOLUTION": FieldAccessor(lambda e, energy: e.pixel_size[0] * 1e6),
-    "IMAGE": FieldAccessor(lambda e, energy: e.reading.T * 65535),
+    "IMAGE": FieldAccessor(lambda e, energy: e.reading.transpose(-2, -1) * 65535),
     "N_OF_ROW": FieldAccessor(lambda e, energy: e.resolution[0]),
     "N_OF_COL": FieldAccessor(lambda e, energy: e.resolution[1]),
 }
@@ -135,6 +138,7 @@ MAPPINGS = {
     "BPM": BPM_MAPPING,
     "Screen": SCREEN_MAPPING,
     "TransverseDeflectingCavity": TRANSVERSE_DEFLECTING_CAVITY_MAPPING,
+    "Patch": {},
 }
 
 LCLS_ELEMENTS = os.path.join(
@@ -143,7 +147,7 @@ LCLS_ELEMENTS = os.path.join(
 )
 
 
-def handle_quadrupole_composite(elements, pv_attribute, energy, set_value):
+def handle_quadrupole_composite(element, pv_attribute, energy, set_value):
     """
     Handle composite quadrupole devices split into multiple subelements.
 
@@ -177,23 +181,23 @@ def handle_quadrupole_composite(elements, pv_attribute, energy, set_value):
         torch.Tensor or float or None:
             Attribute value if getting, otherwise None.
     """
-    total_length = sum(e.length for e in elements)
+    length = element.base_element.length
+    # if length is vectorized need tests for broadcasting set_values/ length
 
-    if set_value is not None and pv_attribute in {"BCTRL", "BDES"}:
-        new_k1 = set_value / get_magnetic_rigidity(energy) / total_length
-
-        for e in elements:
-            e.k1 = new_k1
-        return
+    if set_value is not None and pv_attribute in {"BCTRL", "BACT", "BDES"}:
+        new_k1 = set_value / get_magnetic_rigidity(energy) / length
+        element.base_element.k1 = new_k1
 
     if pv_attribute in {"BCTRL", "BACT", "BDES"}:
-        return elements[0].k1 * total_length * get_magnetic_rigidity(energy)
+        return element.base_element.k1 * length * get_magnetic_rigidity(energy)
 
     # fallback behavior
-    return default_composite_handler(elements, pv_attribute, energy, set_value)
+    return access_cheetah_attribute(
+        element.base_element, pv_attribute, energy, set_value
+    )
 
 
-def default_composite_handler(elements, pv_attribute, energy, set_value):
+def default_composite_handler(element, pv_attribute, energy, set_value):
     """
     Default handler for composite devices.
     Assumes all subelements share identical attributes.
@@ -221,18 +225,18 @@ def default_composite_handler(elements, pv_attribute, energy, set_value):
         torch.Tensor or float or None:
             Attribute value if getting, otherwise None.
     """
-
+    e = element.base_element
     if set_value is not None:
-        for e in elements:
-            access_cheetah_attribute(e, pv_attribute, energy, set_value)
+        access_cheetah_attribute(e, pv_attribute, energy, set_value)
         return
 
-    return access_cheetah_attribute(elements[0], pv_attribute, energy)
+    return access_cheetah_attribute(e, pv_attribute, energy)
 
 
 COMPOSITE_HANDLERS = {
     "Quadrupole": handle_quadrupole_composite,
     "TransverseDeflectingCavity": default_composite_handler,
+    "Patch": default_composite_handler,
 }
 
 
@@ -267,12 +271,21 @@ def access_cheetah_attribute(element, pv_attribute, energy, set_value=None):
     # simplest case, each subelement has sub_length = length/len(sub_elements)
     # handling composite elements
 
-    if isinstance(element, list):
-        if len(element) == 0:
+    # handle when superimposed quad or tcav is called
+    # after handle when specific embedded elements are called?
+
+    if isinstance(element, SuperimposedElement):
+        if len(element.superimposed_element.elements) == 0:
             raise ValueError("Cannot access attribute on empty element list")
-        element_type = type(element[0]).__name__
-        if any(type(sub).__name__ != element_type for sub in element):
-            raise ValueError("All subelements in element list must have same type")
+
+        element_type = type(element.base_element).__name__
+        if any(
+            type(sub).__name__ not in MAPPINGS
+            for sub in element.superimposed_element.elements
+        ):
+            raise ValueError(
+                "All subelements in element list must have a supported element type"
+            )
 
         handler = COMPOSITE_HANDLERS.get(element_type, default_composite_handler)
         return handler(element, pv_attribute, energy, set_value)
