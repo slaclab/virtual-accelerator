@@ -64,6 +64,9 @@ def test_injector_surrogate_outputs_are_physical():
     assert 0.0 < norm_emit_x < 1.0e-3
     assert 0.0 < norm_emit_y < 1.0e-3
 
+TEST_COVARIANCE_MATRIX = torch.diag(
+    torch.tensor([1.0e-3, 1.0e5, 1.0e-3, 1.0e5, 1.0e-3, 1.0e5], dtype=torch.float32)
+)
 
 class TestLumeModel(LUMEModel):
     """Minimal test model exposing a 6x6 covariance matrix variable."""
@@ -71,7 +74,7 @@ class TestLumeModel(LUMEModel):
     def __init__(self):
         super().__init__()
 
-        self._cache = {"covariance_matrix": torch.eye(6, dtype=torch.float32)}
+        self._cache = {"covariance_matrix": TEST_COVARIANCE_MATRIX.clone()}
 
     def _get(self, names):
         return {name: self._cache[name] for name in names}
@@ -80,7 +83,7 @@ class TestLumeModel(LUMEModel):
         self._cache.update(values)
 
     def reset(self):
-        self._cache = {"covariance_matrix": torch.eye(6, dtype=torch.float32)}
+        self._cache = {"covariance_matrix": TEST_COVARIANCE_MATRIX.clone()}
 
     @property
     def supported_variables(self):
@@ -93,9 +96,15 @@ class TestLumeModel(LUMEModel):
 
 def test_beam_output_wrapper():
     surrogate = TestLumeModel()
-    wrapped = BeamOutputWrapper(surrogate, n_particles=1000)
+    wrapped = BeamOutputWrapper(surrogate, n_particles=1000000, p0c=1e8)
 
     output = wrapped.get(["output_beam", "covariance_matrix"])
     assert "output_beam" in output
     assert output["covariance_matrix"].shape == (6, 6)
-    assert output["output_beam"].x.shape[0] == 1000
+    assert output["output_beam"].x.shape[0] == 1000000
+
+    # check that the covariance matrix is being converted to cheetah units correctly
+    cov = torch.tensor(output["output_beam"].cov("x","px","y","py","z","pz")).float()
+    assert torch.allclose(cov, TEST_COVARIANCE_MATRIX, atol=1e3, rtol=1e-2)
+
+
