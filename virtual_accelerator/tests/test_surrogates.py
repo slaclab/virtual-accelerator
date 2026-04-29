@@ -1,24 +1,23 @@
-import importlib.util
 import pytest
+from lume.model import LUMEModel
 
-# Skip entire module at collection time when lume_torch is absent — avoids
+# Skip entire module at collection time when lume-torch is absent — avoids
 # an ImportError inside injector_surrogate.py before any skip logic fires.
 pytest.importorskip(
     "lume_torch",
     reason="requires lume-torch: pip install virtual-accelerator[surrogate]",
 )
-
-from virtual_accelerator.surrogates.injector_surrogate import InjectorSurrogate  # noqa: E402
-
-
-def _has_module(name: str) -> bool:
-    return importlib.util.find_spec(name) is not None
-
-
-pytestmark = pytest.mark.skipif(
-    not _has_module("cheetah"),
-    reason="requires surrogate optional dependencies: pip install virtual-accelerator[surrogate,cheetah]",
+pytest.importorskip(
+    "cheetah",
+    reason="requires surrogate optional dependencies: pip install virtual-accelerator[surrogate]",
 )
+from lume_torch.variables import TorchNDVariable
+import torch
+
+from virtual_accelerator.surrogates.injector_surrogate import (
+    InjectorSurrogate,
+    BeamOutputWrapper,
+)  # noqa: E402
 
 
 def test_injector_surrogate():
@@ -64,3 +63,39 @@ def test_injector_surrogate_outputs_are_physical():
     assert 0.0 < sigma_z < 1.0e2
     assert 0.0 < norm_emit_x < 1.0e-3
     assert 0.0 < norm_emit_y < 1.0e-3
+
+
+class TestLumeModel(LUMEModel):
+    """Minimal test model exposing a 6x6 covariance matrix variable."""
+
+    def __init__(self):
+        super().__init__()
+
+        self._cache = {"covariance_matrix": torch.eye(6, dtype=torch.float32)}
+
+    def _get(self, names):
+        return {name: self._cache[name] for name in names}
+
+    def _set(self, values):
+        self._cache.update(values)
+
+    def reset(self):
+        self._cache = {"covariance_matrix": torch.eye(6, dtype=torch.float32)}
+
+    @property
+    def supported_variables(self):
+        return {
+            "covariance_matrix": TorchNDVariable(
+                name="covariance_matrix", unit="", shape=(6, 6)
+            )
+        }
+
+
+def test_beam_output_wrapper():
+    surrogate = TestLumeModel()
+    wrapped = BeamOutputWrapper(surrogate, n_particles=1000)
+
+    output = wrapped.get(["output_beam", "covariance_matrix"])
+    assert "output_beam" in output
+    assert output["covariance_matrix"].shape == (6, 6)
+    assert output["output_beam"].x.shape[0] == 1000
