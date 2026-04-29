@@ -213,9 +213,11 @@ class BeamOutputWrapper(LUMEModel):
             "pz": _tensor_to_numpy(particles[:, 5]),
             "t": 0.0,
             "weight": _tensor_to_numpy(
-                torch.ones(self.n_particles) 
+                torch.ones(self.n_particles)
             ),  # need to make at least 1d and negate
-            "status": _tensor_to_numpy(torch.ones(self.n_particles, dtype=torch.int32)),  # need int
+            "status": _tensor_to_numpy(
+                torch.ones(self.n_particles, dtype=torch.int32)
+            ),  # need int
             "species": "electron",
         }
         particle_group = beamphysics.ParticleGroup(data=data)
