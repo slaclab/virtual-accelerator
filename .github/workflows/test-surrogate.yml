@@ -2,7 +2,7 @@ name: Test surrogate extra
 
 # Verifies the [surrogate] optional extra installs and runs correctly.
 # test_surrogates.py runs in full; bmad/cheetah model tests skip.
-# Does not require LCLS_LATTICE — the injector surrogate is self-contained.
+# Does not require LCLS_LATTICE. InjectorSurrogate tests mock the MLflow loader.
 
 on:
   push:
@@ -17,7 +17,6 @@ jobs:
     steps:
       - uses: actions/checkout@v4
         with:
-          submodules: recursive
           fetch-depth: 1
 
       - name: Set up Python ${{ matrix.python-version }}

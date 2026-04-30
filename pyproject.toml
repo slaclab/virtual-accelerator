@@ -53,7 +53,8 @@ pva = [
 surrogate = [
     "torch",
     "lume-torch @ git+https://github.com/lume-science/lume-torch",
-    "lume-cheetah @ git+https://github.com/lume-science/lume-cheetah"
+    "lume-cheetah @ git+https://github.com/lume-science/lume-cheetah",
+    "mlflow-skinny"
 ]
 all = [
     "torch",
@@ -62,6 +63,7 @@ all = [
     "lume-impact @ git+https://github.com/ChristopherMayes/lume-impact",
     "lume-torch @ git+https://github.com/lume-science/lume-torch",
     "lume-pva @ git+https://github.com/lume-science/lume-pva",
+    "mlflow-skinny",
 ]
 dev = [
     "pytest",

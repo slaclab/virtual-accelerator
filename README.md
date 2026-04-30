@@ -37,10 +37,17 @@ Creating the model instances requires the `$LCLS_LATTICE` environment variable t
 contents of the lcls-lattice repo https://github.com/slaclab/lcls-lattice.
 
 
-#### Note
-The Cu Injector model is present in subtrees/lcls_cu_injector_ml_model.
-To pull latest changes from the Cu Inj repo
+#### Injector Surrogate Model
+`InjectorSurrogate` loads the registered Cu injector model from MLflow rather than from a vendored subtree.
+
+By default it resolves `models:/lcls-cu-inj-model/latest` from `https://mlflow.american-science-cloud.org/`.
+You can override the tracking URI with the constructor argument or with `VIRTUAL_ACCELERATOR_MLFLOW_TRACKING_URI`.
+
+For the AmSC deployment, export the MLflow API key in the environment variable named by `mlflow.api_key_env`.
+The default configuration expects:
 
 ```
-git subtree pull --prefix subtrees/lcls_cu_injector_ml_model https://github.com/slaclab/lcls_cu_injector_ml_model.git main --squash
+export api_key=...
 ```
+
+and the helper built into `InjectorSurrogate` adds that value as the `X-Api-Key` header on MLflow requests.

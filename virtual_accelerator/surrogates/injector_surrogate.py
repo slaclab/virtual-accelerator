@@ -1,10 +1,7 @@
-from pathlib import Path
 import os
-import tempfile
 from typing import Any, Iterable, Mapping
 
 import numpy as np
-import yaml
 from lume.model import LUMEModel
 from lume.variables import ParticleGroupVariable
 from scipy import constants
@@ -45,6 +42,20 @@ beamphysics = import_optional(
     feature="openPMD beam export for injector surrogate",
     extra="surrogate",
 )
+mlflow = import_optional(
+    "mlflow",
+    feature="injector surrogate",
+    extra="surrogate",
+)
+
+_DEFAULT_MLFLOW_TRACKING_URI = "https://mlflow.american-science-cloud.org/"
+_DEFAULT_MLFLOW_CONFIG = {
+    "mlflow": {
+        "username": "globus:smiskov@slac.stanford.edu",
+        "api_key_env": "api_key",
+    }
+}
+_UNSET = object()
 
 
 def _tensor_to_numpy(value: Any) -> np.ndarray:
@@ -227,110 +238,132 @@ class BeamOutputWrapper(LUMEModel):
 class InjectorSurrogate(LUMEModel):
     """LUME wrapper around the lcls injector torch surrogate with openPMD beam output."""
 
-    # Config path relative to the project root (used when running from source)
-    _SOURCE_RELATIVE = (
-        Path("subtrees") / "lcls_cu_injector_ml_model" / "model_config.yaml"
-    )
+    tracking_uri = _DEFAULT_MLFLOW_TRACKING_URI
+    registered_model_name = "lcls-cu-inj-model"
+    model_version: str | None = None
+    mlflow_config: Mapping[str, Any] | None = _DEFAULT_MLFLOW_CONFIG
 
-    # Config keys whose values are resource paths that need resolving
-    _RESOURCE_KEYS = ("model", "input_transformers", "output_transformers")
-
-    @classmethod
-    def _candidate_config_roots(cls) -> list[Path]:
-        """Return candidate root directories used to locate model config."""
-        roots: list[Path] = []
-
-        # Module location (source checkout or installed package layout)
-        roots.extend(Path(__file__).resolve().parents)
-
-        # GitHub Actions checkout root
-        workspace = os.environ.get("GITHUB_WORKSPACE")
-        if workspace:
-            roots.append(Path(workspace).resolve())
-
-        # Current working directory and its ancestors
-        cwd = Path.cwd().resolve()
-        roots.append(cwd)
-        roots.extend(cwd.parents)
-
-        # Deduplicate while preserving order
-        seen: set[Path] = set()
-        unique_roots: list[Path] = []
-        for root in roots:
-            if root not in seen:
-                seen.add(root)
-                unique_roots.append(root)
-        return unique_roots
-
-    @classmethod
-    def _find_config(cls) -> Path:
-        """Locate ``model_config.yaml`` regardless of install mode."""
-        for root in cls._candidate_config_roots():
-            candidate = root / cls._SOURCE_RELATIVE
-            if candidate.is_file():
-                return candidate
-
-        raise FileNotFoundError(
-            "Could not find model_config.yaml. Looked for "
-            f"{cls._SOURCE_RELATIVE} from module/cwd/workspace roots. "
-            "Ensure the subtree exists in the checkout, e.g. "
-            "'git subtree add --prefix subtrees/lcls_cu_injector_ml_model <remote> <ref>'."
-        )
-
-    def __init__(self, n_particles: int = 10000) -> None:
-        """Initialize surrogate model and internal cache copy.
-
-        Resource paths inside ``model_config.yaml`` are relative to the
-        submodule directory.  A temporary config file with those paths
-        rewritten to absolute paths is passed to ``TorchModel`` so that
-        initialization succeeds regardless of the current working directory.
-        """
+    def __init__(
+        self,
+        n_particles: int = 10000,
+        *,
+        tracking_uri: str | None = None,
+        registered_model_name: str | None = None,
+        model_version: str | None | object = _UNSET,
+        mlflow_config: Mapping[str, Any] | None | object = _UNSET,
+    ) -> None:
+        """Initialize surrogate model and internal cache copy."""
         super().__init__()
-        tm = self._load_torch_model()
-        self.model = LUMETorchModel(tm)
+        self._tracking_uri = self._resolve_tracking_uri(tracking_uri)
+        self._registered_model_name = (
+            registered_model_name or self.registered_model_name
+        )
+        self._model_version = (
+            self.model_version if model_version is _UNSET else model_version
+        )
+        self._mlflow_config = (
+            self.mlflow_config if mlflow_config is _UNSET else mlflow_config
+        )
+        self.model = self._load_model()
         self.n_particles = n_particles
         self._cache: dict[str, Any] = {}
         self.set({})  # Initializing with defaults of NN model
         self.update_state()
 
     @classmethod
-    def _resolve_resource_paths(cls, config: dict, base_dir: Path) -> dict:
-        """Return a copy of config with resource paths made absolute."""
-        resolved = dict(config)
-        for key in cls._RESOURCE_KEYS:
-            if key not in resolved:
-                continue
-            value = resolved[key]
-            if isinstance(value, str):
-                resolved[key] = str((base_dir / value).resolve())
-            elif isinstance(value, list):
-                resolved[key] = [str((base_dir / v).resolve()) for v in value]
-        return resolved
+    def _resolve_tracking_uri(cls, tracking_uri: str | None) -> str:
+        if tracking_uri:
+            return tracking_uri
+        return (
+            os.getenv("VIRTUAL_ACCELERATOR_MLFLOW_TRACKING_URI")
+            or os.getenv("MLFLOW_TRACKING_URI")
+            or cls.tracking_uri
+        )
+
+    @staticmethod
+    def enable_amsc_x_api_key(config_dict: Mapping[str, Any] | None) -> None:
+        """Patch MLflow requests to include the AmSC API key header."""
+        import mlflow.utils.rest_utils as rest_utils
+
+        mlflow_cfg = config_dict.get("mlflow") if config_dict is not None else None
+        if not isinstance(mlflow_cfg, Mapping):
+            raise KeyError(
+                "Missing 'mlflow' configuration section required for AmSC MLflow authentication."
+            )
+
+        api_key_env = mlflow_cfg.get("api_key_env")
+        if not api_key_env:
+            raise KeyError(
+                "Missing 'api_key_env' in 'mlflow' configuration. "
+                "Please specify the name of the environment variable containing the AmSC API key."
+            )
+
+        api_key = os.getenv(api_key_env)
+        if api_key is None:
+            raise KeyError(
+                f"The environment variable '{api_key_env}' specified in 'mlflow.api_key_env' "
+                "is not set. Please export it with the AmSC MLflow API key."
+            )
+
+        if getattr(rest_utils, "_virtual_accelerator_amsc_patch", None) == api_key_env:
+            return
+
+        original_http_request = rest_utils.http_request
+
+        def patched(host_creds, endpoint, method, *args, **kwargs):
+            if "headers" in kwargs and kwargs["headers"] is not None:
+                headers = dict(kwargs["headers"])
+                headers["X-Api-Key"] = api_key
+                kwargs["headers"] = headers
+            else:
+                headers = dict(kwargs.get("extra_headers") or {})
+                headers["X-Api-Key"] = api_key
+                kwargs["extra_headers"] = headers
+            return original_http_request(host_creds, endpoint, method, *args, **kwargs)
+
+        rest_utils.http_request = patched
+        rest_utils._virtual_accelerator_amsc_patch = api_key_env
 
     @classmethod
-    def _load_torch_model(cls) -> Any:
-        """Load :class:`TorchModel` with all resource paths resolved.
+    def _configure_mlflow(
+        cls, tracking_uri: str, config_dict: Mapping[str, Any] | None
+    ):
+        mlflow.set_tracking_uri(tracking_uri)
+        mlflow_cfg = config_dict.get("mlflow") if config_dict is not None else None
+        if isinstance(mlflow_cfg, Mapping):
+            username = mlflow_cfg.get("username")
+            if username:
+                os.environ.setdefault("MLFLOW_TRACKING_USERNAME", str(username))
+            cls.enable_amsc_x_api_key(config_dict)
 
-        Writes a temporary config YAML whose resource paths are absolute so
-        that ``TorchModel`` can locate them regardless of the working directory.
-        The temporary file is removed after loading.
-        """
-        config_path = cls._find_config()
-        base_dir = config_path.parent
+    @classmethod
+    def _coerce_model(cls, loaded_model: Any) -> LUMEModel:
+        if isinstance(loaded_model, LUMEModel):
+            return loaded_model
+        if isinstance(loaded_model, TorchModel):
+            return LUMETorchModel(loaded_model)
 
-        with open(config_path, encoding="utf-8") as fh:
-            config = yaml.safe_load(fh)
+        unwrap = getattr(loaded_model, "unwrap_python_model", None)
+        if callable(unwrap):
+            return cls._coerce_model(unwrap())
 
-        resolved_config = cls._resolve_resource_paths(config, base_dir)
+        inner_model = getattr(loaded_model, "model", None)
+        if inner_model is not None and inner_model is not loaded_model:
+            return cls._coerce_model(inner_model)
 
-        with tempfile.NamedTemporaryFile(mode="w", suffix=".yaml", delete=False) as tmp:
-            yaml.safe_dump(resolved_config, tmp, sort_keys=False)
-            tmp_path = Path(tmp.name)
+        raise TypeError(
+            "Loaded MLflow model is not a supported LUME model type. "
+            f"Got {type(loaded_model)!r}."
+        )
 
-        try:
-            return TorchModel(str(tmp_path))
-        finally:
-            tmp_path.unlink(missing_ok=True)
+    def _model_uri(self) -> str:
+        version = self._model_version if self._model_version is not None else "latest"
+        return f"models:/{self._registered_model_name}/{version}"
+
+    def _load_model(self) -> LUMEModel:
+        self._configure_mlflow(self._tracking_uri, self._mlflow_config)
+        loaded_model = mlflow.pyfunc.load_model(self._model_uri())
+        return self._coerce_model(loaded_model)
 
     def _get(self, names: Iterable[str]) -> dict[str, Any]:
         return {name: self._cache[name] for name in names}
