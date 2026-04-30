@@ -36,7 +36,7 @@ def get_name_to_epics_mapping(fname: str) -> dict[str, str]:
     )
 
 
-def get_name_or_overlay_to_epics_mapping(fname: str) -> dict[str, str]:
+def get_name_or_overlay_to_epics_mapping(fname: str, beampath: str = None) -> dict[str, str]:
     """
     Get the mapping from element name or bmad overlay to control system
     PV prefix from file
@@ -54,6 +54,11 @@ def get_name_or_overlay_to_epics_mapping(fname: str) -> dict[str, str]:
     """
     df = pd.read_csv(fname)
 
+    # if a `beampath` is provided, filter the dataframe to only include elements
+    # in the specified beam path (e.g. "IN20")
+    if beampath is not None:
+        df = df[df["Beampath"].str.contains(beampath, na=False)]
+
     # remove rows with `keyword` = `USEG` and `LCAV`
     df = df[~df["Keyword"].str.contains("USEG|LCAV|TCAV", na=False)]
 
@@ -61,8 +66,8 @@ def get_name_or_overlay_to_epics_mapping(fname: str) -> dict[str, str]:
     return dict(zip(name_data["Element"], name_data["Control System Name"]))
 
 
-def get_epics_to_name_or_overlay_mapping(fname: str) -> dict[str, str]:
-    return {v: k for k, v in get_name_or_overlay_to_epics_mapping(fname).items()}
+def get_epics_to_name_or_overlay_mapping(fname: str, beampath: str = None) -> dict[str, str]:
+    return {v: k for k, v in get_name_or_overlay_to_epics_mapping(fname, beampath=beampath).items()}
 
 
 def get_element_attr_mapping():

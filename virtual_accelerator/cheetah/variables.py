@@ -48,7 +48,6 @@ def get_variables_from_segment(
     """
     from cheetah.accelerator import Screen
 
-    #
     all_variables = {}
     element_attr_mapping = element_attr_mapping or get_element_attr_mapping()
 
