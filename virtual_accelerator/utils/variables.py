@@ -14,7 +14,7 @@ VARIABLE_CLASS_MAP = {
 }
 
 
-def get_name_to_epics_mapping():
+def get_name_to_epics_mapping(fname: str) -> dict[str, str]:
     """
     Get the mapping from element name to control system PV prefix for
     LCLS elements.
@@ -57,25 +57,12 @@ def get_name_or_overlay_to_epics_mapping(fname: str) -> dict[str, str]:
     # remove rows with `keyword` = `USEG` and `LCAV`
     df = df[~df["Keyword"].str.contains("USEG|LCAV|TCAV", na=False)]
 
-    name_data = df[["Element","Control System Name"]].dropna()
+    name_data = df[["Element", "Control System Name"]].dropna()
     return dict(zip(name_data["Element"], name_data["Control System Name"]))
 
 
 def get_epics_to_name_or_overlay_mapping(fname: str) -> dict[str, str]:
     return {v: k for k, v in get_name_or_overlay_to_epics_mapping(fname).items()}
-
-
-def get_epics_to_name_mapping():
-    """
-    Get the mapping from control system PV prefix to element name for
-    LCLS elements.
-
-    Returns
-    -------
-    dict[str, str]
-        Mapping of control-system PV prefix -> lattice element name.
-    """
-    return {v: k for k, v in get_name_to_epics_mapping().items()}
 
 
 def get_element_attr_mapping():

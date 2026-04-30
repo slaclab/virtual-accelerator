@@ -4,7 +4,6 @@ from pathlib import Path
 from virtual_accelerator.utils.optional_dependencies import import_optional
 from virtual_accelerator.utils.variables import (
     get_epics_to_name_or_overlay_mapping,
-    get_epics_to_name_mapping,
     split_control_and_observable,
 )
 
@@ -65,9 +64,13 @@ def get_cu_hxr_bmad_model(
 
     # get supported variables from tao lattice and get mapping from control
     # system device names to bmad element names
-    database_path = os.path.join(LCLS_LATTICE, "bmad/conversion/from_oracle/lcls_elements.csv")
+    database_path = os.path.join(
+        LCLS_LATTICE, "bmad/conversion/from_oracle/lcls_elements.csv"
+    )
     control_name_to_element_name = get_epics_to_name_or_overlay_mapping(database_path)
-    element_name_to_control_name = {v: k for k, v in control_name_to_element_name.items()}
+    element_name_to_control_name = {
+        v: k for k, v in control_name_to_element_name.items()
+    }
     variables = get_variables(tao, element_name_to_control_name)
 
     # Define the controllable and observable variables
@@ -176,8 +179,12 @@ def get_cu_hxr_cheetah_model():
     )
 
     # get control system device to cheetah mapping
-    control_name_to_element_name = {
-        k: v.lower() for k, v in get_epics_to_name_mapping().items()
+    database_path = os.path.join(
+        lcls_lattice, "bmad/conversion/from_oracle/lcls_elements.csv"
+    )
+    control_name_to_element_name = get_epics_to_name_or_overlay_mapping(database_path)
+    element_name_to_control_name = {
+        v: k for k, v in control_name_to_element_name.items()
     }
 
     # Create transformer that handles maps get/set calls
@@ -187,7 +194,7 @@ def get_cu_hxr_cheetah_model():
 
     # Get supported control system variables
     # for the model
-    variables = get_variables_from_segment(segment)
+    variables = get_variables_from_segment(segment, element_name_to_control_name)
 
     # Define the controllable and observable variables
     control_variables, observable_variables = split_control_and_observable(variables)

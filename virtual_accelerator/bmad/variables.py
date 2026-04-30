@@ -7,7 +7,6 @@ from pathlib import Path
 import numpy as np
 from virtual_accelerator.utils.variables import (
     get_element_attr_mapping,
-    get_name_or_overlay_to_epics_mapping,
     get_variables_from_element_name,
 )
 

@@ -3,7 +3,6 @@ import warnings
 from lume.variables import Variable
 from virtual_accelerator.utils.variables import (
     get_variables_from_element_name,
-    get_name_to_epics_mapping,
     get_element_attr_mapping,
     convert_to_torch_variables,
 )
@@ -11,7 +10,7 @@ from virtual_accelerator.utils.variables import (
 
 def get_variables_from_segment(
     segment,
-    device_mapping: dict[str, str] = None,
+    device_mapping: dict[str, str],
     element_attr_mapping: dict[str, dict[str, dict[str, Any]]] = None,
 ) -> dict[str, Variable]:
     """
@@ -51,7 +50,6 @@ def get_variables_from_segment(
 
     #
     all_variables = {}
-    device_mapping = device_mapping or get_name_to_epics_mapping()
     element_attr_mapping = element_attr_mapping or get_element_attr_mapping()
 
     for element in segment.elements:
