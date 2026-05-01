@@ -11,6 +11,10 @@ pytest.importorskip(
     "cheetah",
     reason="requires surrogate optional dependencies: pip install virtual-accelerator[surrogate]",
 )
+pytest.importorskip(
+    "lcls_cu_inj_model",
+    reason="requires packaged Cu injector model: pip install virtual-accelerator[surrogate]",
+)
 from lume_torch.variables import TorchNDVariable
 from lume_torch.models.torch_model import TorchModel
 import torch
@@ -62,6 +66,31 @@ def test_injector_surrogate_outputs_are_physical():
     assert 0.0 < sigma_z < 1.0e2
     assert 0.0 < norm_emit_x < 1.0e-3
     assert 0.0 < norm_emit_y < 1.0e-3
+
+
+def test_facet_injector_surrogate():
+    pytest.importorskip(
+        "facet2_inj_ml_model",
+        reason="requires packaged FACET-II injector model: pip install virtual-accelerator[surrogate]",
+    )
+    from virtual_accelerator.surrogates.facet_injector_surrogate import (
+        FacetInjectorSurrogate,
+    )
+
+    surrogate = FacetInjectorSurrogate(n_particles=1000)
+
+    output = surrogate.get(["output_beam", "covariance_matrix"])
+    assert "output_beam" in output
+    assert "covariance_matrix" in output
+    beam = output["output_beam"]
+    assert beam.x.shape[0] == 1000
+    assert output["covariance_matrix"].shape == (6, 6)
+
+    initial_beam = surrogate.get(["output_beam"])["output_beam"]
+    surrogate.set({"QUAD:IN10:122:BACT": 0.02})
+    updated_beam = surrogate.get(["output_beam"])["output_beam"]
+    assert not (initial_beam.x == updated_beam.x).all()
+    assert surrogate.get(["QUAD:IN10:122:BACT"])["QUAD:IN10:122:BACT"] == 0.02
 
 
 TEST_COVARIANCE_MATRIX = torch.diag(
