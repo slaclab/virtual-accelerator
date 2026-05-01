@@ -32,6 +32,7 @@ def get_facet_bmad_model(
         mapping_beampath="F2_ELEC",
         screens=("PR10571", "PR10711"),
         profmon_config_filename="facet2_profmon_info.yaml",
+        default_track_start="PROF241",
     )
     return build_bmad_model(
         spec=spec,

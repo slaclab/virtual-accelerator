@@ -45,6 +45,7 @@ def get_cu_hxr_bmad_model(
         screens=("OTR3", "OTR4", "OTR11", "OTR12", "OTR21"),
         profmon_config_filename="cu_hxr_profmon_info.yaml",
         default_beam_relpath="bmad/bmad_set_beam2000_pg",
+        default_track_start="OTR2",
     )
     return build_bmad_model(
         spec=spec,
