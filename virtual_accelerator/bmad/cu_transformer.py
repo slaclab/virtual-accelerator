@@ -84,17 +84,17 @@ class CUBmadTransformer(BmadTransformer):
             ]
             attr = ":".join(control_name.split(":")[-1:])
 
-        device_type = control_name.split(":")[0]  # QUAD, KLYS, etc.
+        device_type = tao.ele(element_name).key  # Quadrupole, Solenoid, etc.
         ele_attr = tao.ele_gen_attribs(element_name)
 
-        if device_type == "QUAD":
+        if device_type == "Quadrupole":
             if attr in ["BCTRL", "BACT", "BDES"]:
                 # convert from Bmad units to EPICS units
                 return -ele_attr["B1_GRADIENT"] * ele_attr["L"] * 10
-        elif device_type == "SOLN":
+        elif device_type == "Solenoid":
             if attr in ["BCTRL", "BACT", "BDES"]:
                 return ele_attr["BS_FIELD"] * 10  # TODO confirm this conversion
-        elif device_type in ["KLYS", "ACCL"]:
+        elif device_type in ["KLYS", "Lcavity"]:
             if attr in ["ENLD", "ADES"]:
                 tao.ele_control_var(element_name)
                 return tao.ele_control_var(element_name)["ENLD_MEV"]
@@ -102,9 +102,9 @@ class CUBmadTransformer(BmadTransformer):
                 return tao.ele_control_var(element_name)["PHASE_DEG"]
             if attr == "BEAMCODE1_STAT":
                 return tao.ele_control_var(element_name)["IN_USE"]
-        elif device_type in ["XCOR", "YCOR", "EFC"]:
+        elif device_type in ["HKicker", "VKicker", "EFC"]:
             return tao.ele_gen_attribs(element_name)["BL_KICK"]
-        elif device_type == "OTRS":
+        elif device_type == "Monitor":
             if attr == "Image:ArrayData":
                 bins = self.screen_attributes[element_name]["bins"]
                 resolution = (
@@ -174,20 +174,20 @@ class CUBmadTransformer(BmadTransformer):
             pv_name = ":".join(pv.split(":")[0:3])
             attr = pv.split(":")[3]
             element = self.control_name_to_bmad[pv_name]
-            device_type = pv_name.split(":")[0]  # QUAD, KLYS, etc.
-            if device_type == "OTRS":
+            device_type = tao.ele(element).key  # Quadrupole, Solenoid, etc.
+            if device_type == "Monitor":
                 continue
-            if device_type == "QUAD":
+            if device_type == "Quadrupole":
                 if attr == "BCTRL" or attr == "BDES":
                     # convert from EPICS units to Bmad units
                     ele_attr = tao.ele_gen_attribs(element)
                     bmad_value = -value / (ele_attr["L"] * 10)
                     bmad_attr = "b1_gradient"
-            elif device_type in ["XCOR", "YCOR"]:
+            elif device_type in ["HKicker", "VKicker"]:
                 if attr == "BCTRL" or attr == "BDES":
                     bmad_value = -0.1 * value
                     bmad_attr = "bl_kick"
-            elif device_type == "SOLN":
+            elif device_type == "Solenoid":
                 if attr == "BCTRL" or attr == "BDES":
                     bmad_value = -0.1 * value
                     bmad_attr = "BS_FIELD"

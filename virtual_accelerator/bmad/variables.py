@@ -7,7 +7,6 @@ from pathlib import Path
 import numpy as np
 from virtual_accelerator.utils.variables import (
     get_element_attr_mapping,
-    get_name_or_overlay_to_epics_mapping,
     get_variables_from_element_name,
 )
 
@@ -35,7 +34,7 @@ def get_normalized_element_names(tao: Tao):
 
 def get_variables(
     tao: Tao,
-    device_mapping: dict[str, str] = None,
+    device_mapping: dict[str, str],
     element_attr_mapping: dict[str, dict[str, dict[str, Any]]] = None,
 ):
     """
@@ -49,7 +48,7 @@ def get_variables(
     ----------
     tao : Tao
         Tao object containing the lattice elements.
-    device_mapping : dict[str, str], optional
+    device_mapping : dict[str, str]
         Mapping of lattice element name -> control-system PV prefix.
     element_attr_mapping : dict[str, dict[str, dict[str, Any]]], optional
         Device-type -> PV attribute -> variable specification mapping
@@ -70,7 +69,6 @@ def get_variables(
 
     """
     all_variables = {}
-    device_mapping = device_mapping or get_name_or_overlay_to_epics_mapping()
     element_attr_mapping = element_attr_mapping or get_element_attr_mapping()
 
     normalized_elements = get_normalized_element_names(tao)
@@ -131,10 +129,11 @@ def get_variables(
     return all_variables
 
 
-def get_cu_hxr_screen_variables(
+def get_screen_variables(
     tao: Tao,
     control_variables: dict[str, NDVariable],
     screen_list: list[str],
+    config_path: Path,
 ) -> tuple[dict[str, NDVariable], dict[str, dict[str, Any]], list[str]]:
     """
     Get screen attributes for cu_hxr from yaml file
@@ -146,8 +145,9 @@ def get_cu_hxr_screen_variables(
     control_variables : dict[str, NDVariable]
         Dictionary of control variables.
     screen_list : list[str]
-        List of screen elements to include. One or more of: ['OTRH1', 'OTRH2', 'OTR2', 'OTR3', 'OTR4',
-                                                             'OTR11', 'OTR12', 'OTR21', 'OTRDMP']
+        List of screen elements to include.
+    config_path : Path
+        Path to the YAML configuration file containing screen attributes.
 
     Returns
     -------
@@ -161,7 +161,6 @@ def get_cu_hxr_screen_variables(
         - used_screens: List of screens that were found in the lattice and included in the control variables.
     """
 
-    config_path = Path(__file__).parent / ".." / "utils" / "cu_hxr_profmon_info.yaml"
     with open(config_path) as f:
         screen_data = yaml.safe_load(f)
 

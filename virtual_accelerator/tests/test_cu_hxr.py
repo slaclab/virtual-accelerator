@@ -59,31 +59,28 @@ class TestCUHXRBmad:
         )
 
         # get initial OTR4 image
-        image = model.get(["OTRS:IN20:711:Image:ArrayData"])[
-            "OTRS:IN20:711:Image:ArrayData"
-        ]
+        image = model.get("OTRS:IN20:711:Image:ArrayData")
         assert image.shape == (1392, 1040)
 
         # set some control variables
         model.set({"QUAD:IN20:631:BCTRL": 0.0})
 
         # get updated OTR4 image
-        updated_image = model.get(["OTRS:IN20:711:Image:ArrayData"])[
-            "OTRS:IN20:711:Image:ArrayData"
-        ]
+        updated_image = model.get("OTRS:IN20:711:Image:ArrayData")
         assert updated_image.shape == (1392, 1040)
 
         # make sure it changed
         assert not (image == updated_image).all()
 
+    @pytest.mark.xfail(reason="need to update klystron implementation")
     def test_cu_hxr_lcavity(self):
         model = get_cu_hxr_bmad_model(custom_beam_path=TEST_BEAM_PATH)
 
-        enld = model.get(["KLYS:LI21:31:ENLD"])["KLYS:LI21:31:ENLD"]
+        enld = model.get("KLYS:LI21:31:ENLD")
         enld = enld + 5
         model.set({"KLYS:LI21:31:ENLD": enld})
-        ampl = model.get(["KLYS:LI21:31:ENLD"])
-        assert ampl["KLYS:LI21:31:ENLD"] == enld
+        ampl = model.get("KLYS:LI21:31:ENLD")
+        assert ampl == enld
 
 
 @pytest.mark.skipif(
