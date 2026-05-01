@@ -38,7 +38,7 @@ the matching extra to install.
 `InjectorSurrogate` also depends on the installable Cu injector model package:
 
 ```
-pip install git+https://github.com/slaclab/lcls_cu_injector_ml_model.git@packaging
+pip install git+https://github.com/slaclab/lcls_cu_injector_ml_model.git
 ```
 
 `FacetInjectorSurrogate` depends on the installable FACET-II injector model package:
