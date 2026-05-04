@@ -41,6 +41,8 @@ def build_bmad_model(
         [
             "pytao",
             "lume_bmad.model",
+            "lume_bmad.transformer",
+            "beamphysics.interfaces.bmad",
             "virtual_accelerator.bmad.cu_transformer",
             "virtual_accelerator.bmad.variables",
         ],
