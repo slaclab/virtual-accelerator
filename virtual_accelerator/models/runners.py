@@ -47,9 +47,7 @@ def main():
     elif args.model == "facet_bmad":
         model = get_facet_bmad_model(end_element=args.end_element)
     else:
-        raise ValueError(
-            f"Invalid model choice. Please choose one of {choices}."
-        )
+        raise ValueError(f"Invalid model choice. Please choose one of {choices}.")
 
     # Run the model
     runner = Runner(model)

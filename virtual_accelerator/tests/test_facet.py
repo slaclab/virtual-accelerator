@@ -183,5 +183,3 @@ class TestFACET2Bmad:
                 f"{element}: {', '.join(pvs)}" for element, pvs in missing_pvs.items()
             )
         )
-
-
