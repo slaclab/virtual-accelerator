@@ -9,7 +9,6 @@ from virtual_accelerator.tests._bmad_model_test_utils import (
     assert_bmad_model_twiss_outputs,
     assert_bmad_model_track_beam_custom_path,
     assert_element_pvs_match_tao_lattice,
-
 )
 from virtual_accelerator.models.cu_hxr import (
     get_cu_hxr_bmad_model,
