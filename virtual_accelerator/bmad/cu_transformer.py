@@ -91,9 +91,17 @@ class CUBmadTransformer(BmadTransformer):
             if attr in ["BCTRL", "BACT", "BDES"]:
                 # convert from Bmad units to EPICS units
                 return -ele_attr["B1_GRADIENT"] * ele_attr["L"] * 10
+            elif attr == "BMIN":
+                return -100  # TODO: add logic for these limits
+            elif attr == "BMAX":
+                return 100
         elif device_type == "Solenoid":
             if attr in ["BCTRL", "BACT", "BDES"]:
                 return ele_attr["BS_FIELD"] * 10  # TODO confirm this conversion
+            elif attr == "BMIN":
+                return -100  # TODO: add logic for these limits
+            elif attr == "BMAX":
+                return 100
         elif device_type in ["KLYS", "Lcavity"]:  # TODO: handle KLYS properly
             if attr in ["ENLD", "ADES"]:
                 tao.ele_control_var(element_name)
@@ -102,7 +110,7 @@ class CUBmadTransformer(BmadTransformer):
                 return tao.ele_control_var(element_name)["PHASE_DEG"]
             if attr == "BEAMCODE1_STAT":
                 return tao.ele_control_var(element_name)["IN_USE"]
-        elif device_type in ["HKicker", "VKicker", "EFC"]:  # TODO: handle EFC properly
+        elif device_type in ["HKicker", "VKicker", "EFC"]:
             return tao.ele_gen_attribs(element_name)["BL_KICK"]
         elif device_type == "Monitor":
             if attr == "Image:ArrayData":
