@@ -93,7 +93,8 @@ def assert_element_pvs_match_tao_lattice(
         if element_name not in pv_prefix_by_element
     )
     assert not missing_mapping, (
-        f"{element_key} elements missing PV prefix mapping: " + ", ".join(missing_mapping)
+        f"{element_key} elements missing PV prefix mapping: "
+        + ", ".join(missing_mapping)
     )
 
     # Check that all expected PVs exist in supported_variables
@@ -109,6 +110,7 @@ def assert_element_pvs_match_tao_lattice(
 
     assert not missing_pvs, (
         f"{element_key} PVs missing from model.supported_variables: "
-        + "; ".join(f"{element}: {', '.join(pvs)}" for element, pvs in missing_pvs.items())
+        + "; ".join(
+            f"{element}: {', '.join(pvs)}" for element, pvs in missing_pvs.items()
+        )
     )
-
