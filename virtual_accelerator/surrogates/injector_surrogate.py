@@ -14,10 +14,6 @@ import torch
 import beamphysics
 from cheetah import ParticleBeam
 
-from virtual_accelerator.utils.optional_dependencies import (
-    import_optional,
-    import_optional_symbol,
-)
 
 OTR2_BEAM_ENERGY = 135.0e6  # eV
 

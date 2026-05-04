@@ -1,5 +1,4 @@
 import os
-import importlib.util
 
 import pytest
 from virtual_accelerator.tests._bmad_model_test_utils import (
@@ -10,10 +9,6 @@ from virtual_accelerator.tests._bmad_model_test_utils import (
     assert_bmad_model_twiss_outputs,
 )
 from virtual_accelerator.models.facet2 import get_facet_bmad_model
-
-
-def _has_module(name: str) -> bool:
-    return importlib.util.find_spec(name) is not None
 
 
 HAS_FACET_LATTICE = bool(os.environ.get("FACET2_LATTICE"))

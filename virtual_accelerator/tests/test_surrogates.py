@@ -79,9 +79,7 @@ def make_dummy_torch_model() -> TorchModel:
         TorchNDVariable(name="covariance_matrix", unit="", shape=(6, 6))
     ]
     model.input_names = []
-    model.evaluate.return_value = {
-        "covariance_matrix": TEST_COVARIANCE_MATRIX.clone()
-    }
+    model.evaluate.return_value = {"covariance_matrix": TEST_COVARIANCE_MATRIX.clone()}
     return model
 
 
