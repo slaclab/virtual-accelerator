@@ -51,4 +51,137 @@ class TestFACET2Bmad:
         new_output = model.get("OTRS:IN10:571:Image:ArrayData")
         assert not (new_output == output).all()  # Check that the screen output changed
 
-    
+    @pytest.mark.xfail(reason="known FACET2 quadrupoles are missing EPICS mappings")
+    def test_quadrupole_pvs_match_tao_lattice(self):
+        model = get_facet_bmad_model()
+
+        element_names = model.tao.lat_list("*", "ele.name")
+        element_keys = model.tao.lat_list("*", "ele.key")
+        quadrupole_elements = {
+            element_name.split("#")[0]
+            for element_name, element_key in zip(element_names, element_keys)
+            if element_name not in ("BEGINNING", "END") and element_key == "Quadrupole"
+        }
+
+        pv_prefix_by_element = {
+            element_name: pv_prefix
+            for pv_prefix, element_name in model.transformer.control_name_to_bmad.items()
+        }
+
+        missing_mapping = sorted(
+            element_name
+            for element_name in quadrupole_elements
+            if element_name not in pv_prefix_by_element
+        )
+        assert not missing_mapping, (
+            "Quadrupole elements missing PV prefix mapping: "
+            + ", ".join(missing_mapping)
+        )
+
+        quadrupole_attrs = ("BCTRL", "BACT", "BDES", "BMIN", "BMAX")
+        supported_variable_names = set(model.supported_variables)
+
+        missing_pvs = {}
+        for element_name in sorted(quadrupole_elements):
+            pv_prefix = pv_prefix_by_element[element_name]
+            expected_pvs = {f"{pv_prefix}:{attr}" for attr in quadrupole_attrs}
+            absent_pvs = sorted(expected_pvs - supported_variable_names)
+            if absent_pvs:
+                missing_pvs[element_name] = absent_pvs
+
+        assert not missing_pvs, (
+            "Quadrupole PVs missing from model.supported_variables: "
+            + "; ".join(
+                f"{element}: {', '.join(pvs)}" for element, pvs in missing_pvs.items()
+            )
+        )
+
+    @pytest.mark.xfail(reason="known FACET2 HKickers are missing EPICS mappings")
+    def test_hkicker_pvs_match_tao_lattice(self):
+        model = get_facet_bmad_model()
+
+        element_names = model.tao.lat_list("*", "ele.name")
+        element_keys = model.tao.lat_list("*", "ele.key")
+        hkicker_elements = {
+            element_name.split("#")[0]
+            for element_name, element_key in zip(element_names, element_keys)
+            if element_name not in ("BEGINNING", "END") and element_key == "HKicker"
+        }
+
+        pv_prefix_by_element = {
+            element_name: pv_prefix
+            for pv_prefix, element_name in model.transformer.control_name_to_bmad.items()
+        }
+
+        missing_mapping = sorted(
+            element_name
+            for element_name in hkicker_elements
+            if element_name not in pv_prefix_by_element
+        )
+        assert not missing_mapping, (
+            "HKicker elements missing PV prefix mapping: " + ", ".join(missing_mapping)
+        )
+
+        hkicker_attrs = ("BCTRL", "BACT", "BDES", "BMIN", "BMAX")
+        supported_variable_names = set(model.supported_variables)
+
+        missing_pvs = {}
+        for element_name in sorted(hkicker_elements):
+            pv_prefix = pv_prefix_by_element[element_name]
+            expected_pvs = {f"{pv_prefix}:{attr}" for attr in hkicker_attrs}
+            absent_pvs = sorted(expected_pvs - supported_variable_names)
+            if absent_pvs:
+                missing_pvs[element_name] = absent_pvs
+
+        assert not missing_pvs, (
+            "HKicker PVs missing from model.supported_variables: "
+            + "; ".join(
+                f"{element}: {', '.join(pvs)}" for element, pvs in missing_pvs.items()
+            )
+        )
+
+    @pytest.mark.xfail(reason="known FACET2 VKickers are missing EPICS mappings")
+    def test_vkicker_pvs_match_tao_lattice(self):
+        model = get_facet_bmad_model()
+
+        element_names = model.tao.lat_list("*", "ele.name")
+        element_keys = model.tao.lat_list("*", "ele.key")
+        vkicker_elements = {
+            element_name.split("#")[0]
+            for element_name, element_key in zip(element_names, element_keys)
+            if element_name not in ("BEGINNING", "END") and element_key == "VKicker"
+        }
+
+        pv_prefix_by_element = {
+            element_name: pv_prefix
+            for pv_prefix, element_name in model.transformer.control_name_to_bmad.items()
+        }
+
+        missing_mapping = sorted(
+            element_name
+            for element_name in vkicker_elements
+            if element_name not in pv_prefix_by_element
+        )
+        assert not missing_mapping, (
+            "VKicker elements missing PV prefix mapping: " + ", ".join(missing_mapping)
+        )
+
+        vkicker_attrs = ("BCTRL", "BACT", "BDES", "BMIN", "BMAX")
+        supported_variable_names = set(model.supported_variables)
+
+        missing_pvs = {}
+        for element_name in sorted(vkicker_elements):
+            pv_prefix = pv_prefix_by_element[element_name]
+            expected_pvs = {f"{pv_prefix}:{attr}" for attr in vkicker_attrs}
+            absent_pvs = sorted(expected_pvs - supported_variable_names)
+            if absent_pvs:
+                missing_pvs[element_name] = absent_pvs
+
+        assert not missing_pvs, (
+            "VKicker PVs missing from model.supported_variables: "
+            + "; ".join(
+                f"{element}: {', '.join(pvs)}" for element, pvs in missing_pvs.items()
+            )
+        )
+
+

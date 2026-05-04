@@ -1,16 +1,22 @@
 import argparse
 
-from ..utils.optional_dependencies import import_optional_symbol
+from virtual_accelerator.utils.optional_dependencies import import_optional_symbol
 
 
 def main():
     parser = argparse.ArgumentParser(
         description="Run the CU HXR model with BMAD or CHEETAH backend"
     )
+    choices = ["cu_hxr_bmad", "cu_hxr_cheetah", "facet_bmad"]
     parser.add_argument(
         "model",
-        choices=["cu_hxr_bmad", "cu_hxr_cheetah"],
-        help="Model backend to run (cu_hxr_bmad or cu_hxr_cheetah)",
+        choices=choices,
+        help="Model backend to run (cu_hxr_bmad, cu_hxr_cheetah, or facet_bmad)",
+    )
+    parser.add_argument(
+        "--end-element",
+        default="END",
+        help="End lattice element for BMAD models (default: END)",
     )
 
     args = parser.parse_args()
@@ -26,15 +32,23 @@ def main():
         get_cu_hxr_bmad_model,
         get_cu_hxr_cheetah_model,
     )
+    from virtual_accelerator.models.facet2 import get_facet_bmad_model
 
     # Get the appropriate model based on user input
     if args.model == "cu_hxr_bmad":
-        model = get_cu_hxr_bmad_model()
+        model = get_cu_hxr_bmad_model(end_element=args.end_element)
     elif args.model == "cu_hxr_cheetah":  # cu_hxr_cheetah
+        if args.end_element != "END":
+            parser.error(
+                "--end-element is only supported for BMAD models "
+                "(cu_hxr_bmad, facet_bmad)."
+            )
         model = get_cu_hxr_cheetah_model()
+    elif args.model == "facet_bmad":
+        model = get_facet_bmad_model(end_element=args.end_element)
     else:
         raise ValueError(
-            "Invalid model choice. Please choose 'cu_hxr_bmad' or 'cu_hxr_cheetah'."
+            f"Invalid model choice. Please choose one of {choices}."
         )
 
     # Run the model
