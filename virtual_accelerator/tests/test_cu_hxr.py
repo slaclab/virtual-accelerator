@@ -1,7 +1,6 @@
 import os
 import importlib.util
 
-from pathlib import Path
 import pytest
 from virtual_accelerator.tests._bmad_model_test_utils import (
     HAS_BMAD_DEPS,
@@ -10,20 +9,18 @@ from virtual_accelerator.tests._bmad_model_test_utils import (
     assert_bmad_model_twiss_outputs,
     assert_bmad_model_track_beam_custom_path,
     assert_element_pvs_match_tao_lattice,
+
 )
 from virtual_accelerator.models.cu_hxr import (
     get_cu_hxr_bmad_model,
     get_cu_hxr_cheetah_model,
 )
 
-TEST_BEAM_PATH = os.path.join(Path(__file__).parent, "../bmad", "test_beam")
-
 
 def _has_module(name: str) -> bool:
     return importlib.util.find_spec(name) is not None
 
 
-HAS_BMAD_DEPS = _has_module("pytao") and _has_module("lume_bmad")
 HAS_CHEETAH_DEPS = _has_module("cheetah") and _has_module("lume_cheetah")
 HAS_LCLS_LATTICE = bool(os.environ.get("LCLS_LATTICE"))
 
@@ -31,11 +28,14 @@ HAS_LCLS_LATTICE = bool(os.environ.get("LCLS_LATTICE"))
 @pytest.mark.skipif(not HAS_BMAD_DEPS, reason="requires bmad optional dependencies")
 class TestCUHXRBmad:
     def test_initialization(self):
-        model = get_cu_hxr_bmad_model(
-            end_element="OTR4", custom_beam_path=TEST_BEAM_PATH
+        assert_bmad_model_initialization(
+            lambda **kwargs: get_cu_hxr_bmad_model(end_element="OTR4", **kwargs),
+            required_control_variable="QUAD:IN20:631:BCTRL",
         )
 
-        assert "QUAD:IN20:631:BCTRL" in model.control_variables
+        assert_bmad_model_track_beam_custom_path(
+            lambda **kwargs: get_cu_hxr_bmad_model(end_element="OTR4", **kwargs)
+        )
 
         model = get_cu_hxr_bmad_model(
             end_element="OTR4", track_beam=True, custom_beam_path=TEST_BEAM_PATH
@@ -43,14 +43,7 @@ class TestCUHXRBmad:
         assert "OTRS:IN20:711:Image:ArrayData" in model.supported_variables
 
     def test_cu_hxr_twiss(self):
-        model = get_cu_hxr_bmad_model(custom_beam_path=TEST_BEAM_PATH)
-
-        outputs = model.get(["a.beta", "b.beta", "name"])
-
-        assert len(outputs["a.beta"]) == len(model.tao.lat_list("*", "ele.name"))
-        assert len(outputs["b.beta"]) == len(model.tao.lat_list("*", "ele.name"))
-        assert outputs["name"][0] == "BEGINNING"
-        assert outputs["name"][-1] == "END"
+        assert_bmad_model_twiss_outputs(get_cu_hxr_bmad_model)
 
     def test_sub_lattice(self):
         model = get_cu_hxr_bmad_model("QE04#1", "OTR2")

@@ -1,6 +1,6 @@
 import os
-from pathlib import Path
 
+from virtual_accelerator.bmad.factory import BmadModelSpec, build_bmad_model
 from virtual_accelerator.utils.optional_dependencies import import_optional
 from virtual_accelerator.utils.variables import (
     get_epics_to_name_or_overlay_mapping,
@@ -38,81 +38,22 @@ def get_cu_hxr_bmad_model(
         Instance of the LUMEBmadModel for the CU_HXR lattice.
     """
 
-    _check_optional_modules(
-        [
-            "pytao",
-            "lume_bmad.model",
-            "virtual_accelerator.bmad.cu_transformer",
-            "virtual_accelerator.bmad.variables",
-        ],
+    spec = BmadModelSpec(
         feature="CU HXR Bmad model",
-        extra="bmad",
+        lattice_env_var="LCLS_LATTICE",
+        tao_init_relpath="bmad/models/cu_hxr/tao.init",
+        screens=("OTR3", "OTR4", "OTR11", "OTR12", "OTR21"),
+        profmon_config_filename="cu_hxr_profmon_info.yaml",
+        default_beam_relpath="bmad/bmad_set_beam2000_pg",
+        default_track_start="OTR2",
     )
-
-    from pytao import Tao
-    from lume_bmad.model import LUMEBmadModel
-    from virtual_accelerator.bmad.cu_transformer import CUBmadTransformer
-    from virtual_accelerator.bmad.variables import (
-        get_variables,
-        get_screen_variables,
+    return build_bmad_model(
+        spec=spec,
+        start_element=start_element,
+        end_element=end_element,
+        track_beam=track_beam,
+        custom_beam_path=custom_beam_path,
     )
-
-    # create Tao instance
-    LCLS_LATTICE = os.environ["LCLS_LATTICE"]
-    init_file = os.path.join(LCLS_LATTICE, "bmad/models/cu_hxr/tao.init")
-    tao = Tao(f"-init {init_file} -noplot -slice_lattice {start_element}:{end_element}")
-
-    # get supported variables from tao lattice and get mapping from control
-    # system device names to bmad element names
-    database_path = os.path.join(
-        LCLS_LATTICE, "bmad/conversion/from_oracle/lcls_elements.csv"
-    )
-    control_name_to_element_name = get_epics_to_name_or_overlay_mapping(database_path)
-    element_name_to_control_name = {
-        v: k for k, v in control_name_to_element_name.items()
-    }
-    variables = get_variables(tao, element_name_to_control_name)
-
-    # Define the controllable and observable variables
-    control_variables, observable_variables = split_control_and_observable(variables)
-
-    # handle Profile Monitors
-    screens = ["OTR3", "OTR4", "OTR11", "OTR12", "OTR21"]
-    config_path = Path(__file__).parent / ".." / "utils" / "cu_hxr_profmon_info.yaml"
-    control_variables, screen_attributes, used_screens = get_screen_variables(
-        tao, control_variables, screens, config_path
-    )
-
-    # Create transformer that handles maps get/set calls and updates the beam distribution
-    transformer = CUBmadTransformer(
-        control_name_to_bmad=control_name_to_element_name,
-        screen_attributes=screen_attributes,
-    )
-
-    model = LUMEBmadModel(
-        tao=tao,
-        control_variables=control_variables,
-        output_variables=observable_variables,
-        transformer=transformer,
-        dump_locations=used_screens,
-    )
-
-    if track_beam:
-        if start_element == "OTR2" and custom_beam_path is None:
-            beam_path = os.path.join(
-                Path(__file__).parent, "../bmad", "bmad_set_beam2000_pg"
-            )
-        elif custom_beam_path is not None:
-            beam_path = custom_beam_path
-        else:
-            raise ValueError(
-                "Cannot have track_beam=True for start_element != OTR2 without providing custom_beam_path"
-            )
-
-        model.tao.cmd(f"set beam_init position_file = {beam_path}")
-        model.set({"track_type": 1})
-
-    return model
 
 
 def get_cu_hxr_cheetah_model():

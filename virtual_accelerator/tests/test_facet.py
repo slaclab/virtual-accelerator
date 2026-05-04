@@ -8,6 +8,7 @@ from virtual_accelerator.tests._bmad_model_test_utils import (
     assert_bmad_model_track_beam_custom_path,
     assert_bmad_model_twiss_outputs,
     assert_element_pvs_match_tao_lattice,
+
 )
 from virtual_accelerator.models.facet2 import get_facet_bmad_model
 
@@ -61,3 +62,4 @@ class TestFACET2Bmad:
     def test_vkicker_pvs_match_tao_lattice(self):
         model = get_facet_bmad_model()
         assert_element_pvs_match_tao_lattice(model, "VKicker")
+

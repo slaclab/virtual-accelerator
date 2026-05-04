@@ -172,6 +172,9 @@ def get_cu_hxr_staged_model(n_particles: int = 1000, **kwargs) -> StagedModel:
     injector_surrogate = InjectorSurrogate(n_particles=n_particles)
     cu_hxr_bmad_model = get_cu_hxr_bmad_model(**kwargs)
 
+    # must be tracking particles
+    cu_hxr_bmad_model.set({"track_type": 1})
+
     staged_model = StagedModel([injector_surrogate, cu_hxr_bmad_model])
 
     return staged_model

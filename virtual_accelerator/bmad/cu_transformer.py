@@ -91,10 +91,18 @@ class CUBmadTransformer(BmadTransformer):
             if attr in ["BCTRL", "BACT", "BDES"]:
                 # convert from Bmad units to EPICS units
                 return -ele_attr["B1_GRADIENT"] * ele_attr["L"] * 10
+            elif attr == "BMIN":
+                return -100  # TODO: add logic for these limits
+            elif attr == "BMAX":
+                return 100
         elif device_type == "Solenoid":
             if attr in ["BCTRL", "BACT", "BDES"]:
                 return ele_attr["BS_FIELD"] * 10  # TODO confirm this conversion
-        elif device_type in ["KLYS", "Lcavity"]:
+            elif attr == "BMIN":
+                return -100  # TODO: add logic for these limits
+            elif attr == "BMAX":
+                return 100
+        elif device_type in ["KLYS", "Lcavity"]:  # TODO: handle KLYS properly
             if attr in ["ENLD", "ADES"]:
                 tao.ele_control_var(element_name)
                 return tao.ele_control_var(element_name)["ENLD_MEV"]

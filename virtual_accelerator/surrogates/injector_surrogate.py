@@ -7,44 +7,15 @@ import numpy as np
 import yaml
 from lume.model import LUMEModel
 from lume.variables import ParticleGroupVariable
+from lume_torch.base import LUMETorchModel
+from lume_torch.models.torch_model import TorchModel
 from scipy import constants
+import torch
+import beamphysics
+from cheetah import ParticleBeam
 
-from virtual_accelerator.utils.optional_dependencies import (
-    import_optional,
-    import_optional_symbol,
-)
 
 OTR2_BEAM_ENERGY = 135.0e6  # eV
-
-torch = import_optional(
-    "torch",
-    feature="injector surrogate",
-    extra="surrogate",
-)
-LUMETorchModel = import_optional_symbol(
-    "lume_torch.base",
-    "LUMETorchModel",
-    feature="injector surrogate",
-    extra="surrogate",
-)
-TorchModel = import_optional_symbol(
-    "lume_torch.models.torch_model",
-    "TorchModel",
-    feature="injector surrogate",
-    extra="surrogate",
-)
-
-ParticleBeam = import_optional_symbol(
-    "cheetah.particles",
-    "ParticleBeam",
-    feature="injector surrogate",
-    extra="surrogate",
-)
-beamphysics = import_optional(
-    "beamphysics",
-    feature="openPMD beam export for injector surrogate",
-    extra="surrogate",
-)
 
 
 def _tensor_to_numpy(value: Any) -> np.ndarray:
@@ -133,7 +104,7 @@ def create_beam_distribution_from_state(state: Mapping[str, Any], n_particles: i
     return beam
 
 
-class BeamOutputWrapper(LUMEModel):
+class BeamOutputModel(LUMEModel):
     """
     LUME wrapper around a surrogate model that adds an openPMD beam
     output variable based on a model predicting the beam covariance matrix.
@@ -146,14 +117,14 @@ class BeamOutputWrapper(LUMEModel):
     """
 
     def __init__(
-        self, surrogate: LUMEModel, n_particles: int = 10000, p0c: float = 1e8
+        self, surrogate: TorchModel, n_particles: int = 10000, p0c: float = 1e8
     ) -> None:
         """
          Initialize wrapper with surrogate model and internal cache copy.
 
          Parameters
          ----------
-        surrogate: LUMEModel
+        surrogate: TorchModel
             The surrogate model to wrap, which must support the required input variables.
         n_particles: int, optional
             The number of particles to generate in the output beam distribution (default: 10000).
@@ -162,7 +133,7 @@ class BeamOutputWrapper(LUMEModel):
 
         """
         super().__init__()
-        self.surrogate = surrogate
+        self.surrogate = LUMETorchModel(surrogate)
         self.n_particles = n_particles
         self.p0c = p0c
         self._cache: dict[str, Any] = {}
