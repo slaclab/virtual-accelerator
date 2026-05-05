@@ -232,7 +232,7 @@ class InjectorSurrogate(LUMEModel, FinalParticlesMixIn):
     def __init__(self, n_particles: int = 10000) -> None:
         """Initialize surrogate model and internal cache copy."""
         super().__init__()
-        tm = load_model(use_cpu=True)
+        tm = load_model()
         self.model = LUMETorchModel(tm)
         self.n_particles = n_particles
         self._cache: dict[str, Any] = {}

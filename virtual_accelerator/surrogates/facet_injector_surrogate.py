@@ -19,6 +19,6 @@ class FacetInjectorSurrogate(BeamOutputWrapper):
     """LUME wrapper around the FACET-II injector covariance surrogate."""
 
     def __init__(self, n_particles: int = 10000, p0c: float = 1e8) -> None:
-        tm = load_model(use_cpu=True)
+        tm = load_model()
         model = LUMETorchModel(tm)
         super().__init__(model, n_particles=n_particles, p0c=p0c)
