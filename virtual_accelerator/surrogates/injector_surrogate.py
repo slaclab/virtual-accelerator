@@ -181,7 +181,7 @@ class BeamOutputModel(LUMEModel):
             "z": _tensor_to_numpy(particles[:, 4]),
             "px": _tensor_to_numpy(particles[:, 1]),
             "py": _tensor_to_numpy(particles[:, 3]),
-            "pz": _tensor_to_numpy(particles[:, 5]),
+            "pz": _tensor_to_numpy(particles[:, 5]) + self.p0c,
             "t": 0.0,
             "weight": _tensor_to_numpy(
                 torch.ones(self.n_particles)
