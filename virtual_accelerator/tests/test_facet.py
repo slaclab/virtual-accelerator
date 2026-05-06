@@ -8,6 +8,7 @@ from virtual_accelerator.tests._bmad_model_test_utils import (
     assert_bmad_model_track_beam_custom_path,
     assert_bmad_model_twiss_outputs,
     assert_element_pvs_match_tao_lattice,
+    assert_screen_image_pvs_in_supported_variables,
 )
 from virtual_accelerator.models.facet2 import get_facet_bmad_model
 
@@ -29,22 +30,35 @@ class TestFACET2Bmad:
     def test_track_beam_custom_path(self):
         assert_bmad_model_track_beam_custom_path(get_facet_bmad_model)
 
+    def test_screen_image_pvs_in_supported_variables(self):
+        model = get_facet_bmad_model(track_beam=True, custom_beam_path=TEST_BEAM_PATH)
+        assert_screen_image_pvs_in_supported_variables(model)
+
+        # test getting all of the supported variables to ensure no errors with screen variable setup
+        _ = model.get(list(model.supported_variables))
+
     def test_screen_variables(self):
         model = get_facet_bmad_model(
             track_beam=True, custom_beam_path=TEST_BEAM_PATH, end_element="PR10711"
         )
-        # Check that screen variables are included in supported variables when tracking is enabled
-        assert "OTRS:IN10:571:Image:ArrayData" in model.supported_variables
-        assert "OTRS:IN10:711:Image:ArrayData" in model.supported_variables
+        # Check that screen image variables are included in supported variables.
+        assert_screen_image_pvs_in_supported_variables(model)
+
+        pv_prefix_by_element = {
+            element_name: pv_prefix
+            for pv_prefix, element_name in model.transformer.control_name_to_bmad.items()
+        }
+        screen_element = "PR10571"
+        screen_pv = f"{pv_prefix_by_element[screen_element]}:Image:ArrayData"
 
         # test specific output from one of the screens to ensure it's properly set up
-        output = model.get("OTRS:IN10:571:Image:ArrayData")
+        output = model.get(screen_pv)
         assert output.shape == (1392, 1040)
 
         # test to make sure that changing an upstream variable that should affect the screen output
         current_value = model.get("QUAD:IN10:371:BCTRL")
         model.set({"QUAD:IN10:371:BCTRL": current_value + 0.1})
-        new_output = model.get("OTRS:IN10:571:Image:ArrayData")
+        new_output = model.get(screen_pv)
         assert not (new_output == output).all()  # Check that the screen output changed
 
     @pytest.mark.xfail(reason="known FACET2 quadrupoles are missing EPICS mappings")
@@ -61,3 +75,4 @@ class TestFACET2Bmad:
     def test_vkicker_pvs_match_tao_lattice(self):
         model = get_facet_bmad_model()
         assert_element_pvs_match_tao_lattice(model, "VKicker")
+
