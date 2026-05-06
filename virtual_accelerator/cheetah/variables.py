@@ -1,5 +1,4 @@
 from typing import Any
-from cheetah.accelerator import Screen, Segment, SuperimposedElement
 import warnings
 from lume.variables import Variable
 from virtual_accelerator.utils.variables import (
@@ -11,7 +10,7 @@ from virtual_accelerator.utils.variables import (
 
 
 def get_variables_from_segment(
-    segment: Segment,
+    segment,
     device_mapping: dict[str, str] = None,
     element_attr_mapping: dict[str, dict[str, dict[str, Any]]] = None,
 ) -> dict[str, Variable]:
@@ -48,6 +47,8 @@ def get_variables_from_segment(
     See `get_variables_from_element_name` for details on the specification of `element_attr_mapping`.
 
     """
+    from cheetah.accelerator import Screen
+
     #
     all_variables = {}
     device_mapping = device_mapping or get_name_to_epics_mapping()

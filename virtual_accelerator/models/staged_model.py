@@ -2,8 +2,6 @@ from typing import Any
 from lume.model import LUMEModel
 from lume.variables.particle_group import ParticleGroupVariable
 from lume.variables.variable import Variable
-from virtual_accelerator.surrogates.injector_surrogate import InjectorSurrogate
-from virtual_accelerator.models.cu_hxr import get_cu_hxr_bmad_model
 
 
 class StagedModel(LUMEModel):
@@ -152,11 +150,13 @@ class StagedModel(LUMEModel):
 
 
 # get lume model instances for each stage of the accelerator
-def get_cu_hxr_staged_model(**kwargs) -> StagedModel:
+def get_cu_hxr_staged_model(n_particles: int = 1000, **kwargs) -> StagedModel:
     """
 
     Parameters
     ----------
+    n_particles: int
+        Number of particles to simulate.
     **kwargs:
         Keyword arguments to be passed to the bmad LUMEModel instances as needed.
 
@@ -166,7 +166,10 @@ def get_cu_hxr_staged_model(**kwargs) -> StagedModel:
         Instance of the StagedModel for the CU_HXR lattice.
     """
 
-    injector_surrogate = InjectorSurrogate()
+    from virtual_accelerator.surrogates.injector_surrogate import InjectorSurrogate
+    from virtual_accelerator.models.cu_hxr import get_cu_hxr_bmad_model
+
+    injector_surrogate = InjectorSurrogate(n_particles=n_particles)
     cu_hxr_bmad_model = get_cu_hxr_bmad_model(**kwargs)
 
     staged_model = StagedModel([injector_surrogate, cu_hxr_bmad_model])
