@@ -14,7 +14,7 @@ VARIABLE_CLASS_MAP = {
 }
 
 
-def get_name_to_epics_mapping():
+def get_name_to_epics_mapping(fname: str) -> dict[str, str]:
     """
     Get the mapping from element name to control system PV prefix for
     LCLS elements.
@@ -36,41 +36,47 @@ def get_name_to_epics_mapping():
     )
 
 
-def get_name_or_overlay_to_epics_mapping():
+def get_name_or_overlay_to_epics_mapping(
+    fname: str, beampath: str = None
+) -> dict[str, str]:
     """
     Get the mapping from element name or bmad overlay to control system
     PV prefix from file
-    """
-    fpath = os.path.join(
-        Path(__file__).parent.resolve(),
-        "cu_hxr_elements_to_device",
-    )
-    mapping = {}
-    with Path(fpath).open() as fh:
-        for line in fh:
-            line = line.strip()
-            if not line:
-                continue
-            key, *rest = line.split()
-            mapping[key] = rest[0] if rest else ""
-    return mapping
 
-
-def get_epics_to_name_or_overlay_mapping():
-    return {v: k for k, v in get_name_or_overlay_to_epics_mapping().items()}
-
-
-def get_epics_to_name_mapping():
-    """
-    Get the mapping from control system PV prefix to element name for
-    LCLS elements.
+    Parameters
+    ----------
+    fname : str
+        Path to CSV file containing "Element", and "Control System Name" columns
 
     Returns
     -------
     dict[str, str]
-        Mapping of control-system PV prefix -> lattice element name.
+        Mapping of lattice element name or bmad overlay -> control-system PV prefix.
+
     """
-    return {v: k for k, v in get_name_to_epics_mapping().items()}
+    df = pd.read_csv(fname)
+
+    # if a `beampath` is provided, filter the dataframe to only include elements
+    # in the specified beam path (e.g. "IN20")
+    if beampath is not None:
+        df = df[df["Beampath"].str.contains(beampath, na=False)]
+
+    # remove rows with `keyword` = `USEG` and `LCAV`
+    df = df[~df["Keyword"].str.contains("USEG|LCAV|TCAV", na=False)]
+
+    name_data = df[["Element", "Control System Name"]].dropna()
+    return dict(zip(name_data["Element"], name_data["Control System Name"]))
+
+
+def get_epics_to_name_or_overlay_mapping(
+    fname: str, beampath: str = None
+) -> dict[str, str]:
+    return {
+        v: k
+        for k, v in get_name_or_overlay_to_epics_mapping(
+            fname, beampath=beampath
+        ).items()
+    }
 
 
 def get_element_attr_mapping():

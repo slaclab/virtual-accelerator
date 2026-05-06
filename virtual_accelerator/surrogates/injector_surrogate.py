@@ -7,44 +7,15 @@ import numpy as np
 import yaml
 from lume.model import LUMEModel
 from lume.variables import ParticleGroupVariable
+from lume_torch.base import LUMETorchModel
+from lume_torch.models.torch_model import TorchModel
 from scipy import constants
+import torch
+import beamphysics
+from cheetah import ParticleBeam
 
-from virtual_accelerator.utils.optional_dependencies import (
-    import_optional,
-    import_optional_symbol,
-)
 
 OTR2_BEAM_ENERGY = 135.0e6  # eV
-
-torch = import_optional(
-    "torch",
-    feature="injector surrogate",
-    extra="surrogate",
-)
-LUMETorchModel = import_optional_symbol(
-    "lume_torch.base",
-    "LUMETorchModel",
-    feature="injector surrogate",
-    extra="surrogate",
-)
-TorchModel = import_optional_symbol(
-    "lume_torch.models.torch_model",
-    "TorchModel",
-    feature="injector surrogate",
-    extra="surrogate",
-)
-
-ParticleBeam = import_optional_symbol(
-    "cheetah.particles",
-    "ParticleBeam",
-    feature="injector surrogate",
-    extra="surrogate",
-)
-beamphysics = import_optional(
-    "beamphysics",
-    feature="openPMD beam export for injector surrogate",
-    extra="surrogate",
-)
 
 
 def _tensor_to_numpy(value: Any) -> np.ndarray:
@@ -133,8 +104,99 @@ def create_beam_distribution_from_state(state: Mapping[str, Any], n_particles: i
     return beam
 
 
+class BeamOutputModel(LUMEModel):
+    """
+    LUME wrapper around a surrogate model that adds an openPMD beam
+    output variable based on a model predicting the beam covariance matrix.
+
+    The surrogate model is expected to support at least the following variables:
+    covariance_matrix: TorchNDVariable
+        6x6 covariance matrix of the beam distribution in openpmd ParticleBeam order / units.
+        Note: The units for openPMD ParticleBeam are meters and eV/c.
+
+    """
+
+    def __init__(
+        self, surrogate: TorchModel, n_particles: int = 10000, p0c: float = 1e8
+    ) -> None:
+        """
+         Initialize wrapper with surrogate model and internal cache copy.
+
+         Parameters
+         ----------
+        surrogate: TorchModel
+            The surrogate model to wrap, which must support the required input variables.
+        n_particles: int, optional
+            The number of particles to generate in the output beam distribution (default: 10000).
+        p0c: float, optional
+            The reference momentum in eV/c to use for generating the output beam distribution (default: 1e8).
+
+        """
+        super().__init__()
+        self.surrogate = LUMETorchModel(surrogate)
+        self.n_particles = n_particles
+        self.p0c = p0c
+        self._cache: dict[str, Any] = {}
+        self.set({})  # Initializing with defaults of NN model
+        self.update_state()
+
+    def _get(self, names: Iterable[str]) -> dict[str, Any]:
+        return {name: self._cache[name] for name in names}
+
+    def _set(self, values: Mapping[str, Any]) -> None:
+        """Update model state and regenerate exported output beam."""
+        for name, value in values.items():
+            self._cache[name] = value
+        self.surrogate.set(dict(values))
+        self.update_state()
+
+    @property
+    def supported_variables(self) -> dict[str, Any]:
+        """Return supported variables without mutating wrapped model metadata."""
+        variables = dict(self.surrogate.supported_variables)
+        variables["output_beam"] = ParticleGroupVariable(
+            name="output_beam", read_only=True
+        )
+        return variables
+
+    def reset(self):
+        self.surrogate.reset()
+        self._cache = {}
+
+    def update_state(self):
+        """Update internal cache from surrogate model and regenerate output beam."""
+        self._cache.update(
+            self.surrogate.get(list(self.surrogate.supported_variables.keys()))
+        )
+        covariance_matrix = self._cache["covariance_matrix"]
+
+        # sample beam distribution from covariance matrix and convert to openPMD ParticleGroup
+        particles = torch.distributions.MultivariateNormal(
+            loc=torch.zeros(6), covariance_matrix=covariance_matrix
+        ).sample((self.n_particles,))
+
+        data = {
+            "x": _tensor_to_numpy(particles[:, 0]),
+            "y": _tensor_to_numpy(particles[:, 2]),
+            "z": _tensor_to_numpy(particles[:, 4]),
+            "px": _tensor_to_numpy(particles[:, 1]),
+            "py": _tensor_to_numpy(particles[:, 3]),
+            "pz": _tensor_to_numpy(particles[:, 5]),
+            "t": 0.0,
+            "weight": _tensor_to_numpy(
+                torch.ones(self.n_particles)
+            ),  # need to make at least 1d and negate
+            "status": _tensor_to_numpy(
+                torch.ones(self.n_particles, dtype=torch.int32)
+            ),  # need int
+            "species": "electron",
+        }
+        particle_group = beamphysics.ParticleGroup(data=data)
+        self._cache["output_beam"] = particle_group
+
+
 class InjectorSurrogate(LUMEModel):
-    """LUME wrapper around injector torch surrogate with openPMD beam output."""
+    """LUME wrapper around the lcls injector torch surrogate with openPMD beam output."""
 
     # Config path relative to the project root (used when running from source)
     _SOURCE_RELATIVE = (

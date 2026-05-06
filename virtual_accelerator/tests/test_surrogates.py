@@ -1,24 +1,24 @@
-import importlib.util
 import pytest
+from unittest.mock import Mock
 
-# Skip entire module at collection time when lume_torch is absent — avoids
+# Skip entire module at collection time when lume-torch is absent — avoids
 # an ImportError inside injector_surrogate.py before any skip logic fires.
 pytest.importorskip(
     "lume_torch",
     reason="requires lume-torch: pip install virtual-accelerator[surrogate]",
 )
-
-from virtual_accelerator.surrogates.injector_surrogate import InjectorSurrogate  # noqa: E402
-
-
-def _has_module(name: str) -> bool:
-    return importlib.util.find_spec(name) is not None
-
-
-pytestmark = pytest.mark.skipif(
-    not _has_module("cheetah"),
-    reason="requires surrogate optional dependencies: pip install virtual-accelerator[surrogate,cheetah]",
+pytest.importorskip(
+    "cheetah",
+    reason="requires surrogate optional dependencies: pip install virtual-accelerator[surrogate]",
 )
+from lume_torch.variables import TorchNDVariable
+from lume_torch.models.torch_model import TorchModel
+import torch
+
+from virtual_accelerator.surrogates.injector_surrogate import (
+    InjectorSurrogate,
+    BeamOutputModel,
+)  # noqa: E402
 
 
 def test_injector_surrogate():
@@ -64,3 +64,36 @@ def test_injector_surrogate_outputs_are_physical():
     assert 0.0 < sigma_z < 1.0e2
     assert 0.0 < norm_emit_x < 1.0e-3
     assert 0.0 < norm_emit_y < 1.0e-3
+
+
+TEST_COVARIANCE_MATRIX = torch.diag(
+    torch.tensor([1.0e-3, 1.0e5, 1.0e-3, 1.0e5, 1.0e-3, 1.0e5], dtype=torch.float32)
+)
+
+
+def make_dummy_torch_model() -> TorchModel:
+    """Return a minimal TorchModel-like object for BeamOutputWrapper tests."""
+    model = Mock(spec=TorchModel)
+    model.input_variables = []
+    model.output_variables = [
+        TorchNDVariable(name="covariance_matrix", unit="", shape=(6, 6))
+    ]
+    model.input_names = []
+    model.evaluate.return_value = {"covariance_matrix": TEST_COVARIANCE_MATRIX.clone()}
+    return model
+
+
+def test_beam_output_model():
+    surrogate = make_dummy_torch_model()
+    wrapped = BeamOutputModel(surrogate, n_particles=1000000, p0c=1e8)
+
+    output = wrapped.get(["output_beam", "covariance_matrix"])
+    assert "output_beam" in output
+    assert output["covariance_matrix"].shape == (6, 6)
+    assert output["output_beam"].x.shape[0] == 1000000
+
+    # check that the covariance matrix is being converted to cheetah units correctly
+    cov = torch.tensor(
+        output["output_beam"].cov("x", "px", "y", "py", "z", "pz")
+    ).float()
+    assert torch.allclose(cov, TEST_COVARIANCE_MATRIX, atol=1e3, rtol=1e-2)

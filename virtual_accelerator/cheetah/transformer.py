@@ -19,7 +19,23 @@ class SLACCheetahTransformer(CheetahTransformer):
     """
 
     def __init__(self, control_name_to_cheetah: dict[str, str]):
+        """
+        Initialize the transformer with a mapping from control variable names to
+        cheetah element names.
+
+        Parameters
+        ----------
+        control_name_to_cheetah : dict[str, str]
+            A dictionary mapping control variable names to cheetah elements
+            (e.g. {"QUAD:IN20:511" : "qe03"}) (cheetah names are converted to
+            lower case internally).
+        """
         self._control_name_to_cheetah = control_name_to_cheetah
+
+        # convert mapping to lower case for cheetah element names
+        self._control_name_to_cheetah = {
+            k: v.lower() for k, v in self._control_name_to_cheetah.items()
+        }
 
     @property
     def control_name_to_cheetah(self):

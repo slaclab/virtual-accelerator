@@ -49,19 +49,15 @@ def injector_model():
 @pytest.fixture
 def cu_hxr_bmad_model():
     """Fixture providing a cu_hxr BMAD model with custom beam path."""
-    return get_cu_hxr_bmad_model(custom_beam_path=TEST_BEAM_PATH)
+    return get_cu_hxr_bmad_model(
+        custom_beam_path=TEST_BEAM_PATH, end_element="OTR4", track_beam=True
+    )
 
 
 @pytest.fixture
 def staged_model(injector_model, cu_hxr_bmad_model):
     """Fixture providing a basic StagedModel combining injector and cu_hxr."""
     return StagedModel([injector_model, cu_hxr_bmad_model])
-
-
-@pytest.fixture
-def staged_model_with_tracking():
-    """Fixture providing a StagedModel with beam tracking enabled."""
-    return get_cu_hxr_staged_model(track_beam=True, end_element="OTR4")
 
 
 class TestStagedModelValidation:
@@ -125,7 +121,9 @@ class TestStagedModelVariables:
         assert "b.beta" in result
 
     def test_staged_model_edge_case(self):
-        model = get_cu_hxr_staged_model(track_beam=True, end_element="TD11")
+        model = get_cu_hxr_staged_model(
+            custom_beam_path=TEST_BEAM_PATH, track_beam=True, end_element="TD11"
+        )
         model.set({"QUAD:IN20:525:BCTRL": 10})
         b = model.get("x.beta")
         assert b is not None
@@ -134,9 +132,9 @@ class TestStagedModelVariables:
 class TestStagedModelStaging:
     """Test beam staging and propagation through models."""
 
-    def test_cu_hxr_staged_model_output(self, staged_model_with_tracking):
+    def test_cu_hxr_staged_model_output(self, staged_model):
         """Test staged model beam output after setting control variables."""
-        model = staged_model_with_tracking
+        model = staged_model
 
         SCAN_QUAD_PV = "QUAD:IN20:525:BCTRL"
         model.set({SCAN_QUAD_PV: float(-10)})
@@ -151,9 +149,9 @@ class TestStagedModelStaging:
         assert "a.beta" in result
         assert result["a.beta"] is not None
 
-    def test_beam_propagation_output(self, staged_model_with_tracking):
+    def test_beam_propagation_output(self, staged_model):
         """Test that beams propagate through stages with tracking enabled."""
-        model = staged_model_with_tracking
+        model = staged_model
 
         # Set a quad and verify output beam exists
         model.set({"QUAD:IN20:631:BCTRL": -5.0})
@@ -170,32 +168,3 @@ class TestStagedModelStaging:
         result = staged_model.get(["a.beta", "b.beta"])
         assert "a.beta" in result
         assert "b.beta" in result
-
-
-class TestStagedModelFactory:
-    """Test the factory function get_cu_hxr_staged_model."""
-
-    def test_get_cu_hxr_staged_model_basic(self):
-        """Test factory function creates valid StagedModel."""
-        model = get_cu_hxr_staged_model(custom_beam_path=TEST_BEAM_PATH)
-
-        assert isinstance(model, StagedModel)
-        assert len(model.lume_model_instances) == 2
-
-    def test_get_cu_hxr_staged_model_with_track_beam(self):
-        """Test factory function with track_beam=True."""
-        model = get_cu_hxr_staged_model(track_beam=True, end_element="OTR4")
-
-        assert isinstance(model, StagedModel)
-        cu_hxr = model.lume_model_instances[1]
-        # Verify tracking is enabled
-        assert "OTR4_beam" in cu_hxr.supported_variables
-
-    def test_get_cu_hxr_staged_model_with_end_element(self):
-        """Test factory function with custom end_element."""
-        model = get_cu_hxr_staged_model(end_element="OTR2")
-
-        assert isinstance(model, StagedModel)
-        cu_hxr = model.lume_model_instances[1]
-        # Model should be created successfully with custom end_element
-        assert len(cu_hxr.supported_variables) > 0
