@@ -185,19 +185,15 @@ def get_screen_variables(
         control_variables[image_name] = NDVariable(
             name=image_name, unit="", read_only=True, shape=(nCol, nRow)
         )
-        control_variables[elem_config["name"] + ":Image:ArraySize1_RBV"] = (
-            IntVariable(
-                name=elem_config["name"] + ":Image:ArraySize1_RBV",
-                unit="pixel",
-                read_only=True,
-            )
+        control_variables[elem_config["name"] + ":Image:ArraySize1_RBV"] = IntVariable(
+            name=elem_config["name"] + ":Image:ArraySize1_RBV",
+            unit="pixel",
+            read_only=True,
         )
-        control_variables[elem_config["name"] + ":Image:ArraySize0_RBV"] = (
-            IntVariable(
-                name=elem_config["name"] + ":Image:ArraySize0_RBV",
-                unit="pixel",
-                read_only=True,
-            )
+        control_variables[elem_config["name"] + ":Image:ArraySize0_RBV"] = IntVariable(
+            name=elem_config["name"] + ":Image:ArraySize0_RBV",
+            unit="pixel",
+            read_only=True,
         )
         control_variables[elem_config["name"] + ":RESOLUTION"] = ScalarVariable(
             name=elem_config["name"] + ":RESOLUTION",

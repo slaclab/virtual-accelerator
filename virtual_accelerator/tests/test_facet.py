@@ -75,4 +75,3 @@ class TestFACET2Bmad:
     def test_vkicker_pvs_match_tao_lattice(self):
         model = get_facet_bmad_model()
         assert_element_pvs_match_tao_lattice(model, "VKicker")
-
