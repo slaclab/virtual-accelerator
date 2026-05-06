@@ -5,12 +5,14 @@ import pandas as pd
 from typing import Any
 import warnings
 
-from lume.variables import Variable, ScalarVariable, NDVariable
+from lume.variables import Variable, ScalarVariable, NDVariable, StrVariable, EnumVariable
 import yaml
 
 VARIABLE_CLASS_MAP = {
     "ScalarVariable": ScalarVariable,
     "NDVariable": NDVariable,
+    "StrVariable": StrVariable,
+    "EnumVariable": EnumVariable,
 }
 
 

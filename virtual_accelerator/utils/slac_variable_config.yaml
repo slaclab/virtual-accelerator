@@ -38,6 +38,19 @@ Quadrupole:
     unit: kG
     read_only: true
     variable_class: ScalarVariable
+  STATCTRLSUB.T:
+    read_only: true
+    variable_class: ScalarVariable
+  CTRL:
+    read_only: true
+    variable_class: EnumVariable
+    default_value: Ready
+    options:
+      0: Ready
+      1: TRIM
+      2: PERTURB
+      3: BCON_TO_BDES
+      4: BACT_TO_BDES      
 
 Solenoid:
   BCTRL:
@@ -68,6 +81,19 @@ Solenoid:
     unit: kG-m
     read_only: true
     variable_class: ScalarVariable
+  STATCTRLSUB.T:
+    read_only: true
+    variable_class: ScalarVariable
+  CTRL:
+    read_only: true
+    variable_class: EnumVariable
+    default_value: Ready
+    options:
+      0: Ready
+      1: TRIM
+      2: PERTURB
+      3: BCON_TO_BDES
+      4: BACT_TO_BDES      
 
 HorizontalCorrector:
   BCTRL:
@@ -98,6 +124,19 @@ HorizontalCorrector:
     unit: kG-m
     read_only: true
     variable_class: ScalarVariable
+  STATCTRLSUB.T:
+    read_only: true
+    variable_class: ScalarVariable
+  CTRL:
+    read_only: true
+    variable_class: EnumVariable
+    default_value: Ready
+    options:
+      0: Ready
+      1: TRIM
+      2: PERTURB
+      3: BCON_TO_BDES
+      4: BACT_TO_BDES      
 
 VerticalCorrector:
   BCTRL:
@@ -128,6 +167,19 @@ VerticalCorrector:
     unit: kG-m
     read_only: true
     variable_class: ScalarVariable
+  STATCTRLSUB.T:
+    read_only: true
+    variable_class: ScalarVariable
+  CTRL:
+    read_only: true
+    variable_class: EnumVariable
+    default_value: Ready
+    options:
+      0: Ready
+      1: TRIM
+      2: PERTURB
+      3: BCON_TO_BDES
+      4: BACT_TO_BDES      
 
 Screen:
   Image:ArrayData:

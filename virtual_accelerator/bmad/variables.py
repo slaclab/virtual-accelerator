@@ -144,7 +144,7 @@ def get_screen_variables(
     ----------
     tao : Tao
         The TAO instance.
-    control_variables : dict[str, NDVariable | ScalarVariable | IntVariable]
+    control_variables : dict[str, NDVariable | ScalarVariable | IntVariable | StrVariable]
         Dictionary of control variables.
     screen_list : list[str]
         List of screen elements to include.
@@ -153,7 +153,7 @@ def get_screen_variables(
 
     Returns
     -------
-    tuple[dict[str, NDVariable | ScalarVariable | IntVariable], dict[str, dict[str, Any]], list[str]]
+    tuple[dict[str, NDVariable | ScalarVariable | IntVariable | StrVariable], dict[str, dict[str, Any]], list[str]]
         - control_variables: Updated dictionary of control variables including screen variables.
         - screen_attributes: Dictionary of screen attributes for each element.
             - number of pixels in x and y
@@ -200,6 +200,7 @@ def get_screen_variables(
             unit="pixel/mm",
             read_only=True,
         )
+
         screen_attributes[element] = {
             "bins": np.array([nCol, nRow]),
             "resolution": elem_config["res"],

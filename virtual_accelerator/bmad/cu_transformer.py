@@ -95,6 +95,10 @@ class CUBmadTransformer(BmadTransformer):
                 return -100  # TODO: add logic for these limits
             elif attr == "BMAX" or attr == "BCTRL.DRVH":
                 return 100
+            elif attr == "STATCTRLSUB.T":
+                return 0  # TODO: add logic for status of solenoid
+            elif attr == "CTRL":
+                return "Ready"
         elif device_type == "Solenoid":
             if attr in ["BCTRL", "BACT", "BDES"]:
                 return ele_attr["BS_FIELD"] * 10  # TODO confirm this conversion
@@ -102,6 +106,10 @@ class CUBmadTransformer(BmadTransformer):
                 return -100  # TODO: add logic for these limits
             elif attr == "BMAX" or attr == "BCTRL.DRVH":
                 return 100
+            elif attr == "STATCTRLSUB.T":
+                return 0  # TODO: add logic for status of solenoid
+            elif attr == "CTRL":
+                return "Ready"
         elif device_type in ["KLYS", "Lcavity"]:  # TODO: handle KLYS properly
             if attr in ["ENLD", "ADES"]:
                 tao.ele_control_var(element_name)
@@ -117,6 +125,10 @@ class CUBmadTransformer(BmadTransformer):
                 return -10  # TODO: add logic for these limits
             elif attr == "BMAX" or attr == "BCTRL.DRVH":
                 return 10
+            elif attr == "STATCTRLSUB.T":
+                return 0  # TODO: add logic for status of solenoid
+            elif attr == "CTRL":
+                return "Ready"
         elif device_type == "Monitor":
             if attr == "Image:ArrayData":
                 bins = self.screen_attributes[element_name]["bins"]
