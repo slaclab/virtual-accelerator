@@ -8,6 +8,16 @@ BPM:
     unit: mm
     read_only: true
     variable_class: ScalarVariable
+  XSCDTH:
+    unit: mm
+    read_only: true
+    variable_class: ScalarVariable
+    default_value: NULL
+  YSCDTH:
+    unit: mm
+    read_only: true
+    variable_class: ScalarVariable
+
 
 Quadrupole:
   BCTRL:

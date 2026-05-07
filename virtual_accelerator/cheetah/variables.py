@@ -46,7 +46,7 @@ def get_variables_from_segment(
     See `get_variables_from_element_name` for details on the specification of `element_attr_mapping`.
 
     """
-    from cheetah.accelerator import Screen
+    from cheetah.accelerator import Screen, SuperimposedElement
 
     all_variables = {}
     element_attr_mapping = element_attr_mapping or get_element_attr_mapping()
@@ -60,9 +60,36 @@ def get_variables_from_segment(
             warnings.warn(f"Element {element.name} not found in device mapping")
             continue
 
-        element_variables = get_variables_from_element_name(
-            type(element).__name__, control_name, element_attr_mapping
-        )
+        if isinstance(element, SuperimposedElement):
+            element_variables = get_variables_from_element_name(
+                type(element.base_element).__name__,
+                control_name,
+                element_attr_mapping,
+            )
+
+            # iterate through the superimposed elements and get variables for each
+            for sub_element in element.superimposed_element.elements:
+                if type(sub_element).__name__ in ["Drift", "Marker", "Cavity"]:
+                    continue
+                elif sub_element.name.upper() in device_mapping:
+                    sub_control_name = device_mapping[sub_element.name.upper()]
+                else:
+                    warnings.warn(
+                        f"Element {sub_element.name} not found in device mapping"
+                    )
+                    continue
+
+                sub_element_variables = get_variables_from_element_name(
+                    type(sub_element).__name__,
+                    sub_control_name,
+                    element_attr_mapping,
+                )
+                element_variables.update(sub_element_variables)
+
+        else:
+            element_variables = get_variables_from_element_name(
+                type(element).__name__, control_name, element_attr_mapping
+            )
 
         # if element type is a screen then modify the output variable
         if isinstance(element, Screen):
