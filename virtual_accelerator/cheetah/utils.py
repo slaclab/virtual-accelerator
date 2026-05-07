@@ -112,6 +112,8 @@ BPM_MAPPING = {
     "Y": FieldAccessor(lambda e, energy: e.reading[..., 1]),
     "XSCDT1H": FieldAccessor(lambda e, energy: e.reading[..., 0]),
     "YSCDT1H": FieldAccessor(lambda e, energy: e.reading[..., 1]),
+    "XSCDTH": FieldAccessor(lambda e, energy: e.reading[..., 0]),
+    "YSCDTH": FieldAccessor(lambda e, energy: e.reading[..., 1]),
     "TMIT": FieldAccessor(lambda e, energy: 1.0),
 }
 

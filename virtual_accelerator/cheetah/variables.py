@@ -46,7 +46,7 @@ def get_variables_from_segment(
     See `get_variables_from_element_name` for details on the specification of `element_attr_mapping`.
 
     """
-    from cheetah.accelerator import Screen
+    from cheetah.accelerator import Screen, SuperimposedElement
 
     all_variables = {}
     element_attr_mapping = element_attr_mapping or get_element_attr_mapping()

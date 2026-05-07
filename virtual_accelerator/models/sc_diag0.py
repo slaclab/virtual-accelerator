@@ -37,10 +37,10 @@ def get_sc_diag0_cheetah_model():
     )
 
     from lume_cheetah import LUMECheetahModel, CheetahSimulator
-    from cheetah.accelerator import Segment
     from cheetah.particles import ParticleBeam
     from virtual_accelerator.cheetah.transformer import SLACCheetahTransformer
     from virtual_accelerator.cheetah.variables import get_variables_from_segment
+    from virtual_accelerator.cheetah.diag0 import get_diag0_beamline
     import torch
 
     incoming_beam = ParticleBeam.from_twiss(
@@ -53,6 +53,7 @@ def get_sc_diag0_cheetah_model():
         energy=torch.tensor(90e6),
     )
     incoming_beam.particle_charges = torch.tensor(1.0)
+    lcls_lattice = os.environ.get("LCLS_LATTICE")
 
     # Create lattice from file
     segment = get_diag0_beamline()
