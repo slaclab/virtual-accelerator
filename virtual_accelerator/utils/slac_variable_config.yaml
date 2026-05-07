@@ -46,11 +46,11 @@ Quadrupole:
     variable_class: EnumVariable
     default_value: Ready
     options:
-      0: Ready
-      1: TRIM
-      2: PERTURB
-      3: BCON_TO_BDES
-      4: BACT_TO_BDES
+      - Ready
+      - TRIM
+      - PERTURB
+      - BCON_TO_BDES
+      - BACT_TO_BDES
 
 Solenoid:
   BCTRL:
@@ -89,11 +89,11 @@ Solenoid:
     variable_class: EnumVariable
     default_value: Ready
     options:
-      0: Ready
-      1: TRIM
-      2: PERTURB
-      3: BCON_TO_BDES
-      4: BACT_TO_BDES
+      - Ready
+      - TRIM
+      - PERTURB
+      - BCON_TO_BDES
+      - BACT_TO_BDES
 
 HorizontalCorrector:
   BCTRL:
@@ -132,11 +132,11 @@ HorizontalCorrector:
     variable_class: EnumVariable
     default_value: Ready
     options:
-      0: Ready
-      1: TRIM
-      2: PERTURB
-      3: BCON_TO_BDES
-      4: BACT_TO_BDES
+      - Ready
+      - TRIM
+      - PERTURB
+      - BCON_TO_BDES
+      - BACT_TO_BDES
 
 VerticalCorrector:
   BCTRL:
@@ -175,11 +175,11 @@ VerticalCorrector:
     variable_class: EnumVariable
     default_value: Ready
     options:
-      0: Ready
-      1: TRIM
-      2: PERTURB
-      3: BCON_TO_BDES
-      4: BACT_TO_BDES
+      - Ready
+      - TRIM
+      - PERTURB
+      - BCON_TO_BDES
+      - BACT_TO_BDES
 
 Screen:
   Image:ArrayData:
