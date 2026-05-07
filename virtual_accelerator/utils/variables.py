@@ -5,12 +5,20 @@ import pandas as pd
 from typing import Any
 import warnings
 
-from lume.variables import Variable, ScalarVariable, NDVariable
+from lume.variables import (
+    Variable,
+    ScalarVariable,
+    NDVariable,
+    StrVariable,
+    EnumVariable,
+)
 import yaml
 
 VARIABLE_CLASS_MAP = {
     "ScalarVariable": ScalarVariable,
     "NDVariable": NDVariable,
+    "StrVariable": StrVariable,
+    "EnumVariable": EnumVariable,
 }
 
 
@@ -309,14 +317,11 @@ def convert_to_torch_variables(
 
         torch_class_name = "Torch" + cls.__name__
 
-        try:
-            torch_class = VARIABLE_CLASS_MAP[torch_class_name]
-        except KeyError as e:
-            raise KeyError(
-                f"No torch variable class registered for {cls.__name__!r} "
-                f"(expected key {torch_class_name!r})"
-            ) from e
+        # skip non Torch variables (e.g. StrVariable, EnumVariable) by checking if the corresponding Torch class exists in the mapping
+        if torch_class_name not in VARIABLE_CLASS_MAP:
+            continue
 
+        torch_class = VARIABLE_CLASS_MAP[torch_class_name]
         torch_variables[name] = torch_class(**kwargs)
 
     return torch_variables

@@ -45,7 +45,7 @@ def main():
             )
         model = get_cu_hxr_cheetah_model()
     elif args.model == "facet_bmad":
-        model = get_facet_bmad_model(end_element=args.end_element)
+        model = get_facet_bmad_model(end_element=args.end_element, track_beam=True)
     else:
         raise ValueError(f"Invalid model choice. Please choose one of {choices}.")
 

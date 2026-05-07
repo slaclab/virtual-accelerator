@@ -14,6 +14,14 @@ Quadrupole:
     unit: kG
     read_only: false
     variable_class: ScalarVariable
+  BCTRL.DRVL:
+    unit: kG
+    read_only: true
+    variable_class: ScalarVariable
+  BCTRL.DRVH:
+    unit: kG
+    read_only: true
+    variable_class: ScalarVariable
   BACT:
     unit: kG
     read_only: true
@@ -30,12 +38,33 @@ Quadrupole:
     unit: kG
     read_only: true
     variable_class: ScalarVariable
+  STATCTRLSUB.T:
+    read_only: true
+    variable_class: ScalarVariable
+  CTRL:
+    read_only: true
+    variable_class: EnumVariable
+    default_value: Ready
+    options:
+      - Ready
+      - TRIM
+      - PERTURB
+      - BCON_TO_BDES
+      - BACT_TO_BDES
 
 Solenoid:
   BCTRL:
     unit: kG-m
     read_only: false
     variable_class: ScalarVariable
+  BCTRL.DRVL:
+    unit: kG
+    read_only: true
+    variable_class: ScalarVariable
+  BCTRL.DRVH:
+    unit: kG
+    read_only: true
+    variable_class: ScalarVariable
   BACT:
     unit: kG-m
     read_only: true
@@ -52,12 +81,33 @@ Solenoid:
     unit: kG-m
     read_only: true
     variable_class: ScalarVariable
+  STATCTRLSUB.T:
+    read_only: true
+    variable_class: ScalarVariable
+  CTRL:
+    read_only: true
+    variable_class: EnumVariable
+    default_value: Ready
+    options:
+      - Ready
+      - TRIM
+      - PERTURB
+      - BCON_TO_BDES
+      - BACT_TO_BDES
 
 HorizontalCorrector:
   BCTRL:
     unit: kG-m
     read_only: false
     variable_class: ScalarVariable
+  BCTRL.DRVL:
+    unit: kG
+    read_only: true
+    variable_class: ScalarVariable
+  BCTRL.DRVH:
+    unit: kG
+    read_only: true
+    variable_class: ScalarVariable
   BACT:
     unit: kG-m
     read_only: true
@@ -74,12 +124,33 @@ HorizontalCorrector:
     unit: kG-m
     read_only: true
     variable_class: ScalarVariable
+  STATCTRLSUB.T:
+    read_only: true
+    variable_class: ScalarVariable
+  CTRL:
+    read_only: true
+    variable_class: EnumVariable
+    default_value: Ready
+    options:
+      - Ready
+      - TRIM
+      - PERTURB
+      - BCON_TO_BDES
+      - BACT_TO_BDES
 
 VerticalCorrector:
   BCTRL:
     unit: kG-m
     read_only: false
     variable_class: ScalarVariable
+  BCTRL.DRVL:
+    unit: kG
+    read_only: true
+    variable_class: ScalarVariable
+  BCTRL.DRVH:
+    unit: kG
+    read_only: true
+    variable_class: ScalarVariable
   BACT:
     unit: kG-m
     read_only: true
@@ -96,6 +167,19 @@ VerticalCorrector:
     unit: kG-m
     read_only: true
     variable_class: ScalarVariable
+  STATCTRLSUB.T:
+    read_only: true
+    variable_class: ScalarVariable
+  CTRL:
+    read_only: true
+    variable_class: EnumVariable
+    default_value: Ready
+    options:
+      - Ready
+      - TRIM
+      - PERTURB
+      - BCON_TO_BDES
+      - BACT_TO_BDES
 
 Screen:
   Image:ArrayData:

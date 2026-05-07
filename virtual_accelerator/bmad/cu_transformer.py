@@ -91,17 +91,25 @@ class CUBmadTransformer(BmadTransformer):
             if attr in ["BCTRL", "BACT", "BDES"]:
                 # convert from Bmad units to EPICS units
                 return -ele_attr["B1_GRADIENT"] * ele_attr["L"] * 10
-            elif attr == "BMIN":
+            elif attr == "BMIN" or attr == "BCTRL.DRVL":
                 return -100  # TODO: add logic for these limits
-            elif attr == "BMAX":
+            elif attr == "BMAX" or attr == "BCTRL.DRVH":
                 return 100
+            elif attr == "STATCTRLSUB.T":
+                return 0  # TODO: add logic for status of solenoid
+            elif attr == "CTRL":
+                return "Ready"
         elif device_type == "Solenoid":
             if attr in ["BCTRL", "BACT", "BDES"]:
                 return ele_attr["BS_FIELD"] * 10  # TODO confirm this conversion
-            elif attr == "BMIN":
+            elif attr == "BMIN" or attr == "BCTRL.DRVL":
                 return -100  # TODO: add logic for these limits
-            elif attr == "BMAX":
+            elif attr == "BMAX" or attr == "BCTRL.DRVH":
                 return 100
+            elif attr == "STATCTRLSUB.T":
+                return 0  # TODO: add logic for status of solenoid
+            elif attr == "CTRL":
+                return "Ready"
         elif device_type in ["KLYS", "Lcavity"]:  # TODO: handle KLYS properly
             if attr in ["ENLD", "ADES"]:
                 tao.ele_control_var(element_name)
@@ -111,7 +119,16 @@ class CUBmadTransformer(BmadTransformer):
             if attr == "BEAMCODE1_STAT":
                 return tao.ele_control_var(element_name)["IN_USE"]
         elif device_type in ["HKicker", "VKicker", "EFC"]:
-            return tao.ele_gen_attribs(element_name)["BL_KICK"]
+            if attr in ["BCTRL", "BACT", "BDES"]:
+                return tao.ele_gen_attribs(element_name)["BL_KICK"]
+            elif attr == "BMIN" or attr == "BCTRL.DRVL":
+                return -10  # TODO: add logic for these limits
+            elif attr == "BMAX" or attr == "BCTRL.DRVH":
+                return 10
+            elif attr == "STATCTRLSUB.T":
+                return 0  # TODO: add logic for status of solenoid
+            elif attr == "CTRL":
+                return "Ready"
         elif device_type == "Monitor":
             if attr == "Image:ArrayData":
                 bins = self.screen_attributes[element_name]["bins"]
@@ -130,6 +147,9 @@ class CUBmadTransformer(BmadTransformer):
                         bins=bins,
                         range=np.stack(((-range[0], range[0]), (-range[1], range[1]))),
                     )
+                    # normalize images and multiply by a scale factor
+                    H = H / np.max(H) * 65535  # scale to 16 bit range
+
                     return H
             elif attr == "Image:ArraySize1_RBV":
                 return self.screen_attributes[element_name]["bins"][0]

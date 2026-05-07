@@ -8,7 +8,8 @@ from virtual_accelerator.tests._bmad_model_test_utils import (
     assert_bmad_model_initialization,
     assert_bmad_model_twiss_outputs,
     assert_bmad_model_track_beam_custom_path,
-    assert_element_pvs_match_tao_lattice,
+    assert_magnet_pvs_match_tao_lattice,
+    assert_screen_image_pvs_in_supported_variables,
 )
 from virtual_accelerator.models.cu_hxr import (
     get_cu_hxr_bmad_model,
@@ -39,7 +40,10 @@ class TestCUHXRBmad:
         model = get_cu_hxr_bmad_model(
             end_element="OTR4", track_beam=True, custom_beam_path=TEST_BEAM_PATH
         )
-        assert "OTRS:IN20:711:Image:ArrayData" in model.supported_variables
+        assert_screen_image_pvs_in_supported_variables(model)
+
+        # test getting all of the supported variables to ensure no errors with screen variable setup
+        _ = model.get(list(model.supported_variables))
 
     def test_cu_hxr_twiss(self):
         assert_bmad_model_twiss_outputs(get_cu_hxr_bmad_model)
@@ -84,15 +88,15 @@ class TestCUHXRBmad:
 
     def test_quadrupole_pvs_match_tao_lattice(self):
         model = get_cu_hxr_bmad_model()
-        assert_element_pvs_match_tao_lattice(model, "Quadrupole")
+        assert_magnet_pvs_match_tao_lattice(model, "Quadrupole")
 
     def test_hkicker_pvs_match_tao_lattice(self):
         model = get_cu_hxr_bmad_model()
-        assert_element_pvs_match_tao_lattice(model, "HKicker")
+        assert_magnet_pvs_match_tao_lattice(model, "HKicker")
 
     def test_vkicker_pvs_match_tao_lattice(self):
         model = get_cu_hxr_bmad_model()
-        assert_element_pvs_match_tao_lattice(model, "VKicker")
+        assert_magnet_pvs_match_tao_lattice(model, "VKicker")
 
 
 @pytest.mark.skipif(

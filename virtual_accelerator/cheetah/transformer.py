@@ -1,3 +1,5 @@
+import torch
+
 from virtual_accelerator.cheetah.utils import access_cheetah_attribute
 from lume_cheetah.transformer import CheetahTransformer
 
@@ -72,6 +74,9 @@ class SLACCheetahTransformer(CheetahTransformer):
         beam_energy_at_element = simulator.energies[element_name]
         # due to getting beam energy this calc is very slow, maybe some list format should
         # be passable for args.
+        if "STATCTRLSUB.T" in attribute:
+            return torch.tensor(1.0)
+
         return access_cheetah_attribute(element, attribute, beam_energy_at_element)
 
     def set_cheetah_property(self, simulator, control_variable_name, value):

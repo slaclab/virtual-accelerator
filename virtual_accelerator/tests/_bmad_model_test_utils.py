@@ -40,10 +40,18 @@ def assert_bmad_model_track_beam_custom_path(get_model) -> None:
     assert model is not None
 
 
-def assert_element_pvs_match_tao_lattice(
+def assert_magnet_pvs_match_tao_lattice(
     model,
     element_key: str,
-    element_attrs: tuple[str, ...] = ("BCTRL", "BACT", "BDES", "BMIN", "BMAX"),
+    element_attrs: tuple[str, ...] = (
+        "BCTRL",
+        "BACT",
+        "BDES",
+        "BMIN",
+        "BMAX",
+        "STATCTRLSUB.T",
+        "CTRL",
+    ),
 ) -> None:
     """
     Verify that all lattice elements of a given type have corresponding PV mappings.
@@ -113,4 +121,67 @@ def assert_element_pvs_match_tao_lattice(
         + "; ".join(
             f"{element}: {', '.join(pvs)}" for element, pvs in missing_pvs.items()
         )
+    )
+
+
+def assert_screen_image_pvs_in_supported_variables(
+    model,
+    screen_elements: tuple[str, ...] | list[str] | None = None,
+    screen_attrs: tuple[str, ...] = (
+        "Image:ArrayData",
+        "Image:ArraySize1_RBV",
+        "Image:ArraySize0_RBV",
+        "RESOLUTION",
+    ),
+) -> None:
+    """
+    Verify image-related PVs for screen elements are present in supported variables.
+
+    Parameters
+    ----------
+    model : LUMEModel
+        The LUME BMAD model instance to check.
+    screen_elements : tuple[str, ...] | list[str] | None
+        Optional explicit list of lattice screen element names.
+        If omitted, uses ``model.dump_locations``.
+    screen_attrs : tuple[str, ...]
+        Screen PV attributes to check for each screen element.
+
+    Raises
+    ------
+    AssertionError
+        If screen elements are missing PV prefix mappings or if expected
+        expected screen PVs are absent from ``model.supported_variables``.
+    """
+    if screen_elements is None:
+        screen_elements = tuple(getattr(model, "dump_locations", ()) or ())
+
+    if not screen_elements:
+        return
+
+    pv_prefix_by_element = {
+        element_name: pv_prefix
+        for pv_prefix, element_name in model.transformer.control_name_to_bmad.items()
+    }
+
+    missing_mapping = sorted(
+        element_name
+        for element_name in screen_elements
+        if element_name not in pv_prefix_by_element
+    )
+    assert not missing_mapping, (
+        "Screen elements missing PV prefix mapping: " + ", ".join(missing_mapping)
+    )
+
+    supported_variable_names = set(model.supported_variables)
+    expected_image_pvs = {
+        f"{pv_prefix_by_element[element_name]}:{attr}"
+        for element_name in screen_elements
+        for attr in screen_attrs
+    }
+    missing_image_pvs = sorted(expected_image_pvs - supported_variable_names)
+
+    assert not missing_image_pvs, (
+        "Screen image PVs missing from model.supported_variables: "
+        + ", ".join(missing_image_pvs)
     )

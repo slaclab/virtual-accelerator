@@ -2,7 +2,7 @@ from typing import Any
 from pytao import Tao
 import re
 import yaml
-from lume.variables import NDVariable
+from lume.variables import NDVariable, ScalarVariable, IntVariable
 from pathlib import Path
 import numpy as np
 from virtual_accelerator.utils.variables import (
@@ -131,10 +131,12 @@ def get_variables(
 
 def get_screen_variables(
     tao: Tao,
-    control_variables: dict[str, NDVariable],
+    control_variables: dict[str, NDVariable | ScalarVariable],
     screen_list: list[str],
     config_path: Path,
-) -> tuple[dict[str, NDVariable], dict[str, dict[str, Any]], list[str]]:
+) -> tuple[
+    dict[str, NDVariable | ScalarVariable], dict[str, dict[str, Any]], list[str]
+]:
     """
     Get screen attributes for cu_hxr from yaml file
 
@@ -142,7 +144,7 @@ def get_screen_variables(
     ----------
     tao : Tao
         The TAO instance.
-    control_variables : dict[str, NDVariable]
+    control_variables : dict[str, NDVariable | ScalarVariable | IntVariable | StrVariable]
         Dictionary of control variables.
     screen_list : list[str]
         List of screen elements to include.
@@ -151,7 +153,7 @@ def get_screen_variables(
 
     Returns
     -------
-    tuple[dict[str, NDVariable], dict[str, dict[str, Any]], list[str]]
+    tuple[dict[str, NDVariable | ScalarVariable | IntVariable | StrVariable], dict[str, dict[str, Any]], list[str]]
         - control_variables: Updated dictionary of control variables including screen variables.
         - screen_attributes: Dictionary of screen attributes for each element.
             - number of pixels in x and y
@@ -183,6 +185,22 @@ def get_screen_variables(
         control_variables[image_name] = NDVariable(
             name=image_name, unit="", read_only=True, shape=(nCol, nRow)
         )
+        control_variables[elem_config["name"] + ":Image:ArraySize1_RBV"] = IntVariable(
+            name=elem_config["name"] + ":Image:ArraySize1_RBV",
+            unit="pixel",
+            read_only=True,
+        )
+        control_variables[elem_config["name"] + ":Image:ArraySize0_RBV"] = IntVariable(
+            name=elem_config["name"] + ":Image:ArraySize0_RBV",
+            unit="pixel",
+            read_only=True,
+        )
+        control_variables[elem_config["name"] + ":RESOLUTION"] = ScalarVariable(
+            name=elem_config["name"] + ":RESOLUTION",
+            unit="pixel/mm",
+            read_only=True,
+        )
+
         screen_attributes[element] = {
             "bins": np.array([nCol, nRow]),
             "resolution": elem_config["res"],
