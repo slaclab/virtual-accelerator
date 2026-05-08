@@ -1,7 +1,7 @@
 name: Test bmad extra
 
 # Verifies the [bmad] optional extra installs and runs correctly.
-# TestCUHXRBmad runs; cheetah, surrogate, and staged-model tests skip.
+# BMAD-backed tests (including FACET2) run; cheetah and surrogate tests skip.
 
 on:
   push:
@@ -58,7 +58,8 @@ jobs:
       - name: Verify bmad import works
         run: python -c "from lume_bmad.model import LUMEBmadModel; print('lume_bmad imported OK')"
 
-      - name: Run tests (TestCUHXRBmad runs; cheetah/surrogate/staged tests skip)
+      - name: Run tests (BMAD-backed tests including FACET2)
         env:
           LCLS_LATTICE: ${{ github.workspace }}/lcls-lattice
+          FACET2_LATTICE: ${{ github.workspace }}/lcls-lattice
         run: pytest virtual_accelerator/tests -v --tb=short

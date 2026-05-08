@@ -53,4 +53,5 @@ jobs:
       - name: Run tests
         env:
           LCLS_LATTICE: ${{ github.workspace }}/lcls-lattice
+          FACET2_LATTICE: ${{ github.workspace }}/lcls-lattice
         run: pytest virtual_accelerator/tests
