@@ -4,6 +4,7 @@ from virtual_accelerator.utils.optional_dependencies import import_optional_symb
 
 import logging
 
+
 def main():
     parser = argparse.ArgumentParser(
         description="Run the CU HXR model with BMAD or CHEETAH backend"
@@ -30,7 +31,6 @@ def main():
 
     logging.basicConfig(level=getattr(logging, args.log_level))
     logging.getLogger("pytao").setLevel(logging.WARNING)
-
 
     Runner = import_optional_symbol(
         "lume_pva.runner",
