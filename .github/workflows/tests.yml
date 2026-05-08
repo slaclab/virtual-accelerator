@@ -34,6 +34,11 @@ jobs:
           # temp change branch to address bmad bug TODO: should remove when bug is resolved
           ref: temp_remove_fixers
           path: lcls-lattice
+      - name: Checkout facet2-lattice
+        uses: actions/checkout@v4
+        with:
+          repository: slaclab/facet2-lattice
+          path: facet2-lattice
       - name: Set up conda environment
         uses: conda-incubator/setup-miniconda@v3
         with:
@@ -53,5 +58,5 @@ jobs:
       - name: Run tests
         env:
           LCLS_LATTICE: ${{ github.workspace }}/lcls-lattice
-          FACET2_LATTICE: ${{ github.workspace }}/lcls-lattice
+          FACET2_LATTICE: ${{ github.workspace }}/facet2-lattice
         run: pytest virtual_accelerator/tests
