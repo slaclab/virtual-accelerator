@@ -2,6 +2,7 @@ import argparse
 
 from virtual_accelerator.utils.optional_dependencies import import_optional_symbol
 
+import logging
 
 def main():
     parser = argparse.ArgumentParser(
@@ -18,8 +19,18 @@ def main():
         default="END",
         help="End lattice element for BMAD models (default: END)",
     )
+    parser.add_argument(
+        "--log-level",
+        default="INFO",
+        choices=["DEBUG", "INFO", "WARNING", "ERROR", "CRITICAL"],
+        help="Logging level (default: INFO)",
+    )
 
     args = parser.parse_args()
+
+    logging.basicConfig(level=getattr(logging, args.log_level))
+    logging.getLogger("pytao").setLevel(logging.WARNING)
+
 
     Runner = import_optional_symbol(
         "lume_pva.runner",
