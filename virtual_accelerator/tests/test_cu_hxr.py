@@ -45,6 +45,12 @@ class TestCUHXRBmad:
         # test getting all of the supported variables to ensure no errors with screen variable setup
         _ = model.get(list(model.supported_variables))
 
+        # test beam up to end of TD11
+        model = get_cu_hxr_bmad_model(
+            end_element="TD11", track_beam=True, custom_beam_path=TEST_BEAM_PATH
+        )
+        _ = model.get(list(model.supported_variables))
+
     def test_cu_hxr_twiss(self):
         assert_bmad_model_twiss_outputs(get_cu_hxr_bmad_model)
 

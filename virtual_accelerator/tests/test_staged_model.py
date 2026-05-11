@@ -117,9 +117,7 @@ class TestStagedModelVariables:
         assert "b.beta" in result
 
     def test_staged_model_edge_case(self):
-        model = get_cu_hxr_staged_model(
-            custom_beam_path=TEST_BEAM_PATH, track_beam=True, end_element="TD11"
-        )
+        model = get_cu_hxr_staged_model(end_element="TD11")
         model.set({"QUAD:IN20:525:BCTRL": 10})
         b = model.get("x.beta")
         assert b is not None
