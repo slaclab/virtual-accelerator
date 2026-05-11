@@ -22,7 +22,9 @@ def get_cu_hxr_staged_model(n_particles: int = 1000, **kwargs) -> StagedModel:
     from virtual_accelerator.models.cu_hxr import get_cu_hxr_bmad_model
 
     injector_surrogate = InjectorSurrogate(n_particles=n_particles)
-    cu_hxr_bmad_model = get_cu_hxr_bmad_model(track_beam=True, start_element="OTR2", **kwargs)
+    cu_hxr_bmad_model = get_cu_hxr_bmad_model(
+        track_beam=True, start_element="OTR2", **kwargs
+    )
 
     staged_model = StagedModel([injector_surrogate, cu_hxr_bmad_model])
 
