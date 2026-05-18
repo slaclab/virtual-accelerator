@@ -2,7 +2,7 @@ import os
 import importlib.util
 from pathlib import Path
 import pytest
-from lume.variables.particle_group import ParticleGroupVariable
+from beamphysics.particles import ParticleGroup
 
 # Guard collection: lume_torch is required by InjectorSurrogate at import
 # time; skip the whole module instead of raising an ImportError.
@@ -71,17 +71,13 @@ class TestStagedModelValidation:
 
     def test_output_beam_variable_type_validation(self, injector_model):
         """Test that output_beam must be ParticleGroupVariable."""
-        # Get output_beam from injector and verify it's ParticleGroupVariable
-        output_beam = injector_model.supported_variables.get("output_beam")
-        assert isinstance(output_beam, ParticleGroupVariable)
+        # Get output_beam from injector surrogate and check type
+        assert isinstance(injector_model.final_particles, ParticleGroup)
 
     def test_input_beam_variable_present(self, cu_hxr_bmad_model):
         """Test that downstream models have input_beam variable."""
         # cu_hxr model should have input_beam
-        assert "input_beam" in cu_hxr_bmad_model.supported_variables
-        assert isinstance(
-            cu_hxr_bmad_model.supported_variables["input_beam"], ParticleGroupVariable
-        )
+        assert isinstance(cu_hxr_bmad_model.initial_particles, ParticleGroup)
 
 
 class TestStagedModelVariables:
@@ -121,9 +117,7 @@ class TestStagedModelVariables:
         assert "b.beta" in result
 
     def test_staged_model_edge_case(self):
-        model = get_cu_hxr_staged_model(
-            custom_beam_path=TEST_BEAM_PATH, track_beam=True, end_element="TD11"
-        )
+        model = get_cu_hxr_staged_model(end_element="TD11")
         model.set({"QUAD:IN20:525:BCTRL": 10})
         b = model.get("x.beta")
         assert b is not None

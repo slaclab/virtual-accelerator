@@ -25,18 +25,16 @@ def test_injector_surrogate():
     # test to make sure that the surrogate can be
     # initialized and returns an output beam distribution
     surrogate = InjectorSurrogate(n_particles=1000)
-    output = surrogate.get(["output_beam"])
-    assert "output_beam" in output
-    beam = output["output_beam"]
+    beam = surrogate.final_particles
     assert beam.x.shape[0] == 1000
 
     # check to make sure that changing a control variable changes
     # the output beam distribution
-    initial_beam = surrogate.get(["output_beam"])["output_beam"]
+    initial_beam = surrogate.final_particles
     surrogate.set({"QUAD:IN20:525:BCTRL": -5.0})
-    updated_beam = surrogate.get(["output_beam"])["output_beam"]
+    updated_beam = surrogate.final_particles
     assert not (initial_beam.x == updated_beam.x).all()
-    assert surrogate.get(["QUAD:IN20:525:BCTRL"])["QUAD:IN20:525:BCTRL"] == -5.0
+    assert surrogate.get("QUAD:IN20:525:BCTRL") == -5.0
 
 
 def test_injector_surrogate_outputs_are_physical():
@@ -87,13 +85,11 @@ def test_beam_output_model():
     surrogate = make_dummy_torch_model()
     wrapped = BeamOutputModel(surrogate, n_particles=1000000, p0c=1e8)
 
-    output = wrapped.get(["output_beam", "covariance_matrix"])
-    assert "output_beam" in output
+    output = wrapped.get(["covariance_matrix"])
+    beam = wrapped.final_particles
     assert output["covariance_matrix"].shape == (6, 6)
-    assert output["output_beam"].x.shape[0] == 1000000
+    assert beam.x.shape[0] == 1000000
 
     # check that the covariance matrix is being converted to cheetah units correctly
-    cov = torch.tensor(
-        output["output_beam"].cov("x", "px", "y", "py", "z", "pz")
-    ).float()
+    cov = torch.tensor(beam.cov("x", "px", "y", "py", "z", "pz")).float()
     assert torch.allclose(cov, TEST_COVARIANCE_MATRIX, atol=1e3, rtol=1e-2)
