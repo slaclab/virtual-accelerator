@@ -30,7 +30,9 @@ class TestFACET2Bmad:
             track_beam=True,
             start_element="L0AFEND",
             end_element="PR10571",
-            custom_beam_path=os.path.join(Path(__file__).parent, "../beams", "2024-10-22_oneBunch.h5"),
+            custom_beam_path=os.path.join(
+                Path(__file__).parent, "../beams", "2024-10-22_oneBunch.h5"
+            ),
         )
 
     def test_twiss(self):

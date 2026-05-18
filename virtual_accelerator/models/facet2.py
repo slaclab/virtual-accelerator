@@ -42,3 +42,34 @@ def get_facet_bmad_model(
         track_beam=track_beam,
         custom_beam_path=custom_beam_path,
     )
+
+
+def get_facet_staged_model(n_particles=1000, **kwargs):
+    """
+    Get the StagedModel for the FACET-II lattice from PRR10241 to END, with an injector surrogate model.
+
+    Parameters
+    -------------
+    n_particles: int, optional
+        Number of particles to simulate in the surrogate model. Default is 1000.
+    **kwargs:
+        Keyword arguments to be passed to the bmad LUMEModel instance as needed.
+
+    Returns
+    -------
+    StagedModel
+        Instance of the StagedModel for the FACET-II lattice.
+    """
+    from facet2_inj_ml_model import load_model
+    from virtual_accelerator.surrogates.injector_surrogate import BeamOutputModel
+    from virtual_accelerator.models.facet2 import get_facet_bmad_model
+    from lume.staged_model import StagedModel
+
+    injector_surrogate = BeamOutputModel(load_model("sim"), n_particles=n_particles)
+    facet_bmad_model = get_facet_bmad_model(
+        start_element="PR10241", track_beam=True, **kwargs
+    )
+
+    staged_model = StagedModel([injector_surrogate, facet_bmad_model])
+
+    return staged_model

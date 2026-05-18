@@ -7,6 +7,7 @@ import numpy as np
 import yaml
 from lume.model import LUMEModel
 from lume.variables import ParticleGroupVariable
+from lume.staged_model import FinalParticlesMixIn
 from lume_torch.base import LUMETorchModel
 from lume_torch.models.torch_model import TorchModel
 from scipy import constants
@@ -104,7 +105,7 @@ def create_beam_distribution_from_state(state: Mapping[str, Any], n_particles: i
     return beam
 
 
-class BeamOutputModel(LUMEModel):
+class BeamOutputModel(LUMEModel, FinalParticlesMixIn):
     """
     LUME wrapper around a surrogate model that adds an openPMD beam
     output variable based on a model predicting the beam covariance matrix.
@@ -117,7 +118,12 @@ class BeamOutputModel(LUMEModel):
     """
 
     def __init__(
-        self, surrogate: TorchModel, n_particles: int = 10000, p0c: float = 1e8
+        self,
+        surrogate: TorchModel,
+        n_particles: int = 10000,
+        p0c: float = 1e8,
+        t0: float = 0.0,
+        z0: float = 0.0,
     ) -> None:
         """
          Initialize wrapper with surrogate model and internal cache copy.
@@ -130,13 +136,19 @@ class BeamOutputModel(LUMEModel):
             The number of particles to generate in the output beam distribution (default: 10000).
         p0c: float, optional
             The reference momentum in eV/c to use for generating the output beam distribution (default: 1e8).
+        t0: float, optional
+            The reference time in seconds to use for generating the output beam distribution (default: 0.0).
+        z0: float, optional
+            The reference position in meters to use for generating the output beam distribution (default: 0.0).
 
         """
         super().__init__()
         self.surrogate = LUMETorchModel(surrogate)
         self.n_particles = n_particles
         self.p0c = p0c
-        self._cache: dict[str, Any] = {}
+        self.t0 = t0
+        self.z0 = z0
+        self._cache: dict[str, Any] = {"output_beam": None}
         self.set({})  # Initializing with defaults of NN model
         self.update_state()
 
@@ -178,11 +190,11 @@ class BeamOutputModel(LUMEModel):
         data = {
             "x": _tensor_to_numpy(particles[:, 0]),
             "y": _tensor_to_numpy(particles[:, 2]),
-            "z": _tensor_to_numpy(particles[:, 4]),
+            "t": _tensor_to_numpy(particles[:, 4] + self.t0),
             "px": _tensor_to_numpy(particles[:, 1]),
             "py": _tensor_to_numpy(particles[:, 3]),
-            "pz": _tensor_to_numpy(particles[:, 5]),
-            "t": 0.0,
+            "pz": _tensor_to_numpy(particles[:, 5] + self.p0c),
+            "z": self.z0,
             "weight": _tensor_to_numpy(
                 torch.ones(self.n_particles)
             ),  # need to make at least 1d and negate
@@ -193,6 +205,11 @@ class BeamOutputModel(LUMEModel):
         }
         particle_group = beamphysics.ParticleGroup(data=data)
         self._cache["output_beam"] = particle_group
+
+    @property
+    def final_particles(self) -> beamphysics.ParticleGroup:
+        """Return the final particle distribution as an openPMD ParticleGroup."""
+        return self._cache["output_beam"]
 
 
 class InjectorSurrogate(LUMEModel):
