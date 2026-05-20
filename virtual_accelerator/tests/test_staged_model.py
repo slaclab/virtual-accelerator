@@ -10,12 +10,17 @@ pytest.importorskip(
     "lume_torch",
     reason="requires lume-torch: pip install virtual-accelerator[surrogate]",
 )
+pytest.importorskip(
+    "facet2_inj_ml_model",
+    reason="requires facet2_inj_ml_model: pip install virtual-accelerator[surrogate]",
+)
 
 from virtual_accelerator.models.staged_model import (  # noqa: E402
     StagedModel,
     get_cu_hxr_staged_model,
 )
 from virtual_accelerator.models.cu_hxr import get_cu_hxr_bmad_model  # noqa: E402
+from virtual_accelerator.models.facet2 import get_facet_staged_model  # noqa: E402
 from virtual_accelerator.surrogates.injector_surrogate import InjectorSurrogate  # noqa: E402
 
 TEST_BEAM_PATH = os.path.join(Path(__file__).parent, "../bmad", "test_beam")
@@ -33,6 +38,8 @@ pytestmark = pytest.mark.skipif(
             "lume_bmad",
             "cheetah",
             "lume_cheetah",
+            "lume_torch",
+            "facet2_inj_ml_model",
         )
     ),
     reason="requires staged-model optional dependencies",
@@ -162,3 +169,7 @@ class TestStagedModelStaging:
         result = staged_model.get(["a.beta", "b.beta"])
         assert "a.beta" in result
         assert "b.beta" in result
+
+    def test_facet_model(self):
+        staged_model = get_facet_staged_model(end_element="PR10711")
+        staged_model.get(list(staged_model.supported_variables.keys()))

@@ -117,7 +117,12 @@ class BeamOutputModel(LUMEModel, FinalParticlesMixIn):
     """
 
     def __init__(
-        self, surrogate: TorchModel, n_particles: int = 10000, p0c: float = 1e8
+        self,
+        surrogate: TorchModel,
+        n_particles: int = 10000,
+        p0c: float = 1e8,
+        t0: float = 0.0,
+        z0: float = 0.0,
     ) -> None:
         """
          Initialize wrapper with surrogate model and internal cache copy.
@@ -130,12 +135,18 @@ class BeamOutputModel(LUMEModel, FinalParticlesMixIn):
             The number of particles to generate in the output beam distribution (default: 10000).
         p0c: float, optional
             The reference momentum in eV/c to use for generating the output beam distribution (default: 1e8).
+        t0: float, optional
+            The reference time in seconds to use for generating the output beam distribution (default: 0.0).
+        z0: float, optional
+            The reference position in meters to use for generating the output beam distribution (default: 0.0).
 
         """
         super().__init__()
         self.surrogate = LUMETorchModel(surrogate)
         self.n_particles = n_particles
         self.p0c = p0c
+        self.t0 = t0
+        self.z0 = z0
         self._cache: dict[str, Any] = {"output_beam": None}
         self.set({})  # Initializing with defaults of NN model
         self.update_state()
@@ -174,14 +185,14 @@ class BeamOutputModel(LUMEModel, FinalParticlesMixIn):
         data = {
             "x": _tensor_to_numpy(particles[:, 0]),
             "y": _tensor_to_numpy(particles[:, 2]),
-            "z": _tensor_to_numpy(particles[:, 4]),
+            "t": _tensor_to_numpy(particles[:, 4] + self.t0),
             "px": _tensor_to_numpy(particles[:, 1]),
             "py": _tensor_to_numpy(particles[:, 3]),
-            "pz": _tensor_to_numpy(particles[:, 5]),
-            "t": 0.0,
+            "pz": _tensor_to_numpy(particles[:, 5] + self.p0c),
+            "z": self.z0,
             "weight": _tensor_to_numpy(
                 torch.ones(self.n_particles)
-            ),  # need to make at least 1d and negate
+            ),  # need to make at least 1d
             "status": _tensor_to_numpy(
                 torch.ones(self.n_particles, dtype=torch.int32)
             ),  # need int
@@ -191,7 +202,8 @@ class BeamOutputModel(LUMEModel, FinalParticlesMixIn):
         self._cache["output_beam"] = particle_group
 
     @property
-    def final_particles(self):
+    def final_particles(self) -> beamphysics.ParticleGroup:
+        """Return the final particle distribution as an openPMD ParticleGroup."""
         return self._cache["output_beam"]
 
 

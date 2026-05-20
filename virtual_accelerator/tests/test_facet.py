@@ -1,4 +1,5 @@
 import os
+from pathlib import Path
 
 import pytest
 from virtual_accelerator.tests._bmad_model_test_utils import (
@@ -10,7 +11,9 @@ from virtual_accelerator.tests._bmad_model_test_utils import (
     assert_magnet_pvs_match_tao_lattice,
     assert_screen_image_pvs_in_supported_variables,
 )
-from virtual_accelerator.models.facet2 import get_facet_bmad_model
+from virtual_accelerator.models.facet2 import (
+    get_facet_bmad_model,
+)
 
 
 HAS_FACET_LATTICE = bool(os.environ.get("FACET2_LATTICE"))
@@ -23,6 +26,16 @@ HAS_FACET_LATTICE = bool(os.environ.get("FACET2_LATTICE"))
 class TestFACET2Bmad:
     def test_initialization(self):
         assert_bmad_model_initialization(get_facet_bmad_model)
+
+    def test_short_tracking(self):
+        get_facet_bmad_model(
+            track_beam=True,
+            start_element="PR10241",
+            end_element="PR10571",
+            custom_beam_path=os.path.join(
+                Path(__file__).parent, "../beams", "2024-10-22_oneBunch.h5"
+            ),
+        )
 
     def test_twiss(self):
         assert_bmad_model_twiss_outputs(get_facet_bmad_model)
