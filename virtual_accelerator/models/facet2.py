@@ -33,7 +33,7 @@ def get_facet_bmad_model(
         screens=("PR10571", "PR10711"),
         profmon_config_filename="facet2_profmon_info.yaml",
         default_beam_relpath="beams/2024-10-22_oneBunch.h5",
-        default_track_start="PR10241",
+        default_track_start="L0AFEND",
     )
     return build_bmad_model(
         spec=spec,
@@ -41,6 +41,7 @@ def get_facet_bmad_model(
         end_element=end_element,
         track_beam=track_beam,
         custom_beam_path=custom_beam_path,
+        custom_tao_commands=["set bmad_com absolute_time_tracking=true"],
     )
 
 
