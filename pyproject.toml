@@ -55,7 +55,6 @@ surrogate = [
     "lume-torch @ git+https://github.com/lume-science/lume-torch",
     "lume-cheetah @ git+https://github.com/lume-science/lume-cheetah",
     "lcls-cu-inj-model @ git+https://github.com/slaclab/lcls_cu_injector_ml_model.git",
-    "facet2_inj_ml_model @ git+https://github.com/slaclab/facet2_inj_ml_model.git",
 ]
 all = [
     "torch",
@@ -65,7 +64,6 @@ all = [
     "lume-torch @ git+https://github.com/lume-science/lume-torch",
     "lume-pva @ git+https://github.com/lume-science/lume-pva",
     "lcls-cu-inj-model @ git+https://github.com/slaclab/lcls_cu_injector_ml_model.git",
-    "facet2_inj_ml_model @ git+https://github.com/slaclab/facet2_inj_ml_model.git",
 ]
 dev = [
     "pytest",

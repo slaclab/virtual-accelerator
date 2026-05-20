@@ -2,7 +2,7 @@ from typing import Any, Iterable, Mapping
 
 import numpy as np
 from lume.model import LUMEModel
-from lume.variables import ParticleGroupVariable
+from lume.staged_model import FinalParticlesMixIn
 from scipy import constants
 
 from virtual_accelerator.utils.optional_dependencies import (
