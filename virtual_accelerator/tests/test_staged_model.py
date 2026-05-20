@@ -38,6 +38,7 @@ pytestmark = pytest.mark.skipif(
             "lume_bmad",
             "cheetah",
             "lume_cheetah",
+            "lume_torch",
             "facet2_inj_ml_model",
         )
     ),
