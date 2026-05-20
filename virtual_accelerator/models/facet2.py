@@ -47,7 +47,7 @@ def get_facet_bmad_model(
     )
 
 
-def get_facet_staged_model(n_particles=1000, surrogate_inputs="machine", **kwargs):
+def get_facet_staged_model(n_particles=10000, surrogate_inputs="machine", **kwargs):
     """
     Get the StagedModel for the FACET-II lattice from PRR10241 to END, with an injector surrogate model.
 
