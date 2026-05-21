@@ -14,6 +14,8 @@ import torch
 import beamphysics
 from cheetah import ParticleBeam
 
+from virtual_accelerator.surrogates.covariance import compute_covariance_matrix
+
 
 OTR2_BEAM_ENERGY = 135.0e6  # eV
 
@@ -248,18 +250,28 @@ class InjectorSurrogate(LUMEModel, FinalParticlesMixIn):
             "'git subtree add --prefix subtrees/lcls_cu_injector_ml_model <remote> <ref>'."
         )
 
-    def __init__(self, n_particles: int = 10000) -> None:
+    def __init__(
+        self, n_particles: int = 10000, energy: float = OTR2_BEAM_ENERGY
+    ) -> None:
         """Initialize surrogate model and internal cache copy.
 
         Resource paths inside ``model_config.yaml`` are relative to the
         submodule directory.  A temporary config file with those paths
         rewritten to absolute paths is passed to ``TorchModel`` so that
         initialization succeeds regardless of the current working directory.
+
+        Parameters
+        ----------
+        n_particles : int, optional
+            Number of particles for beam distribution (default: 10000).
+        energy : float, optional
+            Beam energy in eV for covariance matrix calculation (default: OTR2_BEAM_ENERGY).
         """
         super().__init__()
         tm = self._load_torch_model()
         self.model = LUMETorchModel(tm)
         self.n_particles = n_particles
+        self.energy = energy
         self._cache: dict[str, Any] = {}
         self.set({})  # Initializing with defaults of NN model
         self.update_state()
@@ -326,6 +338,9 @@ class InjectorSurrogate(LUMEModel, FinalParticlesMixIn):
         self._cache = {k: _to_python_scalar(v, k) for k, v in self._cache.items()}
         beam = create_beam_distribution_from_state(self._cache, self.n_particles)
         self._cache["output_beam"] = to_openpmd_particlegroup(beam)
+        self._cache["covariance_matrix"] = compute_covariance_matrix(
+            self._cache, self.energy
+        )
 
     @property
     def final_particles(self):
