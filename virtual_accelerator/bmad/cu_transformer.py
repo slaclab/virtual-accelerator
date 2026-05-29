@@ -158,9 +158,9 @@ class CUBmadTransformer(BmadTransformer):
             elif attr == "RESOLUTION":
                 return self.screen_attributes[element_name]["resolution"]
             elif attr == "X":
-                return tao.ele(element_name).orbit.x * 1e3 # convert from m to mm
+                return tao.ele(element_name).orbit.x * 1e3  # convert from m to mm
             elif attr == "Y":
-                return tao.ele(element_name).orbit.y * 1e3 # convert from m to mm
+                return tao.ele(element_name).orbit.y * 1e3  # convert from m to mm
 
         else:
             return ele_attr[attr]

@@ -224,10 +224,12 @@ def assert_bpm_pvs_match_tao_lattice(
     }
 
     missing_mapping = sorted(
-        element_name for element_name in bpm_elements if element_name not in pv_prefix_by_element
+        element_name
+        for element_name in bpm_elements
+        if element_name not in pv_prefix_by_element
     )
-    assert not missing_mapping, (
-        "BPM elements missing PV prefix mapping: " + ", ".join(missing_mapping)
+    assert not missing_mapping, "BPM elements missing PV prefix mapping: " + ", ".join(
+        missing_mapping
     )
 
     pv_prefix_by_element = {
@@ -248,7 +250,6 @@ def assert_bpm_pvs_match_tao_lattice(
     assert not missing_bpm_pvs, (
         "BPM PVs missing from model.supported_variables: "
         + "; ".join(
-            f"{element}: {', '.join(pvs)}"
-            for element, pvs in missing_bpm_pvs.items()
+            f"{element}: {', '.join(pvs)}" for element, pvs in missing_bpm_pvs.items()
         )
     )
