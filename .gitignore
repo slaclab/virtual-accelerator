@@ -215,3 +215,5 @@ __marimo__/
 *.h5
 *.png
 *.svg
+
+dev/*
