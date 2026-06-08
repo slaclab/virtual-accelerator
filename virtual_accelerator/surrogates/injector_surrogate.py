@@ -13,6 +13,7 @@ from scipy import constants
 import torch
 import beamphysics
 from cheetah import ParticleBeam
+from distgen import Generator
 
 
 OTR2_BEAM_ENERGY = 135.0e6  # eV
@@ -175,30 +176,49 @@ class BeamOutputModel(LUMEModel, FinalParticlesMixIn):
         self._cache.update(
             self.surrogate.get(list(self.surrogate.supported_variables.keys()))
         )
+        # get the covariance matrix from the cache
+        # units and variable order: [x, px, y, py, z, pz]
+        # units: [m, eV/c, m, eV/c, s, eV/c]
         covariance_matrix = self._cache["covariance_matrix"]
 
-        # sample beam distribution from covariance matrix and convert to openPMD ParticleGroup
-        particles = torch.distributions.MultivariateNormal(
-            loc=torch.zeros(6), covariance_matrix=covariance_matrix
-        ).sample((self.n_particles,))
+        # convert covariance matrix time axis to z using speed of light units for the 
+        # surrogate and openPMD ParticleBeam convention
+        scaled_covariance_matrix = covariance_matrix.clone()
+        scaled_covariance_matrix[4, :] *= constants.speed_of_light
+        scaled_covariance_matrix[:, 4] *= constants.speed_of_light
 
-        data = {
-            "x": _tensor_to_numpy(particles[:, 0]),
-            "y": _tensor_to_numpy(particles[:, 2]),
-            "t": _tensor_to_numpy(particles[:, 4] + self.t0),
-            "px": _tensor_to_numpy(particles[:, 1]),
-            "py": _tensor_to_numpy(particles[:, 3]),
-            "pz": _tensor_to_numpy(particles[:, 5] + self.p0c),
-            "z": self.z0,
-            "weight": _tensor_to_numpy(
-                torch.ones(self.n_particles)
-            ),  # need to make at least 1d
-            "status": _tensor_to_numpy(
-                torch.ones(self.n_particles, dtype=torch.int32)
-            ),  # need int
+        # reorder covariance matrix from surrogate variable order to openPMD ParticleBeam order
+        # surrogate variable order: [x, px, y, py, z, pz]
+        # openPMD ParticleBeam order: [x, y, z, px, py, pz]
+        reorder_indices = [0, 2, 4, 1, 3, 5]
+        scaled_covariance_matrix = scaled_covariance_matrix[:, reorder_indices][reorder_indices, :]
+
+        print("scaled_covariance_matrix diagonal:", np.diag(scaled_covariance_matrix))
+
+        mean = np.array([0.0, 0.0, 0.0, 0.0, self.t0, self.p0c], dtype=np.float32) # units: [m, eV/c, m, eV/c, s, eV/c]
+        inputs = {
+            "n_particle": 10000,
             "species": "electron",
+            "nd_gaussian_dist": {
+                "method": "cholesky",
+                "centroid": {
+                    "x": str(mean[0]) +" m", 
+                    "y": str(mean[1]) + " m", 
+                    "z": str(mean[2]) +" m", 
+                    "px": str(mean[3]) + " eV/c", 
+                    "py": str(mean[4]) +" eV/c", 
+                    "pz": str(mean[5]) + " eV/c"},
+                "cov_matrix": scaled_covariance_matrix.tolist(),
+            },
+            "start":{"tstart": str(0.0) + " s", "type": "time"},
+            "total_charge": str(1e-9) + " C",
         }
-        particle_group = beamphysics.ParticleGroup(data=data)
+        # convert to yaml
+        inputs_yaml = yaml.safe_dump(inputs, sort_keys=False)
+
+        generator = Generator(inputs_yaml)
+
+        particle_group = generator.run()
         self._cache["output_beam"] = particle_group
 
     @property
