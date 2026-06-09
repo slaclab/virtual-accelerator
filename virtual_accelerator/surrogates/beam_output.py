@@ -18,9 +18,9 @@ class BeamOutputModel(LUMEModel, FinalParticlesMixIn):
 
     The surrogate model is expected to support at least the following variables:
     covariance_matrix: TorchNDVariable
-        6x6 covariance matrix of the beam distribution in openpmd ParticleBeam order / units.
-        Note: The units for openPMD ParticleBeam are meters and eV/c.
-
+        6x6 covariance matrix in the surrogate convention/order [x, px, y, py, t, pz].
+        Units are [m, eV/c, m, eV/c, s, eV/c]. This wrapper converts the t-axis to z (meters)
+        using z = -c * t before generating the output ParticleGroup.
     """
 
     def __init__(
