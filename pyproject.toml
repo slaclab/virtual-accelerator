@@ -27,7 +27,6 @@ dependencies = [
     "numpy",
     "scipy",
     "pyyaml",
-    "distgen @ git+https://github.com/ColwynGulliford/distgen",
     "lume-base @ git+https://github.com/slaclab/lume-base",
 ]
 
@@ -55,7 +54,8 @@ surrogate = [
     "torch",
     "lume-torch @ git+https://github.com/lume-science/lume-torch",
     "lume-cheetah @ git+https://github.com/lume-science/lume-cheetah",
-    "facet2_inj_ml_model @ git+https://github.com/slaclab/facet2_inj_ml_model.git",
+    "distgen @ git+https://github.com/ColwynGulliford/distgen",
+    "facet2-inj-ml-model @ git+https://github.com/slaclab/facet2_inj_ml_model",
     "lcls-cu-inj-model @ git+https://github.com/slaclab/lcls_cu_injector_ml_model.git",
 ]
 all = [
@@ -65,7 +65,8 @@ all = [
     "lume-impact @ git+https://github.com/ChristopherMayes/lume-impact",
     "lume-torch @ git+https://github.com/lume-science/lume-torch",
     "lume-pva @ git+https://github.com/lume-science/lume-pva",
-    "facet2_inj_ml_model @ git+https://github.com/slaclab/facet2_inj_ml_model.git",
+    "distgen @ git+https://github.com/ColwynGulliford/distgen",
+    "facet2-inj-ml-model @ git+https://github.com/slaclab/facet2_inj_ml_model",
     "lcls-cu-inj-model @ git+https://github.com/slaclab/lcls_cu_injector_ml_model.git",
 ]
 dev = [

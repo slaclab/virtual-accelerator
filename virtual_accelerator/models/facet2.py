@@ -1,4 +1,5 @@
 import os
+import tempfile
 
 from virtual_accelerator.bmad.factory import BmadModelSpec, build_bmad_model
 
@@ -49,12 +50,12 @@ def get_facet_bmad_model(
 
 def get_facet_staged_model(n_particles=10000, surrogate_inputs="machine", **kwargs):
     """
-    Get the StagedModel for the FACET-II lattice from PRR10241 to END, with an injector surrogate model.
+    Get the StagedModel for the FACET-II lattice from PR10241 to END, with an injector surrogate model.
 
     Parameters
     -------------
     n_particles: int, optional
-        Number of particles to simulate in the surrogate model. Default is 1000.
+        Number of particles to simulate in the surrogate model. Default is 10000.
     surrogate_inputs: str, optional
         Input for the surrogate model either "machine" or "sim". Default is "machine".
     **kwargs:
@@ -77,8 +78,9 @@ def get_facet_staged_model(n_particles=10000, surrogate_inputs="machine", **kwar
         z0=0.9420843,
     )
 
-    # need to provide a beam distribution file to initialize the bmad model
-    fname = os.getcwd() + "/input_beam.h5"
+    tmp = tempfile.NamedTemporaryFile(suffix=".h5")
+    fname = tmp.name
+    tmp.close()
     injector_surrogate.final_particles.write(fname)
 
     facet_bmad_model = get_facet_bmad_model(

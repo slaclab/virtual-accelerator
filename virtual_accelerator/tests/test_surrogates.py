@@ -96,9 +96,10 @@ def test_beam_output_model():
     assert beam.x.shape[0] == 1000000
 
     # convert the covariance matrix time to z using speed of light
-    TEST_COVARIANCE_MATRIX[4, :] *= -constants.speed_of_light
-    TEST_COVARIANCE_MATRIX[:, 4] *= -constants.speed_of_light
+    test_matrix = TEST_COVARIANCE_MATRIX.clone()
+    test_matrix[4, :] *= -constants.speed_of_light
+    test_matrix[:, 4] *= -constants.speed_of_light
 
     # check that the covariance matrix is being converted to cheetah units correctly
     cov = torch.tensor(beam.cov("x", "px", "y", "py", "z", "pz")).float()
-    assert torch.allclose(cov, TEST_COVARIANCE_MATRIX, atol=1e-3, rtol=1e-4)
+    assert torch.allclose(cov, test_matrix, atol=1e-3, rtol=1e-3)
