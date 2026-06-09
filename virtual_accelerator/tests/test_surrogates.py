@@ -1,5 +1,6 @@
 import pytest
 from unittest.mock import Mock
+from scipy import constants
 
 # Skip entire module at collection time when lume-torch is absent — avoids
 # an ImportError inside injector_surrogate.py before any skip logic fires.
@@ -21,8 +22,8 @@ import torch
 
 from virtual_accelerator.surrogates.injector_surrogate import (
     InjectorSurrogate,
-    BeamOutputModel,
 )  # noqa: E402
+from virtual_accelerator.surrogates.beam_output import BeamOutputModel
 
 
 def test_injector_surrogate():
@@ -94,6 +95,11 @@ def test_beam_output_model():
     assert output["covariance_matrix"].shape == (6, 6)
     assert beam.x.shape[0] == 1000000
 
+    # convert the covariance matrix time to z using speed of light
+    test_matrix = TEST_COVARIANCE_MATRIX.clone()
+    test_matrix[4, :] *= -constants.speed_of_light
+    test_matrix[:, 4] *= -constants.speed_of_light
+
     # check that the covariance matrix is being converted to cheetah units correctly
     cov = torch.tensor(beam.cov("x", "px", "y", "py", "z", "pz")).float()
-    assert torch.allclose(cov, TEST_COVARIANCE_MATRIX, atol=1e3, rtol=1e-2)
+    assert torch.allclose(cov, test_matrix, atol=1e-3, rtol=1e-3)

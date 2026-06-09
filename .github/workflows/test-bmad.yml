@@ -1,7 +1,7 @@
 name: Test bmad extra
 
 # Verifies the [bmad] optional extra installs and runs correctly.
-# TestCUHXRBmad runs; cheetah, surrogate, and staged-model tests skip.
+# BMAD-backed tests (including FACET2) run; cheetah and surrogate tests skip.
 
 on:
   push:
@@ -33,6 +33,12 @@ jobs:
           repository: slaclab/lcls-lattice
           ref: temp_remove_fixers
           path: lcls-lattice
+      - name: Checkout facet2-lattice
+        uses: actions/checkout@v4
+        with:
+          repository: slaclab/facet2-lattice
+          path: facet2-lattice
+          ref: temp_fix_fixer
 
       - name: Set up conda environment
         uses: conda-incubator/setup-miniconda@v3
@@ -58,7 +64,8 @@ jobs:
       - name: Verify bmad import works
         run: python -c "from lume_bmad.model import LUMEBmadModel; print('lume_bmad imported OK')"
 
-      - name: Run tests (TestCUHXRBmad runs; cheetah/surrogate/staged tests skip)
+      - name: Run tests (BMAD-backed tests including FACET2)
         env:
           LCLS_LATTICE: ${{ github.workspace }}/lcls-lattice
+          FACET2_LATTICE: ${{ github.workspace }}/facet2-lattice
         run: pytest virtual_accelerator/tests -v --tb=short

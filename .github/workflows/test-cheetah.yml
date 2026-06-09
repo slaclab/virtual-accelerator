@@ -25,7 +25,12 @@ jobs:
           repository: slaclab/lcls-lattice
           ref: temp_remove_fixers
           path: lcls-lattice
-
+      - name: Checkout facet2-lattice
+        uses: actions/checkout@v4
+        with:
+          repository: slaclab/facet2-lattice
+          path: facet2-lattice
+          ref: temp_fix_fixer
       - name: Set up Python ${{ matrix.python-version }}
         uses: actions/setup-python@v5
         with:
@@ -46,4 +51,5 @@ jobs:
       - name: Run tests (TestCUHXRCheetah runs; bmad/staged tests skip)
         env:
           LCLS_LATTICE: ${{ github.workspace }}/lcls-lattice
+          FACET2_LATTICE: ${{ github.workspace }}/facet2-lattice
         run: pytest virtual_accelerator/tests -v --tb=short

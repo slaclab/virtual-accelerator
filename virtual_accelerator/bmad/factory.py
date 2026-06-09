@@ -34,6 +34,7 @@ def build_bmad_model(
     end_element: str,
     track_beam: bool,
     custom_beam_path: str | None,
+    custom_tao_commands: list[str] | None = None,
 ):
     """Build a lattice-specific LUMEBmadModel from a shared implementation."""
 
@@ -61,6 +62,13 @@ def build_bmad_model(
     lattice_root = os.environ[spec.lattice_env_var]
     init_file = os.path.join(lattice_root, spec.tao_init_relpath)
     tao = Tao(f"-init {init_file} -noplot -slice_lattice {start_element}:{end_element}")
+
+    # set tracking to start_element
+    tao.cmd(f"set beam track_start = {start_element}")
+
+    if custom_tao_commands is not None:
+        for cmd in custom_tao_commands:
+            tao.cmd(cmd)
 
     database_path = os.path.join(lattice_root, spec.database_relpath)
     control_name_to_element_name = get_epics_to_name_or_overlay_mapping(

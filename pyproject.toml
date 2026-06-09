@@ -54,6 +54,8 @@ surrogate = [
     "torch",
     "lume-torch @ git+https://github.com/lume-science/lume-torch",
     "lume-cheetah @ git+https://github.com/lume-science/lume-cheetah",
+    "distgen @ git+https://github.com/ColwynGulliford/distgen",
+    "facet2-inj-ml-model @ git+https://github.com/slaclab/facet2_inj_ml_model",
     "lcls-cu-inj-model @ git+https://github.com/slaclab/lcls_cu_injector_ml_model.git",
 ]
 all = [
@@ -63,6 +65,8 @@ all = [
     "lume-impact @ git+https://github.com/ChristopherMayes/lume-impact",
     "lume-torch @ git+https://github.com/lume-science/lume-torch",
     "lume-pva @ git+https://github.com/lume-science/lume-pva",
+    "distgen @ git+https://github.com/ColwynGulliford/distgen",
+    "facet2-inj-ml-model @ git+https://github.com/slaclab/facet2_inj_ml_model",
     "lcls-cu-inj-model @ git+https://github.com/slaclab/lcls_cu_injector_ml_model.git",
 ]
 dev = [

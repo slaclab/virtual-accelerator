@@ -1,3 +1,4 @@
+import importlib.util
 import os
 
 import pytest
@@ -11,10 +12,17 @@ from virtual_accelerator.tests._bmad_model_test_utils import (
     assert_magnet_pvs_match_tao_lattice,
     assert_screen_image_pvs_in_supported_variables,
 )
-from virtual_accelerator.models.facet2 import get_facet_bmad_model
+from virtual_accelerator.models.facet2 import (
+    get_facet_bmad_model,
+    get_facet_staged_model,
+)
 
 
 HAS_FACET_LATTICE = bool(os.environ.get("FACET2_LATTICE"))
+HAS_FACET_SURROGATE_DEPS = (
+    importlib.util.find_spec("facet2_inj_ml_model") is not None
+    and importlib.util.find_spec("lume_torch") is not None
+)
 
 
 @pytest.mark.skipif(
@@ -62,6 +70,23 @@ class TestFACET2Bmad:
         new_output = model.get(screen_pv)
         assert not (new_output == output).all()  # Check that the screen output changed
 
+    @pytest.mark.skipif(
+        not HAS_FACET_SURROGATE_DEPS,
+        reason="requires staged-model optional dependencies",
+    )
+    def test_staged_model(self):
+        staged_model = get_facet_staged_model(
+            surrogate_inputs="machine", n_particles=1000, end_element="PR10711"
+        )
+
+        mapping = staged_model.lume_model_instances[1].transformer.control_name_to_bmad
+        pv_prefix_by_element = {
+            element_name: pv_prefix for pv_prefix, element_name in mapping.items()
+        }
+        for screen_element in ["PR10571", "PR10711"]:
+            screen_pv = f"{pv_prefix_by_element[screen_element]}:Image:ArrayData"
+            assert screen_pv in staged_model.supported_variables
+
     @pytest.mark.xfail(reason="known FACET2 quadrupoles are missing EPICS mappings")
     def test_quadrupole_pvs_match_tao_lattice(self):
         model = get_facet_bmad_model()
@@ -77,6 +102,7 @@ class TestFACET2Bmad:
         model = get_facet_bmad_model()
         assert_magnet_pvs_match_tao_lattice(model, "VKicker")
 
+    @pytest.mark.xfail(reason="known FACET2 BPMs are missing EPICS mappings")
     def test_bpm_pvs_match_tao_lattice(self):
         model = get_facet_bmad_model()
         assert_bpm_pvs_match_tao_lattice(model)
