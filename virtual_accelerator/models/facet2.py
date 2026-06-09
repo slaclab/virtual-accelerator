@@ -1,4 +1,3 @@
-import os
 import tempfile
 
 from virtual_accelerator.bmad.factory import BmadModelSpec, build_bmad_model
