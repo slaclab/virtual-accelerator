@@ -66,12 +66,16 @@ def get_facet_staged_model(n_particles=10000, surrogate_inputs="machine", **kwar
         Instance of the StagedModel for the FACET-II lattice.
     """
     from facet2_inj_ml_model import load_model
-    from virtual_accelerator.surrogates.injector_surrogate import BeamOutputModel
+    from virtual_accelerator.surrogates.beam_output import BeamOutputModel
     from virtual_accelerator.models.facet2 import get_facet_bmad_model
     from lume.staged_model import StagedModel
 
     injector_surrogate = BeamOutputModel(
-        load_model(surrogate_inputs), n_particles=n_particles
+        load_model(surrogate_inputs),
+        n_particles=n_particles,
+        t0=3.15391398e-09,
+        p0c=6.3e06,
+        z0=0.9420843,
     )
 
     # need to provide a beam distribution file to initialize the bmad model

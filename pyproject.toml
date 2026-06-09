@@ -27,6 +27,7 @@ dependencies = [
     "numpy",
     "scipy",
     "pyyaml",
+    "distgen",
     "lume-base @ git+https://github.com/slaclab/lume-base",
 ]
 
