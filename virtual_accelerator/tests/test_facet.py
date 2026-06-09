@@ -70,9 +70,11 @@ class TestFACET2Bmad:
         new_output = model.get(screen_pv)
         assert not (new_output == output).all()  # Check that the screen output changed
 
+    @pytest.mark.skipif(
+        not HAS_FACET_SURROGATE_DEPS,
+        reason="requires staged-model optional dependencies",
+    )
     def test_staged_model(self):
-        if not HAS_FACET_SURROGATE_DEPS:
-            pytest.skip("requires staged-model optional dependencies")
         staged_model = get_facet_staged_model(
             surrogate_inputs="machine", n_particles=1000, end_element="PR10711"
         )
