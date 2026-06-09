@@ -12,6 +12,10 @@ pytest.importorskip(
     "cheetah",
     reason="requires surrogate optional dependencies: pip install virtual-accelerator[surrogate]",
 )
+pytest.importorskip(
+    "lcls_cu_inj_model",
+    reason="requires packaged Cu injector model: pip install virtual-accelerator[surrogate]",
+)
 from lume_torch.variables import TorchNDVariable
 from lume_torch.models.torch_model import TorchModel
 import torch
