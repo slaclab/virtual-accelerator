@@ -111,6 +111,10 @@ def get_variables(
         # Only query TAO for elements we actually need
         element_type = tao.ele_head(element_name)["key"]
 
+        # handle BPMS by name since the device type is just Monitor, but we want to treat it as a BPM
+        if "BPM" in device_name:
+            element_type = "BPM"
+
         # Apply element type mappings
         element_type = ELEMENT_TYPE_MAPPING.get(element_type, element_type)
 

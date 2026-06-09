@@ -1,21 +1,52 @@
-from pathlib import Path
-import os
-import tempfile
 from typing import Any, Iterable, Mapping
 
 import numpy as np
-import yaml
 from lume.model import LUMEModel
 from lume.staged_model import FinalParticlesMixIn
-from lume_torch.base import LUMETorchModel
-from lume_torch.models.torch_model import TorchModel
 from scipy import constants
-import torch
-import beamphysics
-from cheetah import ParticleBeam
 
+from virtual_accelerator.utils.optional_dependencies import (
+    import_optional,
+    import_optional_symbol,
+)
 
 OTR2_BEAM_ENERGY = 135.0e6  # eV
+
+torch = import_optional(
+    "torch",
+    feature="injector surrogate",
+    extra="surrogate",
+)
+LUMETorchModel = import_optional_symbol(
+    "lume_torch.base",
+    "LUMETorchModel",
+    feature="injector surrogate",
+    extra="surrogate",
+)
+TorchModel = import_optional_symbol(
+    "lume_torch.models.torch_model",
+    "TorchModel",
+    feature="injector surrogate",
+    extra="surrogate",
+)
+load_model = import_optional_symbol(
+    "lcls_cu_inj_model",
+    "load_model",
+    feature="injector surrogate model package",
+    extra="surrogate",
+)
+
+ParticleBeam = import_optional_symbol(
+    "cheetah.particles",
+    "ParticleBeam",
+    feature="injector surrogate",
+    extra="surrogate",
+)
+beamphysics = import_optional(
+    "beamphysics",
+    feature="openPMD beam export for injector surrogate",
+    extra="surrogate",
+)
 
 
 def _tensor_to_numpy(value: Any) -> np.ndarray:
@@ -107,110 +138,15 @@ def create_beam_distribution_from_state(state: Mapping[str, Any], n_particles: i
 class InjectorSurrogate(LUMEModel, FinalParticlesMixIn):
     """LUME wrapper around the lcls injector torch surrogate with openPMD beam output."""
 
-    # Config path relative to the project root (used when running from source)
-    _SOURCE_RELATIVE = (
-        Path("subtrees") / "lcls_cu_injector_ml_model" / "model_config.yaml"
-    )
-
-    # Config keys whose values are resource paths that need resolving
-    _RESOURCE_KEYS = ("model", "input_transformers", "output_transformers")
-
-    @classmethod
-    def _candidate_config_roots(cls) -> list[Path]:
-        """Return candidate root directories used to locate model config."""
-        roots: list[Path] = []
-
-        # Module location (source checkout or installed package layout)
-        roots.extend(Path(__file__).resolve().parents)
-
-        # GitHub Actions checkout root
-        workspace = os.environ.get("GITHUB_WORKSPACE")
-        if workspace:
-            roots.append(Path(workspace).resolve())
-
-        # Current working directory and its ancestors
-        cwd = Path.cwd().resolve()
-        roots.append(cwd)
-        roots.extend(cwd.parents)
-
-        # Deduplicate while preserving order
-        seen: set[Path] = set()
-        unique_roots: list[Path] = []
-        for root in roots:
-            if root not in seen:
-                seen.add(root)
-                unique_roots.append(root)
-        return unique_roots
-
-    @classmethod
-    def _find_config(cls) -> Path:
-        """Locate ``model_config.yaml`` regardless of install mode."""
-        for root in cls._candidate_config_roots():
-            candidate = root / cls._SOURCE_RELATIVE
-            if candidate.is_file():
-                return candidate
-
-        raise FileNotFoundError(
-            "Could not find model_config.yaml. Looked for "
-            f"{cls._SOURCE_RELATIVE} from module/cwd/workspace roots. "
-            "Ensure the subtree exists in the checkout, e.g. "
-            "'git subtree add --prefix subtrees/lcls_cu_injector_ml_model <remote> <ref>'."
-        )
-
     def __init__(self, n_particles: int = 10000) -> None:
-        """Initialize surrogate model and internal cache copy.
-
-        Resource paths inside ``model_config.yaml`` are relative to the
-        submodule directory.  A temporary config file with those paths
-        rewritten to absolute paths is passed to ``TorchModel`` so that
-        initialization succeeds regardless of the current working directory.
-        """
+        """Initialize surrogate model and internal cache copy."""
         super().__init__()
-        tm = self._load_torch_model()
+        tm = load_model()
         self.model = LUMETorchModel(tm)
         self.n_particles = n_particles
         self._cache: dict[str, Any] = {}
         self.set({})  # Initializing with defaults of NN model
         self.update_state()
-
-    @classmethod
-    def _resolve_resource_paths(cls, config: dict, base_dir: Path) -> dict:
-        """Return a copy of config with resource paths made absolute."""
-        resolved = dict(config)
-        for key in cls._RESOURCE_KEYS:
-            if key not in resolved:
-                continue
-            value = resolved[key]
-            if isinstance(value, str):
-                resolved[key] = str((base_dir / value).resolve())
-            elif isinstance(value, list):
-                resolved[key] = [str((base_dir / v).resolve()) for v in value]
-        return resolved
-
-    @classmethod
-    def _load_torch_model(cls) -> Any:
-        """Load :class:`TorchModel` with all resource paths resolved.
-
-        Writes a temporary config YAML whose resource paths are absolute so
-        that ``TorchModel`` can locate them regardless of the working directory.
-        The temporary file is removed after loading.
-        """
-        config_path = cls._find_config()
-        base_dir = config_path.parent
-
-        with open(config_path, encoding="utf-8") as fh:
-            config = yaml.safe_load(fh)
-
-        resolved_config = cls._resolve_resource_paths(config, base_dir)
-
-        with tempfile.NamedTemporaryFile(mode="w", suffix=".yaml", delete=False) as tmp:
-            yaml.safe_dump(resolved_config, tmp, sort_keys=False)
-            tmp_path = Path(tmp.name)
-
-        try:
-            return TorchModel(str(tmp_path))
-        finally:
-            tmp_path.unlink(missing_ok=True)
 
     def _get(self, names: Iterable[str]) -> dict[str, Any]:
         return {name: self._cache[name] for name in names}

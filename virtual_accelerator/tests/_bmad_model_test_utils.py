@@ -185,3 +185,71 @@ def assert_screen_image_pvs_in_supported_variables(
         "Screen image PVs missing from model.supported_variables: "
         + ", ".join(missing_image_pvs)
     )
+
+
+def assert_bpm_pvs_match_tao_lattice(
+    model,
+    bpm_attrs: tuple[str, ...] = ("X", "Y"),
+) -> None:
+    """
+    Verify that mapped BPM elements expose expected BPM PVs.
+
+    Parameters
+    ----------
+    model : LUMEModel
+        The LUME BMAD model instance to check.
+    bpm_attrs : tuple[str, ...]
+        BPM PV attributes expected for each BPM device.
+
+    Raises
+    ------
+    AssertionError
+        If BPM lattice elements are missing PV prefix mappings, or if expected
+        BPM PVs are missing from ``model.supported_variables``.
+    """
+    element_names = model.tao.lat_list("*", "ele.name")
+    bpm_elements = {
+        element_name.split("#")[0]
+        for element_name in element_names
+        if element_name not in ("BEGINNING", "END")
+        and "BPM" in element_name.split("#")[0]
+    }
+
+    if not bpm_elements:
+        return
+
+    pv_prefix_by_element = {
+        element_name
+        for _, element_name in model.transformer.control_name_to_bmad.items()
+    }
+
+    missing_mapping = sorted(
+        element_name
+        for element_name in bpm_elements
+        if element_name not in pv_prefix_by_element
+    )
+    assert not missing_mapping, "BPM elements missing PV prefix mapping: " + ", ".join(
+        missing_mapping
+    )
+
+    pv_prefix_by_element = {
+        element_name: pv_prefix
+        for pv_prefix, element_name in model.transformer.control_name_to_bmad.items()
+    }
+
+    supported_variable_names = set(model.supported_variables)
+    missing_bpm_pvs = {}
+
+    for element_name in sorted(bpm_elements):
+        pv_prefix = pv_prefix_by_element[element_name]
+        expected_pvs = {f"{pv_prefix}:{attr}" for attr in bpm_attrs}
+        absent_pvs = sorted(expected_pvs - supported_variable_names)
+        if absent_pvs:
+            missing_bpm_pvs[element_name] = absent_pvs
+
+    assert not missing_bpm_pvs, (
+        "BPM PVs missing from model.supported_variables: "
+        + "; ".join(
+            f"{element}: {', '.join(pvs)}" for element, pvs in missing_bpm_pvs.items()
+        )
+    )
