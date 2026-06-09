@@ -67,7 +67,6 @@ def get_facet_staged_model(n_particles=10000, surrogate_inputs="machine", **kwar
     """
     from facet2_inj_ml_model import load_model
     from virtual_accelerator.surrogates.beam_output import BeamOutputModel
-    from virtual_accelerator.models.facet2 import get_facet_bmad_model
     from lume.staged_model import StagedModel
 
     injector_surrogate = BeamOutputModel(
