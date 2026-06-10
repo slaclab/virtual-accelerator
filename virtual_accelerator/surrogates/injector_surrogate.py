@@ -11,7 +11,7 @@ from scipy import constants
 
 
 def compute_covariance_matrix(state: Mapping[str, Any], energy: float) -> np.ndarray:
-    """Compute a diagonal 6x6 covariance matrix from scalar beam 
+    """Compute a diagonal 6x6 covariance matrix from scalar beam
     parameters for a specific (lcls_cu_inj_model) surrogate model.
 
     The matrix is in OpenPMDBeamphysics units with no off-diagonal terms.
