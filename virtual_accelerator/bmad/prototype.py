@@ -1,6 +1,7 @@
 from typing import Any
 from lume.model import LUMEModel
 from lume.variables import NDVariable, ScalarVariable, Variable
+from lume.actions import set_action, get_action
 from pytao import Tao
 
 from virtual_accelerator.bmad.actions import BCTRLQuadrupoleAction, StatAction
@@ -30,7 +31,6 @@ class PrototypeLUMEBmadModel(LUMEModel):
             Dictionary mapping variable names to their current values
         """
         out = {name: self._state[name] for name in names}
-        print(f"Getting variables: {out}")
         return out
     
     def _set(self, values: dict[str, Any]) -> None:
@@ -46,7 +46,7 @@ class PrototypeLUMEBmadModel(LUMEModel):
         self.tao.cmd("set global lattice_calc_on = F")
 
         for name, value in values.items():
-            self.variables[name].set(self.tao, value)
+            set_action(self.tao, self.variables[name], value)
 
         # re-enable lattice calculations after setting all variables
         self.tao.cmd("set global lattice_calc_on = T")
@@ -56,7 +56,7 @@ class PrototypeLUMEBmadModel(LUMEModel):
 
     def update_state(self):
         for name, var in self.variables.items():
-            self._state[name] = var.get(self.tao)
+            self._state[name] = get_action(self.tao, var)
 
     @property
     def supported_variables(self) -> dict[str, Variable]:
@@ -77,7 +77,6 @@ if __name__ == "__main__":
     end_element = "OTR4"
     tao = Tao(f"-init {init_file} -noplot -slice_lattice {start_element}:{end_element}")
 
-
     # set tracking to start_element
     tao.cmd(f"set beam track_start = {start_element}")
 
@@ -93,7 +92,6 @@ if __name__ == "__main__":
     }
 
     model = PrototypeLUMEBmadModel(tao=tao, variables=variables)
-    print(model.supported_variables)
 
     model.get(["s", "a.beta", "b.beta"])
 
