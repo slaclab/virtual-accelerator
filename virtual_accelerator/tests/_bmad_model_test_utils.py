@@ -1,7 +1,9 @@
 import importlib.util
+import math
 import os
+from numbers import Real
 from pathlib import Path
-
+from lume.variables import ScalarVariable
 
 TEST_BEAM_PATH = os.path.join(Path(__file__).parent, "../bmad", "test_beam")
 
@@ -253,3 +255,73 @@ def assert_bpm_pvs_match_tao_lattice(
             f"{element}: {', '.join(pvs)}" for element, pvs in missing_bpm_pvs.items()
         )
     )
+
+
+def assert_roundtrip_pv_get_set(
+    model,
+) -> None:
+    """
+    Verify that all writable PVs roundtrip through set/get unchanged.
+
+    Parameters
+    ----------
+    model : LUMEModel
+        The model instance under test.
+    """
+
+    def assert_value_equal(pv_name, expected_value, actual_value) -> None:
+        if (
+            isinstance(expected_value, Real)
+            and isinstance(actual_value, Real)
+            and not isinstance(expected_value, bool)
+            and not isinstance(actual_value, bool)
+        ):
+            assert math.isclose(
+                float(actual_value),
+                float(expected_value),
+                rel_tol=0.0,
+                abs_tol=1e-9,
+            ), (
+                f"Expected {pv_name!r} readback to be {expected_value!r}, "
+                f"got {actual_value!r}"
+            )
+            return
+
+        equality_result = actual_value == expected_value
+        if hasattr(equality_result, "all"):
+            assert bool(equality_result.all()), (
+                f"Expected {pv_name!r} readback to be {expected_value!r}, "
+                f"got {actual_value!r}"
+            )
+            return
+
+        assert actual_value == expected_value, (
+            f"Expected {pv_name!r} readback to be {expected_value!r}, "
+            f"got {actual_value!r}"
+        )
+
+    supported_variables = model.supported_variables
+    assert supported_variables, "model.supported_variables is empty"
+
+    writable_supported_variables = [
+        name for name, val in supported_variables.items() if val.read_only is False
+    ]
+    if not writable_supported_variables:
+        writable_supported_variables = [
+            name
+            for name, variable in supported_variables.items()
+            if not getattr(variable, "read_only", True)
+        ]
+
+    assert writable_supported_variables, (
+        "No writable variables found in model.supported_variables"
+    )
+
+    for pv_name in writable_supported_variables:
+        if pv_name is not "track_type":
+            if isinstance(supported_variables[pv_name], ScalarVariable):
+                original_value = model.get(pv_name) + 0.001  # add small offset to ensure set does something
+                assert original_value != 0, f"Original value for {pv_name} is zero, cannot perform roundtrip test with offset"
+                model.set({pv_name: original_value})
+                roundtrip_value = model.get(pv_name)
+        assert_value_equal(pv_name, original_value, roundtrip_value)

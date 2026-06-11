@@ -118,9 +118,9 @@ class CUBmadTransformer(BmadTransformer):
                 return tao.ele_control_var(element_name)["PHASE_DEG"]
             if attr == "BEAMCODE1_STAT":
                 return tao.ele_control_var(element_name)["IN_USE"]
-        elif device_type in ["HKicker", "VKicker", "EFC"]:
+        elif device_type in ["HKicker", "VKicker", "EFC", "Kicker"]:
             if attr in ["BCTRL", "BACT", "BDES"]:
-                return tao.ele_gen_attribs(element_name)["BL_KICK"]
+                return -10.0*tao.ele_gen_attribs(element_name)["BL_KICK"]
             elif attr == "BMIN" or attr == "BCTRL.DRVL":
                 return -10  # TODO: add logic for these limits
             elif attr == "BMAX" or attr == "BCTRL.DRVH":
@@ -215,10 +215,10 @@ class CUBmadTransformer(BmadTransformer):
                     ele_attr = tao.ele_gen_attribs(element)
                     bmad_value = -value / (ele_attr["L"] * 10)
                     bmad_attr = "b1_gradient"
-            elif device_type in ["HKicker", "VKicker"]:
+            elif device_type in ["HKicker", "VKicker", "Kicker"]:
                 if attr == "BCTRL" or attr == "BDES":
                     bmad_value = -0.1 * value
-                    bmad_attr = "bl_kick"
+                    bmad_attr = "BL_KICK"
             elif device_type == "Solenoid":
                 if attr == "BCTRL" or attr == "BDES":
                     bmad_value = -0.1 * value

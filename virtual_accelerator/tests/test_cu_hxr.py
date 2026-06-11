@@ -10,6 +10,7 @@ from virtual_accelerator.tests._bmad_model_test_utils import (
     assert_bmad_model_twiss_outputs,
     assert_bmad_model_track_beam_custom_path,
     assert_magnet_pvs_match_tao_lattice,
+    assert_roundtrip_pv_get_set,
     assert_screen_image_pvs_in_supported_variables,
 )
 from virtual_accelerator.models.cu_hxr import (
@@ -108,6 +109,10 @@ class TestCUHXRBmad:
     def test_bpm_pvs_match_tao_lattice(self):
         model = get_cu_hxr_bmad_model()
         assert_bpm_pvs_match_tao_lattice(model)
+
+    def test_roundtrip_pv_get_set(self):
+        model = get_cu_hxr_bmad_model(custom_beam_path=TEST_BEAM_PATH, end_element="OTR4")
+        assert_roundtrip_pv_get_set(model)
 
 
 @pytest.mark.skipif(
