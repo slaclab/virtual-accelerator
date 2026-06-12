@@ -22,6 +22,7 @@ class CUBmadTransformer(BmadTransformer):
         self,
         control_name_to_bmad: dict[str, str],
         screen_attributes: dict[str, str] = None,
+        klystron_mapping: dict[str, str] = None,
     ):
         """
         Initialize the CUBmadTransformer.
@@ -39,6 +40,9 @@ class CUBmadTransformer(BmadTransformer):
                     "resolution": 10, # um/pixel
                 }
             }
+        klystron_mapping: dict[str, str]
+            A dictionary mapping control variable names for klystrons to Bmad elements and attributes.
+            Example: {"KLYS:IN20:1001: "KLYS01"}
 
         Notes
         -----
@@ -48,6 +52,7 @@ class CUBmadTransformer(BmadTransformer):
 
         super().__init__(control_name_to_bmad=control_name_to_bmad)
         self.screen_attributes = screen_attributes
+        self.klystron_mapping = klystron_mapping
 
     def get_tao_property(self, tao: Tao, control_name: str):
         """
@@ -78,6 +83,18 @@ class CUBmadTransformer(BmadTransformer):
                 ":".join(control_name.split(":")[:3])
             ]
             attr = ":".join(control_name.split(":")[3:])
+
+        elif "KLYS" in control_name:
+            if self.klystron_mapping is not None:
+                element_name = self.klystron_mapping[
+                    ":".join(control_name.split(":")[:3])
+                ]
+            else:
+                element_name = self.control_name_to_bmad[
+                    ":".join(control_name.split(":")[:3])
+                ]
+            attr = ":".join(control_name.split(":")[3:])
+
         else:
             element_name = self.control_name_to_bmad[
                 ":".join(control_name.split(":")[:-1])
@@ -110,17 +127,16 @@ class CUBmadTransformer(BmadTransformer):
                 return 0  # TODO: add logic for status of solenoid
             elif attr == "CTRL":
                 return "Ready"
-        elif device_type in ["KLYS", "Lcavity"]:  # TODO: handle KLYS properly
-            if attr in ["ENLD", "ADES"]:
-                tao.ele_control_var(element_name)
-                return tao.ele_control_var(element_name)["ENLD_MEV"]
-            if attr in ["PHAS", "PDES"]:
-                return tao.ele_control_var(element_name)["PHASE_DEG"]
+        elif device_type in ["Lcavity"]:  # TODO: handle KLYS properly
+            if attr in ["PDES", "SFB_PDES", "PREQ"]:
+                return ele_attr["PHI0"] * 360  # convert from rad/2pi in Bmad to degrees
+            if attr in ["AREQ", "ADES"]:
+                return ele_attr["VOLTAGE"] / 1e6
             if attr == "BEAMCODE1_STAT":
-                return tao.ele_control_var(element_name)["IN_USE"]
+                return ele_attr["IN_USE"]
         elif device_type in ["HKicker", "VKicker", "EFC"]:
             if attr in ["BCTRL", "BACT", "BDES"]:
-                return tao.ele_gen_attribs(element_name)["BL_KICK"]
+                return ele_attr["BL_KICK"]
             elif attr == "BMIN" or attr == "BCTRL.DRVL":
                 return -10  # TODO: add logic for these limits
             elif attr == "BMAX" or attr == "BCTRL.DRVH":
@@ -205,7 +221,12 @@ class CUBmadTransformer(BmadTransformer):
                 continue
             pv_name = ":".join(pv.split(":")[0:3])
             attr = pv.split(":")[3]
-            element = self.control_name_to_bmad[pv_name]
+
+            if "KLYS" in pv_name:
+                element = self.klystron_mapping[pv_name]
+            else:
+                element = self.control_name_to_bmad[pv_name]
+
             device_type = tao.ele(element).key  # Quadrupole, Solenoid, etc.
             if device_type == "Monitor":
                 continue
@@ -223,9 +244,18 @@ class CUBmadTransformer(BmadTransformer):
                 if attr == "BCTRL" or attr == "BDES":
                     bmad_value = -0.1 * value
                     bmad_attr = "BS_FIELD"
-            elif device_type == "KLYS":
-                bmad_value = value
-                bmad_attr = klys_attr_to_bmad[attr]
+            elif device_type == "Lcavity":
+                if attr in klys_attr_to_bmad.keys():
+                    bmad_value = value
+                    bmad_attr = klys_attr_to_bmad[attr]
+                elif attr in ["AREQ", "ADES"]:
+                    bmad_value = value * 1e6
+                    bmad_attr = "VOLTAGE"
+                elif attr in ["PREQ", "PHAS", "SFB_PDES"]:
+                    bmad_value = value / 360
+                    bmad_attr = (
+                        "PHI0"  # units are in rad/2pi in Bmad, convert from degrees
+                    )
             else:
                 print(f"Do not know about {device_type} {attr}")
             # print(f"set ele for {device_type} {attr} {element} {bmad_attr} = {bmad_value}")

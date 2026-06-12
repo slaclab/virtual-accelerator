@@ -118,12 +118,6 @@ def get_variables(
         # Apply element type mappings
         element_type = ELEMENT_TYPE_MAPPING.get(element_type, element_type)
 
-        # Handle Lcavity and Lcavity_Overlay types
-        if element_type == "Lcavity":
-            element_type = "Lcavity_Overlay"
-        elif element_type == "Overlay" and device_name.split(":")[0] == "KLYS":
-            element_type = "Lcavity_Overlay"
-
         element_variables = get_variables_from_element_name(
             element_type, device_name, element_attr_mapping
         )

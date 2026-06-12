@@ -18,6 +18,7 @@ class BmadModelSpec:
     profmon_config_filename: str
     mapping_beampath: str | None = None
     database_relpath: str = "bmad/conversion/from_oracle/lcls_elements.csv"
+    klystron_mapping: dict[str, str] | None = None
     default_track_start: str | None = None
     default_beam_relpath: str | None = None
 
@@ -93,6 +94,7 @@ def build_bmad_model(
     transformer = CUBmadTransformer(
         control_name_to_bmad=control_name_to_element_name,
         screen_attributes=screen_attributes,
+        klystron_mapping=spec.klystron_mapping,
     )
 
     model = LUMEBmadModel(

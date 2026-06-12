@@ -87,22 +87,32 @@ class TestFACET2Bmad:
             screen_pv = f"{pv_prefix_by_element[screen_element]}:Image:ArrayData"
             assert screen_pv in staged_model.supported_variables
 
+    def test_klystron_pvs(self):
+        model = get_facet_bmad_model(start_element="PR10241", end_element="PR10711")
+        klystron_pvs = [
+            "KLYS:LI10:51:AREQ",
+            "KLYS:LI10:41:AREQ",
+            "KLYS:LI10:81:AREQ",
+        ]
+        for pv in klystron_pvs:
+            assert pv in model.supported_variables
+
     @pytest.mark.xfail(reason="known FACET2 quadrupoles are missing EPICS mappings")
     def test_quadrupole_pvs_match_tao_lattice(self):
-        model = get_facet_bmad_model()
+        model = get_facet_bmad_model(end_element="TD11")
         assert_magnet_pvs_match_tao_lattice(model, "Quadrupole")
 
     @pytest.mark.xfail(reason="known FACET2 HKickers are missing EPICS mappings")
     def test_hkicker_pvs_match_tao_lattice(self):
-        model = get_facet_bmad_model()
+        model = get_facet_bmad_model(end_element="TD11")
         assert_magnet_pvs_match_tao_lattice(model, "HKicker")
 
     @pytest.mark.xfail(reason="known FACET2 VKickers are missing EPICS mappings")
     def test_vkicker_pvs_match_tao_lattice(self):
-        model = get_facet_bmad_model()
+        model = get_facet_bmad_model(end_element="TD11")
         assert_magnet_pvs_match_tao_lattice(model, "VKicker")
 
     @pytest.mark.xfail(reason="known FACET2 BPMs are missing EPICS mappings")
     def test_bpm_pvs_match_tao_lattice(self):
-        model = get_facet_bmad_model()
+        model = get_facet_bmad_model(end_element="TD11")
         assert_bpm_pvs_match_tao_lattice(model)

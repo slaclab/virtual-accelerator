@@ -28,7 +28,7 @@ Quadrupole:
     variable_class: ScalarVariable
   BDES:
     unit: kG
-    read_only: true
+    read_only: false
     variable_class: ScalarVariable
   BMIN:
     unit: kG
@@ -71,7 +71,7 @@ Solenoid:
     variable_class: ScalarVariable
   BDES:
     unit: kG-m
-    read_only: true
+    read_only: false
     variable_class: ScalarVariable
   BMIN:
     unit: kG-m
@@ -114,7 +114,7 @@ HorizontalCorrector:
     variable_class: ScalarVariable
   BDES:
     unit: kG-m
-    read_only: true
+    read_only: false
     variable_class: ScalarVariable
   BMIN:
     unit: kG-m
@@ -157,7 +157,7 @@ VerticalCorrector:
     variable_class: ScalarVariable
   BDES:
     unit: kG-m
-    read_only: true
+    read_only: false
     variable_class: ScalarVariable
   BMIN:
     unit: kG-m
@@ -219,12 +219,38 @@ Lcavity_Overlay:
     read_only: false
     variable_class: ScalarVariable
 
-TransverseDeflectingCavity:
+Lcavity:
   AREQ:
+    unit: MV
+    read_only: false
+    variable_class: ScalarVariable
+
+  PREQ:
     unit: degrees
     read_only: false
     variable_class: ScalarVariable
-  PREQ:
+
+  PDES:
+    unit: degrees
+    read_only: false
+    variable_class: ScalarVariable
+
+  ADES:
     unit: MV
+    read_only: false
+    variable_class: ScalarVariable
+
+  SFB_PDES:
+    unit: degrees
+    read_only: false
+    variable_class: ScalarVariable
+
+TransverseDeflectingCavity:
+  AREQ:
+    unit: MV
+    read_only: false
+    variable_class: ScalarVariable
+  PREQ:
+    unit: degrees
     read_only: false
     variable_class: ScalarVariable

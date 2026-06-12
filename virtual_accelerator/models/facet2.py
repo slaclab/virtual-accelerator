@@ -26,18 +26,24 @@ def get_facet_bmad_model(
     LUMEBmadModel
         Instance of the LUMEBmadModel for the FACET-II lattice.
     """
+    klystron_mapping = {
+        "KLYS:LI10:51": "TCY10490",
+        "KLYS:LI10:41": "L0BF",
+        "KLYS:LI10:81": "L0AF",
+    }
 
     spec = BmadModelSpec(
         feature="FACET-II Bmad model",
         lattice_env_var="FACET2_LATTICE",
         tao_init_relpath="bmad/models/f2_elec/tao.init",
         mapping_beampath=None,
+        klystron_mapping=klystron_mapping,
         screens=("PR10571", "PR10711"),
         profmon_config_filename="facet2_profmon_info.yaml",
         default_beam_relpath="beams/2024-10-22_oneBunch.h5",
         default_track_start="L0AFEND",
     )
-    return build_bmad_model(
+    model = build_bmad_model(
         spec=spec,
         start_element=start_element,
         end_element=end_element,
@@ -45,6 +51,33 @@ def get_facet_bmad_model(
         custom_beam_path=custom_beam_path,
         custom_tao_commands=["set bmad_com absolute_time_tracking=true"],
     )
+
+    # the model will return RF cavity variables as "ACCL:IN10:400:AREQ", or "TCAV:IN10:490:AREQ" for the TCAV
+    # however, facet2 uses klystron variables like "KLYS:LI10:41:AREQ"
+    translation_mapping = {
+        "TCAV:IN10:490": "KLYS:LI10:51",
+        "ACCL:IN10:400": "KLYS:LI10:41",
+        "ACCL:IN10:300": "KLYS:LI10:81",
+    }
+
+    # add translated variables to the model
+    for var_name, facet_var_name in translation_mapping.items():
+        for attr in ["AREQ", "ADES", "PREQ", "PDES", "SFB_PDES"]:
+            try:
+                variable = model.supported_variables[f"{var_name}:{attr}"]
+            except KeyError:
+                continue  # if the variable is not in the model, skip it
+
+            # create a copy
+            translated_variable = variable.copy()
+            # change the name to the facet variable name
+            translated_variable.name = f"{facet_var_name}:{attr}"
+            # add to the model's supported variables
+            model.supported_variables[translated_variable.name] = translated_variable
+            # remove the original variable
+            del model.supported_variables[f"{var_name}:{attr}"]
+
+    return model
 
 
 def get_facet_staged_model(n_particles=10000, surrogate_inputs="machine", **kwargs):

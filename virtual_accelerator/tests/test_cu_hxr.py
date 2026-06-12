@@ -85,7 +85,9 @@ class TestCUHXRBmad:
 
     @pytest.mark.xfail(reason="need to update klystron implementation")
     def test_cu_hxr_lcavity(self):
-        model = get_cu_hxr_bmad_model(custom_beam_path=TEST_BEAM_PATH)
+        model = get_cu_hxr_bmad_model(
+            end_element="TD11", custom_beam_path=TEST_BEAM_PATH
+        )
 
         enld = model.get("KLYS:LI21:31:ENLD")
         enld = enld + 5
@@ -94,19 +96,19 @@ class TestCUHXRBmad:
         assert ampl == enld
 
     def test_quadrupole_pvs_match_tao_lattice(self):
-        model = get_cu_hxr_bmad_model()
+        model = get_cu_hxr_bmad_model(end_element="TD11")
         assert_magnet_pvs_match_tao_lattice(model, "Quadrupole")
 
     def test_hkicker_pvs_match_tao_lattice(self):
-        model = get_cu_hxr_bmad_model()
+        model = get_cu_hxr_bmad_model(end_element="TD11")
         assert_magnet_pvs_match_tao_lattice(model, "HKicker")
 
     def test_vkicker_pvs_match_tao_lattice(self):
-        model = get_cu_hxr_bmad_model()
+        model = get_cu_hxr_bmad_model(end_element="TD11")
         assert_magnet_pvs_match_tao_lattice(model, "VKicker")
 
     def test_bpm_pvs_match_tao_lattice(self):
-        model = get_cu_hxr_bmad_model()
+        model = get_cu_hxr_bmad_model(end_element="TD11")
         assert_bpm_pvs_match_tao_lattice(model)
 
 
