@@ -1,5 +1,4 @@
 import os
-
 from virtual_accelerator.utils.optional_dependencies import import_optional
 from virtual_accelerator.utils.variables import (
     get_epics_to_name_or_overlay_mapping,

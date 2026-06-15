@@ -93,10 +93,17 @@ CORRECTOR_MAPPING = {
     "BCON": FieldAccessor(lambda e, energy: 1.0),
     "BDES": FieldAccessor(lambda e, energy: e.angle * get_magnetic_rigidity(energy)),
 }
+# check set_cheetah_value works then update othe setattrs
 
 TRANSVERSE_DEFLECTING_CAVITY_MAPPING = {
-    "AREQ": "voltage",
-    "PREQ": "phase",
+    "AREQ": FieldAccessor(
+        lambda e, energy: e.voltage / 1e6,
+        lambda e, energy, v: set_cheetah_value(e, "voltage", v * 1e6),
+    ),
+    "PREQ": FieldAccessor(
+        lambda e, energy: e.phase * (360 / (2 * torch.pi)),
+        lambda e, energy, p: setattr(e, "phase", p * (2 * torch.pi) / 360),
+    ),
     "AFBENB": FieldAccessor(lambda e, energy: 0.0),
     "AFBST": FieldAccessor(lambda e, energy: 0.0),
     "AMPL_W0CH0": FieldAccessor(lambda e, energy: 0.0),
@@ -108,12 +115,24 @@ TRANSVERSE_DEFLECTING_CAVITY_MAPPING = {
 }
 
 BPM_MAPPING = {
-    "X": FieldAccessor(lambda e, energy: e.reading[..., 0]),
-    "Y": FieldAccessor(lambda e, energy: e.reading[..., 1]),
-    "XSCDT1H": FieldAccessor(lambda e, energy: e.reading[..., 0]),
-    "YSCDT1H": FieldAccessor(lambda e, energy: e.reading[..., 1]),
-    "XSCDTH": FieldAccessor(lambda e, energy: e.reading[..., 0]),
-    "YSCDTH": FieldAccessor(lambda e, energy: e.reading[..., 1]),
+    "X": FieldAccessor(
+        lambda e, energy: e.reading[..., 0] * 1000
+    ),  # convert from m to mm
+    "Y": FieldAccessor(
+        lambda e, energy: e.reading[..., 1] * 1000
+    ),  # convert from m to mm
+    "XSCDT1H": FieldAccessor(
+        lambda e, energy: e.reading[..., 0] * 1000
+    ),  # convert from m to mm
+    "YSCDT1H": FieldAccessor(
+        lambda e, energy: e.reading[..., 1] * 1000
+    ),  # convert from m to mm
+    "XSCDTH": FieldAccessor(
+        lambda e, energy: e.reading[..., 0] * 1000
+    ),  # convert from m to mm
+    "YSCDTH": FieldAccessor(
+        lambda e, energy: e.reading[..., 1] * 1000
+    ),  # convert from m to mm
     "TMIT": FieldAccessor(lambda e, energy: 1.0),
 }
 
@@ -269,13 +288,9 @@ def access_cheetah_attribute(element, pv_attribute, energy, set_value=None):
         value: The corresponding Cheetah attribute value if `set_value` is None, otherwise sets the value and returns None.
     """
 
-    # implementing fix for quads, will rethink for tcavs
-    # simplest case, each subelement has sub_length = length/len(sub_elements)
-    # handling composite elements
-
-    # handle when superimposed quad or tcav is called
-    # after handle when specific embedded elements are called?
-
+    # need to think about writing/reading to and from nn.Parameters,
+    # if var 'TRAINABLE:PV:300' is set to nn.Parameter(torch.tensor(1.0))
+    # if needs to make the corresponding element attribute a nn.Parameter as well, or if it can just set the data of the existing attribute
     if isinstance(element, SuperimposedElement):
         if len(element.superimposed_element.elements) == 0:
             raise ValueError("Cannot access attribute on empty element list")
@@ -328,6 +343,42 @@ def access_cheetah_attribute(element, pv_attribute, energy, set_value=None):
             raise ValueError(
                 f"Cannot set value for {pv_attribute} of element type {element_type}"
             ) from e
+
+
+def set_cheetah_value(element, attr_name, value):
+    """
+    Set a Cheetah element attribute safely.
+
+    If the existing attribute is an nn.Parameter, update its value in-place
+    without replacing the Parameter object.
+
+    If the existing attribute is a Tensor, update in-place when shape-compatible.
+
+    Otherwise, fall back to setattr.
+    """
+    existing = getattr(element, attr_name)
+    # value = nn.Parameter ( ) * tensor is not a param.
+    if isinstance(existing, torch.nn.Parameter):
+        print("is nn should update in place.")
+        value = torch.as_tensor(
+            value,
+            dtype=existing.dtype,
+            device=existing.device,
+        )
+
+        with torch.no_grad():
+            existing.copy_(value)
+
+        return
+
+    if isinstance(existing, torch.Tensor):
+        value = torch.as_tensor(
+            value,
+            dtype=existing.dtype,
+            device=existing.device,
+        )
+
+    setattr(element, attr_name, value)
 
 
 def get_mad_control_mapping(fname: str | None = None):

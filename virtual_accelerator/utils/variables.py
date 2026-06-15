@@ -62,7 +62,7 @@ def get_name_or_overlay_to_epics_mapping(
         df = df[df["Beampath"].str.contains(beampath, na=False)]
 
     # remove rows with `keyword` = `USEG` and `LCAV`
-    df = df[~df["Keyword"].str.contains("USEG|LCAV|TCAV", na=False)]
+    df = df[~df["Keyword"].str.contains("USEG|LCAV", na=False)]
 
     name_data = df[["Element", "Control System Name"]].dropna()
     return dict(zip(name_data["Element"], name_data["Control System Name"]))

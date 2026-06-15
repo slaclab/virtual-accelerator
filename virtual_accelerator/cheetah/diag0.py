@@ -102,7 +102,7 @@ def get_diag0_beamline():
             ele.tracking_method = "second_order"
         elif isinstance(ele, SuperimposedElement):
             ele.base_element.tracking_method = "second_order"
-        else:
+        elif hasattr(ele, "supported_tracking_methods"):
             ele.tracking_method = "linear"
 
     return tracking_segment
