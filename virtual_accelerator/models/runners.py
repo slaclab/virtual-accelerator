@@ -1,5 +1,6 @@
 import argparse
 
+from virtual_accelerator.models.facet2 import get_facet_staged_model
 from virtual_accelerator.utils.optional_dependencies import import_optional_symbol
 
 import logging
@@ -9,11 +10,11 @@ def main():
     parser = argparse.ArgumentParser(
         description="Run the CU HXR model with BMAD or CHEETAH backend"
     )
-    choices = ["cu_hxr_bmad", "cu_hxr_cheetah", "facet_bmad"]
+    choices = ["cu_hxr_bmad", "cu_hxr_cheetah", "facet_bmad", "facet_staged"]
     parser.add_argument(
         "model",
         choices=choices,
-        help="Model backend to run (cu_hxr_bmad, cu_hxr_cheetah, or facet_bmad)",
+        help="Model backend to run (cu_hxr_bmad, cu_hxr_cheetah, facet_bmad, or facet_staged)",
     )
     parser.add_argument(
         "--end-element",
@@ -57,6 +58,8 @@ def main():
         model = get_cu_hxr_cheetah_model()
     elif args.model == "facet_bmad":
         model = get_facet_bmad_model(end_element=args.end_element, track_beam=True)
+    elif args.model == "facet_staged":
+        model = get_facet_staged_model(end_element=args.end_element, n_particles=10000)
     else:
         raise ValueError(f"Invalid model choice. Please choose one of {choices}.")
 

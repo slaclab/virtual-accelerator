@@ -1,6 +1,7 @@
 from typing import Any, Iterable, Mapping
 
 import numpy as np
+import torch
 import yaml
 from lume.model import LUMEModel
 from lume.staged_model import FinalParticlesMixIn
@@ -87,9 +88,15 @@ class BeamOutputModel(LUMEModel, FinalParticlesMixIn):
 
     def update_state(self):
         """Update internal cache from surrogate model and regenerate output beam."""
-        self._cache.update(
-            self.surrogate.get(list(self.surrogate.supported_variables.keys()))
-        )
+        outputs = self.surrogate.get(list(self.surrogate.supported_variables.keys()))
+
+        # change outputs to numpy if they are torch tensors -- except for the covariance matrix
+        for key, value in outputs.items():
+            if isinstance(value, torch.Tensor):
+                if key != "covariance_matrix":
+                    outputs[key] = value.detach().cpu().numpy()
+
+        self._cache.update(outputs)
         self._generate_output_beam()
 
     def _generate_output_beam(self):
@@ -98,7 +105,7 @@ class BeamOutputModel(LUMEModel, FinalParticlesMixIn):
         # get the covariance matrix from the cache
         # units and variable order: [x, px, y, py, z, pz]
         # units: [m, eV/c, m, eV/c, s, eV/c]
-        covariance_matrix = self._cache["covariance_matrix"]
+        covariance_matrix = torch.tensor(self._cache["covariance_matrix"])
 
         # convert covariance matrix time axis to z using speed of light units for the
         # surrogate and openPMD ParticleBeam convention

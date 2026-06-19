@@ -187,7 +187,7 @@ def get_screen_variables(
         nRow = elem_config["nRow"]
 
         control_variables[image_name] = NDVariable(
-            name=image_name, unit="", read_only=True, shape=(nCol, nRow)
+            name=image_name, unit="", read_only=True, shape=(nCol, nRow), dtype=np.float64
         )
         control_variables[elem_config["name"] + ":Image:ArraySize1_RBV"] = IntVariable(
             name=elem_config["name"] + ":Image:ArraySize1_RBV",
