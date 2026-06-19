@@ -37,14 +37,20 @@ def get_facet_bmad_model(
         default_beam_relpath="beams/2024-10-22_oneBunch.h5",
         default_track_start="L0AFEND",
     )
-    return build_bmad_model(
+    model = build_bmad_model(
         spec=spec,
         start_element=start_element,
         end_element=end_element,
         track_beam=track_beam,
         custom_beam_path=custom_beam_path,
-        custom_tao_commands=["set bmad_com absolute_time_tracking=true"],
+        custom_tao_commands=[
+            "set bmad_com absolute_time_tracking=true",
+            "set ele PR10571 alias = PROF:IN10:571",
+            "set ele PR10711 alias = PROF:IN10:711",
+        ],
     )
+
+    return model
 
 
 def get_facet_staged_model(n_particles=10000, surrogate_inputs="machine", **kwargs):

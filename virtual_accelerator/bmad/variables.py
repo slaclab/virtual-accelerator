@@ -1,14 +1,18 @@
 from typing import Any
 from pytao import Tao
 import re
-import yaml
-from lume.variables import NDVariable, ScalarVariable, IntVariable
-from pathlib import Path
-import numpy as np
-from virtual_accelerator.utils.variables import (
-    get_element_attr_mapping,
-    get_variables_from_element_name,
+from lume.variables import Variable
+
+from lume_bmad.actions import (
+    ScreenSpec,
+    ScreenImageVariable,
+    ScreenResolutionVariable,
+    ScreenImageShapeVariable,
 )
+
+import logging
+
+logger = logging.getLogger(__name__)
 
 # Pre-compile regex patterns for performance
 KLYSTRON_SEGMENT_PATTERN = re.compile(r"^(K\d+_\d+)[A-Z]$")
@@ -24,21 +28,40 @@ ELEMENT_TYPE_MAPPING = {
 def get_normalized_element_names(tao: Tao):
     elements = tao.lat_list("*", "ele.name")
 
-    # Remove sentinel elements and deduplicate by stripping Bmad instance suffixes
-    elements_set = {
-        elem.split("#")[0] for elem in elements if elem not in ("BEGINNING", "END")
-    }
+    # Remove sentinel elements and preserve Tao's unique element IDs to avoid
+    # ambiguous lookups when multiple elements share the same base name.
+    return list(
+        dict.fromkeys(elem for elem in elements if elem not in ("BEGINNING", "END"))
+    )
 
-    return sorted(elements_set)
+
+def get_element_type(tao: Tao, element_name: str) -> str:
+    """Get the element type for an element, applying any necessary mappings or normalizations."""
+    try:
+        element_type = tao.ele_head(element_name)["key"]
+    except Exception as exc:
+        logger.warning(
+            "Error getting element type for %s: %s. Defaulting to 'Unknown'.",
+            element_name,
+            exc,
+        )
+        return "Unknown"
+
+    # handle BPMs
+    if element_type == "Monitor" and element_name.startswith("BPM"):
+        element_type = "BPM"
+
+    # Apply element type mappings
+    element_type = ELEMENT_TYPE_MAPPING.get(element_type, element_type)
+    return element_type
 
 
 def get_variables(
     tao: Tao,
-    device_mapping: dict[str, str],
     element_attr_mapping: dict[str, dict[str, dict[str, Any]]] = None,
 ):
     """
-    Get variables for all controlable devices.
+    Get variables for all controllable devices.
 
     This function iterates over devices and
     uses the provided device mapping and variable configuration to instantiate
@@ -48,8 +71,6 @@ def get_variables(
     ----------
     tao : Tao
         Tao object containing the lattice elements.
-    device_mapping : dict[str, str]
-        Mapping of lattice element name -> control-system PV prefix.
     element_attr_mapping : dict[str, dict[str, dict[str, Any]]], optional
         Device-type -> PV attribute -> variable specification mapping
         loaded from the SLAC variable YAML configuration.
@@ -62,156 +83,143 @@ def get_variables(
 
     Notes
     -----
-    An example `device_mapping` might look like:
-    device_mapping = {"QE03": "QUAD:IN20:511", "KLYS01": "KLYS:IN20:1001"}
-
     See `get_variables_from_element_name` for details on the specification of `element_attr_mapping`.
 
     """
-    all_variables = {}
-    element_attr_mapping = element_attr_mapping or get_element_attr_mapping()
+    all_variables = []
 
     normalized_elements = get_normalized_element_names(tao)
 
-    # Track which (base_element, device_name) pairs we've already created variables for
-    # This handles cavity segments (e.g., K21_3A, K21_3B, K21_3C) that map to the same device
-    processed_devices = set()
-
     # iterate over the normalized element names and create variables for those that are in the device mapping
     for element_name in normalized_elements:
-        # Try to find the element in device_mapping
-        # First try the element name directly
-        if element_name in device_mapping:
-            device_name = device_mapping[element_name]
-            base_element = element_name
-        else:
-            # If not found, check if this is a klystron element with segment suffix (e.g., K21_3B)
-            # and try matching the base element (e.g., K21_3)
-            klystron_match = KLYSTRON_SEGMENT_PATTERN.match(element_name)
-            if not klystron_match:
-                # Not in mapping and not a klystron segment, skip it
-                continue
+        element_type = get_element_type(tao, element_name)
 
-            base_element = klystron_match.group(1)
-            if base_element not in device_mapping:
-                # Element not in mapping, skip it
-                continue
-
-            device_name = device_mapping[base_element]
-
-        # Create a unique key for this device by base element and control name
-        device_key = (base_element, device_name)
-
-        # Skip if we've already processed this device (handles multi-segment cavities)
-        if device_key in processed_devices:
+        # check if element type is in the variable configuration mapping, if not skip it with a warning
+        if element_type not in element_attr_mapping:
+            # raise warning and skip if element type is not in the variable configuration mapping
+            logger.warning(
+                f"Element type {element_type} for element {element_name} not found in variable configuration mapping. Skipping."
+            )
             continue
 
-        processed_devices.add(device_key)
+        # get the element pv suffix mapping for this element type from the variable configuration
+        element_pv_suffix_mapping = element_attr_mapping[element_type]
 
-        # Only query TAO for elements we actually need
-        element_type = tao.ele_head(element_name)["key"]
-
-        # handle BPMS by name since the device type is just Monitor, but we want to treat it as a BPM
-        if "BPM" in device_name:
-            element_type = "BPM"
-
-        # Apply element type mappings
-        element_type = ELEMENT_TYPE_MAPPING.get(element_type, element_type)
-
-        # Handle Lcavity and Lcavity_Overlay types
-        if element_type == "Lcavity":
-            element_type = "Lcavity_Overlay"
-        elif element_type == "Overlay" and device_name.split(":")[0] == "KLYS":
-            element_type = "Lcavity_Overlay"
-
-        element_variables = get_variables_from_element_name(
-            element_type, device_name, element_attr_mapping
+        all_variables.extend(
+            create_variables_from_element(
+                tao=tao,
+                element_name=element_name,
+                class_mapping=element_pv_suffix_mapping,
+            )
         )
-
-        all_variables.update(element_variables)
 
     return all_variables
 
 
-def get_screen_variables(
+def create_variables_from_element(
     tao: Tao,
-    control_variables: dict[str, NDVariable | ScalarVariable],
-    screen_list: list[str],
-    config_path: Path,
-) -> tuple[
-    dict[str, NDVariable | ScalarVariable], dict[str, dict[str, Any]], list[str]
-]:
+    element_name: str,
+    class_mapping: dict[str, Any],
+) -> list[Variable]:
     """
-    Get screen attributes for cu_hxr from yaml file
+    Create variables for an element
 
     Parameters
     ----------
     tao : Tao
-        The TAO instance.
-    control_variables : dict[str, NDVariable | ScalarVariable | IntVariable | StrVariable]
-        Dictionary of control variables.
-    screen_list : list[str]
-        List of screen elements to include.
-    config_path : Path
-        Path to the YAML configuration file containing screen attributes.
+        Tao object containing the lattice elements.
+    element_name : str
+        Name of the element to create variables for.
+    class_mapping : dict[str, Any]
+        Mapping of PV attribute suffix -> variable specification.
+        Each value may be a variable class name string or a dict
+        containing a `variable_class` field.
 
     Returns
     -------
-    tuple[dict[str, NDVariable | ScalarVariable | IntVariable | StrVariable], dict[str, dict[str, Any]], list[str]]
-        - control_variables: Updated dictionary of control variables including screen variables.
-        - screen_attributes: Dictionary of screen attributes for each element.
-            - number of pixels in x and y
-            - resolution um/pixel
-            - bit_depth
-            - orientation
-        - used_screens: List of screens that were found in the lattice and included in the control variables.
+    list[Variable]
+        List of instantiated LUME Variables for the given element based on the provided class mapping.
+
     """
 
-    with open(config_path) as f:
-        screen_data = yaml.safe_load(f)
+    variables = []
 
-    normalized_elements = get_normalized_element_names(tao)
+    base_pv = tao.ele(element_name).head.alias
+    for attr, var_spec in class_mapping.items():
+        pv_name = f"{base_pv}:{attr}"
 
-    screen_attributes = {}
-    used_screens = []
-    for element in normalized_elements:
-        if element not in screen_list:
-            continue
+        if isinstance(var_spec, dict):
+            var_class_name = var_spec["variable_class"]
+        else:
+            var_class_name = var_spec
 
-        if element not in screen_data:
-            continue
+        # use the configured class name to get the class from actions.py
+        var_class = globals()[var_class_name]
+        variable = var_class(name=pv_name, element_name=element_name)
+        variables.append(variable)
 
-        elem_config = screen_data[element]
-        image_name = elem_config["name"] + ":Image:ArrayData"
-        nCol = elem_config["nCol"]
-        nRow = elem_config["nRow"]
+    return variables
 
-        control_variables[image_name] = NDVariable(
-            name=image_name, unit="", read_only=True, shape=(nCol, nRow), dtype=np.float64
-        )
-        control_variables[elem_config["name"] + ":Image:ArraySize1_RBV"] = IntVariable(
-            name=elem_config["name"] + ":Image:ArraySize1_RBV",
-            unit="pixel",
-            read_only=True,
-        )
-        control_variables[elem_config["name"] + ":Image:ArraySize0_RBV"] = IntVariable(
-            name=elem_config["name"] + ":Image:ArraySize0_RBV",
-            unit="pixel",
-            read_only=True,
-        )
-        control_variables[elem_config["name"] + ":RESOLUTION"] = ScalarVariable(
-            name=elem_config["name"] + ":RESOLUTION",
-            unit="pixel/mm",
-            read_only=True,
-        )
 
-        screen_attributes[element] = {
-            "bins": np.array([nCol, nRow]),
-            "resolution": elem_config["res"],
-            "bit_depth": elem_config["bitdepth"],
-            "orient": np.array([elem_config["orientX"], elem_config["orientY"]]),
-        }
+def get_screen_variables(
+    tao: Tao,
+    screen_name: str,
+    config_dict: dict[str, dict[str, Any]],
+):
+    """
+    Get variables for a screen element based on the provided configuration.
 
-        used_screens.append(element)
+    Parameters
+    ----------
+    tao : Tao
+        Tao object containing the lattice elements.
+    screen_name : str
+        Name of the screen element to get variables for.
+    config_dict : dict[str, dict[str, Any]]
+        Mapping of screen name -> variable configuration dict. The variable configuration dict should specify the PV attribute suffixes and corresponding variable class names to instantiate for that screen.
 
-    return control_variables, screen_attributes, used_screens
+    Returns
+    -------
+    list[Variable]
+        List of instantiated LUME Variables for the given screen based on the provided configuration.
+
+    """
+
+    base_pv = tao.ele(screen_name).head.alias
+    if screen_name not in config_dict:
+        raise ValueError(f"Screen {screen_name} not found in configuration dictionary.")
+
+    screen_config = config_dict[screen_name]
+
+    shape = screen_config["shape"]
+    pixel_size = screen_config["pixel_size"]
+
+    screen_spec = ScreenSpec(
+        element_name=screen_name,
+        shape=tuple(shape),
+        pixel_size=float(pixel_size),
+    )
+
+    # create screen variables based on the configuration for this screen
+    variables = [
+        ScreenImageVariable.from_screen_spec(
+            name=f"{base_pv}:Image:ArrayData",
+            screen_spec=screen_spec,
+        ),
+        ScreenResolutionVariable.from_screen_spec(
+            name=f"{base_pv}:RESOLUTION",
+            screen_spec=screen_spec,
+        ),
+        ScreenImageShapeVariable.from_screen_spec(
+            name=f"{base_pv}:Image:ArraySize0_RBV",
+            screen_spec=screen_spec,
+            index=0,
+        ),
+        ScreenImageShapeVariable.from_screen_spec(
+            name=f"{base_pv}:Image:ArraySize1_RBV",
+            screen_spec=screen_spec,
+            index=1,
+        ),
+    ]
+
+    return variables

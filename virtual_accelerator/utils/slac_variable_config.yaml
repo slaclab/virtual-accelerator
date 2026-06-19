@@ -1,230 +1,47 @@
 BPM:
-  X:
-    unit: mm
-    read_only: true
-    variable_class: ScalarVariable
-    default_value: NULL
-  Y:
-    unit: mm
-    read_only: true
-    variable_class: ScalarVariable
+  X: BPMXVariable
+  Y: BPMYVariable
 
 Quadrupole:
-  BCTRL:
-    unit: kG
-    read_only: false
-    variable_class: ScalarVariable
-  BCTRL.DRVL:
-    unit: kG
-    read_only: true
-    variable_class: ScalarVariable
-  BCTRL.DRVH:
-    unit: kG
-    read_only: true
-    variable_class: ScalarVariable
-  BACT:
-    unit: kG
-    read_only: true
-    variable_class: ScalarVariable
-  BDES:
-    unit: kG
-    read_only: true
-    variable_class: ScalarVariable
-  BMIN:
-    unit: kG
-    read_only: true
-    variable_class: ScalarVariable
-  BMAX:
-    unit: kG
-    read_only: true
-    variable_class: ScalarVariable
-  STATCTRLSUB.T:
-    read_only: true
-    variable_class: ScalarVariable
-  CTRL:
-    read_only: true
-    variable_class: EnumVariable
-    default_value: Ready
-    options:
-      - Ready
-      - TRIM
-      - PERTURB
-      - BCON_TO_BDES
-      - BACT_TO_BDES
+  BCTRL: QuadrupoleBCTRLVariable
+  BCTRL.DRVL: BminVariable
+  BCTRL.DRVH: BmaxVariable
+  BACT: QuadrupoleBACTVariable
+  BDES: QuadrupoleBCTRLVariable
+  BMAX: BmaxVariable
+  BMIN: BminVariable
+  STATCTRLSUB.T: StatusVariable
+  CTRL: ControlStateVariable
 
 Solenoid:
-  BCTRL:
-    unit: kG-m
-    read_only: false
-    variable_class: ScalarVariable
-  BCTRL.DRVL:
-    unit: kG
-    read_only: true
-    variable_class: ScalarVariable
-  BCTRL.DRVH:
-    unit: kG
-    read_only: true
-    variable_class: ScalarVariable
-  BACT:
-    unit: kG-m
-    read_only: true
-    variable_class: ScalarVariable
-  BDES:
-    unit: kG-m
-    read_only: true
-    variable_class: ScalarVariable
-  BMIN:
-    unit: kG-m
-    read_only: true
-    variable_class: ScalarVariable
-  BMAX:
-    unit: kG-m
-    read_only: true
-    variable_class: ScalarVariable
-  STATCTRLSUB.T:
-    read_only: true
-    variable_class: ScalarVariable
-  CTRL:
-    read_only: true
-    variable_class: EnumVariable
-    default_value: Ready
-    options:
-      - Ready
-      - TRIM
-      - PERTURB
-      - BCON_TO_BDES
-      - BACT_TO_BDES
+  BCTRL: SolenoidBCTRLVariable
+  BCTRL.DRVL: BminVariable
+  BCTRL.DRVH: BmaxVariable
+  BACT: SolenoidBACTVariable
+  BDES: SolenoidBCTRLVariable
+  BMIN: BminVariable
+  BMAX: BmaxVariable
+  STATCTRLSUB.T: StatusVariable
+  CTRL: ControlStateVariable
 
 HorizontalCorrector:
-  BCTRL:
-    unit: kG-m
-    read_only: false
-    variable_class: ScalarVariable
-  BCTRL.DRVL:
-    unit: kG
-    read_only: true
-    variable_class: ScalarVariable
-  BCTRL.DRVH:
-    unit: kG
-    read_only: true
-    variable_class: ScalarVariable
-  BACT:
-    unit: kG-m
-    read_only: true
-    variable_class: ScalarVariable
-  BDES:
-    unit: kG-m
-    read_only: true
-    variable_class: ScalarVariable
-  BMIN:
-    unit: kG-m
-    read_only: true
-    variable_class: ScalarVariable
-  BMAX:
-    unit: kG-m
-    read_only: true
-    variable_class: ScalarVariable
-  STATCTRLSUB.T:
-    read_only: true
-    variable_class: ScalarVariable
-  CTRL:
-    read_only: true
-    variable_class: EnumVariable
-    default_value: Ready
-    options:
-      - Ready
-      - TRIM
-      - PERTURB
-      - BCON_TO_BDES
-      - BACT_TO_BDES
+  BCTRL: KickerBCTRLVariable
+  BCTRL.DRVL: BminVariable
+  BCTRL.DRVH: BmaxVariable
+  BACT: KickerBACTVariable
+  BDES: KickerBCTRLVariable
+  BMIN: BminVariable
+  BMAX: BmaxVariable
+  STATCTRLSUB.T: StatusVariable
+  CTRL: ControlStateVariable
 
 VerticalCorrector:
-  BCTRL:
-    unit: kG-m
-    read_only: false
-    variable_class: ScalarVariable
-  BCTRL.DRVL:
-    unit: kG
-    read_only: true
-    variable_class: ScalarVariable
-  BCTRL.DRVH:
-    unit: kG
-    read_only: true
-    variable_class: ScalarVariable
-  BACT:
-    unit: kG-m
-    read_only: true
-    variable_class: ScalarVariable
-  BDES:
-    unit: kG-m
-    read_only: true
-    variable_class: ScalarVariable
-  BMIN:
-    unit: kG-m
-    read_only: true
-    variable_class: ScalarVariable
-  BMAX:
-    unit: kG-m
-    read_only: true
-    variable_class: ScalarVariable
-  STATCTRLSUB.T:
-    read_only: true
-    variable_class: ScalarVariable
-  CTRL:
-    read_only: true
-    variable_class: EnumVariable
-    default_value: Ready
-    options:
-      - Ready
-      - TRIM
-      - PERTURB
-      - BCON_TO_BDES
-      - BACT_TO_BDES
-
-Screen:
-  Image:ArrayData:
-    unit: pixel
-    read_only: true
-    variable_class: NDVariable
-    shape: NULL
-  PNEUMATIC:
-    unit: bool
-    read_only: false
-    variable_class: ScalarVariable
-  Image:ArraySize1_RBV:
-    unit: pixel
-    read_only: true
-    variable_class: ScalarVariable
-  Image:ArraySize0_RBV:
-    unit: pixel
-    read_only: true
-    variable_class: ScalarVariable
-  RESOLUTION:
-    unit: pixel/mm
-    read_only: true
-    variable_class: ScalarVariable
-
-
-Lcavity_Overlay:
-  ENLD:
-    unit: MeV
-    read_only: false
-    variable_class: ScalarVariable
-  PHAS:
-    unit: Deg_S
-    read_only: false
-    variable_class: ScalarVariable
-  BEAMCODE1_STAT:
-    unit: Boolean
-    read_only: false
-    variable_class: ScalarVariable
-
-TransverseDeflectingCavity:
-  AREQ:
-    unit: degrees
-    read_only: false
-    variable_class: ScalarVariable
-  PREQ:
-    unit: MV
-    read_only: false
-    variable_class: ScalarVariable
+  BCTRL: KickerBCTRLVariable
+  BCTRL.DRVL: BminVariable
+  BCTRL.DRVH: BmaxVariable
+  BACT: KickerBACTVariable
+  BDES: KickerBCTRLVariable
+  BMIN: BminVariable
+  BMAX: BmaxVariable
+  STATCTRLSUB.T: StatusVariable
+  CTRL: ControlStateVariable

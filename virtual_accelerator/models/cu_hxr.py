@@ -2,10 +2,6 @@ import os
 
 from virtual_accelerator.bmad.factory import BmadModelSpec, build_bmad_model
 from virtual_accelerator.utils.optional_dependencies import import_optional
-from virtual_accelerator.utils.variables import (
-    get_epics_to_name_or_overlay_mapping,
-    split_control_and_observable,
-)
 
 
 def _check_optional_modules(module_names: list[str], feature: str, extra: str) -> None:
@@ -80,7 +76,6 @@ def get_cu_hxr_cheetah_model():
     from lume_cheetah import LUMECheetahModel, CheetahSimulator
     from cheetah.accelerator import Segment
     from cheetah.particles import ParticleBeam
-    from virtual_accelerator.cheetah.transformer import SLACCheetahTransformer
     from virtual_accelerator.cheetah.variables import get_variables_from_segment
     import torch
 
@@ -120,26 +115,17 @@ def get_cu_hxr_cheetah_model():
         initial_beam_distribution=incoming_beam,
     )
 
-    # get control system device to cheetah mapping
-    database_path = os.path.join(
-        lcls_lattice, "bmad/conversion/from_oracle/lcls_elements.csv"
-    )
-    control_name_to_element_name = get_epics_to_name_or_overlay_mapping(database_path)
-    element_name_to_control_name = {
-        v: k for k, v in control_name_to_element_name.items()
-    }
 
-    # Create transformer that handles maps get/set calls
-    transformer = SLACCheetahTransformer(
-        control_name_to_cheetah=control_name_to_element_name
-    )
 
     # Get supported control system variables
     # for the model
     variables = get_variables_from_segment(segment, element_name_to_control_name)
 
     # Define the controllable and observable variables
-    control_variables, observable_variables = split_control_and_observable(variables)
+    control_variables, observable_variables = (
+        None,
+        None,
+    )  # split_control_and_observable(variables)
 
     # Create model
     model = LUMECheetahModel(

@@ -16,6 +16,7 @@ from virtual_accelerator.models.facet2 import (
     get_facet_bmad_model,
     get_facet_staged_model,
 )
+from virtual_accelerator.utils.variables import get_pvs_by_element_name
 
 
 HAS_FACET_LATTICE = bool(os.environ.get("FACET2_LATTICE"))
@@ -53,12 +54,9 @@ class TestFACET2Bmad:
         # Check that screen image variables are included in supported variables.
         assert_screen_image_pvs_in_supported_variables(model)
 
-        pv_prefix_by_element = {
-            element_name: pv_prefix
-            for pv_prefix, element_name in model.transformer.control_name_to_bmad.items()
-        }
-        screen_element = "PR10571"
-        screen_pv = f"{pv_prefix_by_element[screen_element]}:Image:ArrayData"
+        screen_pvs = get_pvs_by_element_name(model)["PR10571"]
+        # get the PV name that contains "Image:ArrayData" which is the expected output PV for the screen image
+        screen_pv = next(pv for pv in screen_pvs if "Image:ArrayData" in pv)
 
         # test specific output from one of the screens to ensure it's properly set up
         output = model.get(screen_pv)
@@ -79,30 +77,26 @@ class TestFACET2Bmad:
             surrogate_inputs="machine", n_particles=1000, end_element="PR10711"
         )
 
-        mapping = staged_model.lume_model_instances[1].transformer.control_name_to_bmad
-        pv_prefix_by_element = {
-            element_name: pv_prefix for pv_prefix, element_name in mapping.items()
-        }
+        pvs_by_element = get_pvs_by_element_name(staged_model.lume_model_instances[1])
         for screen_element in ["PR10571", "PR10711"]:
-            screen_pv = f"{pv_prefix_by_element[screen_element]}:Image:ArrayData"
+            screen_pv = next(
+                pv for pv in pvs_by_element[screen_element] if "Image:ArrayData" in pv
+            )
             assert screen_pv in staged_model.supported_variables
 
-    @pytest.mark.xfail(reason="known FACET2 quadrupoles are missing EPICS mappings")
+    # @pytest.mark.xfail(reason="known FACET2 quadrupoles are missing EPICS mappings")
     def test_quadrupole_pvs_match_tao_lattice(self):
-        model = get_facet_bmad_model()
+        model = get_facet_bmad_model(end_element="PR10711")
         assert_magnet_pvs_match_tao_lattice(model, "Quadrupole")
 
-    @pytest.mark.xfail(reason="known FACET2 HKickers are missing EPICS mappings")
     def test_hkicker_pvs_match_tao_lattice(self):
-        model = get_facet_bmad_model()
+        model = get_facet_bmad_model(end_element="PR10711")
         assert_magnet_pvs_match_tao_lattice(model, "HKicker")
 
-    @pytest.mark.xfail(reason="known FACET2 VKickers are missing EPICS mappings")
     def test_vkicker_pvs_match_tao_lattice(self):
-        model = get_facet_bmad_model()
+        model = get_facet_bmad_model(end_element="PR10711")
         assert_magnet_pvs_match_tao_lattice(model, "VKicker")
 
-    @pytest.mark.xfail(reason="known FACET2 BPMs are missing EPICS mappings")
     def test_bpm_pvs_match_tao_lattice(self):
-        model = get_facet_bmad_model()
+        model = get_facet_bmad_model(end_element="PR10711")
         assert_bpm_pvs_match_tao_lattice(model)
