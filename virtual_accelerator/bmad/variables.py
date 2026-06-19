@@ -10,6 +10,8 @@ from lume_bmad.actions import (
     ScreenImageShapeVariable,
 )
 
+import virtual_accelerator.bmad.actions as _bmad_actions
+
 import logging
 
 logger = logging.getLogger(__name__)
@@ -77,16 +79,19 @@ def get_variables(
 
     Returns
     -------
-    dict[str, Variable]
-        Mapping of full PV name -> instantiated LUME Variable
-        (ScalarVariable or NDVariable).
+    list[Variable]
+        List of instantiated LUME Variables for all controllable devices.
 
     Notes
     -----
     See `get_variables_from_element_name` for details on the specification of `element_attr_mapping`.
 
+    Warnings for unknown element types are deduplicated within each invocation;
+    calling this function multiple times may repeat warnings for the same types.
+
     """
     all_variables = []
+    warned_types: set[str] = set()
 
     normalized_elements = get_normalized_element_names(tao)
 
@@ -96,10 +101,12 @@ def get_variables(
 
         # check if element type is in the variable configuration mapping, if not skip it with a warning
         if element_type not in element_attr_mapping:
-            # raise warning and skip if element type is not in the variable configuration mapping
-            logger.warning(
-                f"Element type {element_type} for element {element_name} not found in variable configuration mapping. Skipping."
-            )
+            if element_type not in warned_types:
+                logger.warning(
+                    "Element type %s not found in variable configuration mapping. Skipping all elements of this type.",
+                    element_type,
+                )
+                warned_types.add(element_type)
             continue
 
         # get the element pv suffix mapping for this element type from the variable configuration
@@ -154,7 +161,12 @@ def create_variables_from_element(
             var_class_name = var_spec
 
         # use the configured class name to get the class from actions.py
-        var_class = globals()[var_class_name]
+        var_class = getattr(_bmad_actions, var_class_name, None)
+        if var_class is None:
+            raise KeyError(
+                f"Unknown variable class '{var_class_name}'. "
+                "Ensure it is defined in virtual_accelerator.bmad.actions."
+            )
         variable = var_class(name=pv_name, element_name=element_name)
         variables.append(variable)
 

@@ -1,3 +1,4 @@
+import logging
 import os
 from dataclasses import dataclass
 from pathlib import Path
@@ -5,6 +6,8 @@ import yaml
 
 from virtual_accelerator.utils.optional_dependencies import import_optional
 from virtual_accelerator.utils.variables import get_element_attr_mapping
+
+logger = logging.getLogger(__name__)
 
 
 @dataclass(frozen=True)
@@ -78,6 +81,17 @@ def build_bmad_model(
         screen_name for screen_name in spec.screens if screen_name in lattice_elements
     )
     for screen_name in active_screens:
+        screen_info = info.get(screen_name, {})
+        if "name" in screen_info:
+            try:
+                tao.cmd(f"set ele {screen_name} alias = {screen_info['name']}")
+            except Exception:
+                logger.warning(
+                    "Failed to set alias for screen %s to %s.",
+                    screen_name,
+                    screen_info["name"],
+                    exc_info=True,
+                )
         variables.extend(get_screen_variables(tao, screen_name, info))
 
     model = LUMEBmadModel(

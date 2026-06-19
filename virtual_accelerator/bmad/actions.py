@@ -168,6 +168,7 @@ class BPMXVariable(BmadScalarVariable, ReadOnlyActionMixin):
     """Action that operates on the X position of a BPM"""
 
     read_only: bool = True
+    unit: str = "mm"
 
     def _get(self, simulator: Tao) -> Any:
         return simulator.ele(self.element_name).orbit.x * 1e3  # convert from m to mm
@@ -177,6 +178,7 @@ class BPMYVariable(BmadScalarVariable, ReadOnlyActionMixin):
     """Action that operates on the Y position of a BPM"""
 
     read_only: bool = True
+    unit: str = "mm"
 
     def _get(self, simulator: Tao) -> Any:
         return simulator.ele(self.element_name).orbit.y * 1e3  # convert from m to mm

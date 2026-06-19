@@ -45,8 +45,6 @@ def get_facet_bmad_model(
         custom_beam_path=custom_beam_path,
         custom_tao_commands=[
             "set bmad_com absolute_time_tracking=true",
-            "set ele PR10571 alias = PROF:IN10:571",
-            "set ele PR10711 alias = PROF:IN10:711",
         ],
     )
 
