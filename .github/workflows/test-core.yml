@@ -39,7 +39,6 @@ jobs:
           python - <<'PY'
           import virtual_accelerator
           import virtual_accelerator.models.cu_hxr
-          import virtual_accelerator.models.sc_diag0
           import virtual_accelerator.models.staged_model
           import virtual_accelerator.models.runners
           print("All core imports succeeded without optional backends.")
