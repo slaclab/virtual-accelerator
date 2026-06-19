@@ -105,7 +105,12 @@ class BeamOutputModel(LUMEModel, FinalParticlesMixIn):
         # get the covariance matrix from the cache
         # units and variable order: [x, px, y, py, z, pz]
         # units: [m, eV/c, m, eV/c, s, eV/c]
-        covariance_matrix = torch.tensor(self._cache["covariance_matrix"])
+        covariance_matrix = torch.as_tensor(self._cache["covariance_matrix"]).squeeze()
+        if covariance_matrix.shape != (6, 6):
+            raise ValueError(
+                "Expected covariance_matrix with shape (6, 6) or singleton-batched equivalent; "
+                f"got shape {tuple(covariance_matrix.shape)}"
+            )
 
         # convert covariance matrix time axis to z using speed of light units for the
         # surrogate and openPMD ParticleBeam convention

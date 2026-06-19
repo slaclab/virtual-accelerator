@@ -103,3 +103,20 @@ def test_beam_output_model():
     # check that the covariance matrix is being converted to cheetah units correctly
     cov = torch.tensor(beam.cov("x", "px", "y", "py", "z", "pz")).float()
     assert torch.allclose(cov, test_matrix, atol=1e-3, rtol=1e-3)
+
+
+def test_beam_output_model_accepts_singleton_batched_covariance():
+    surrogate = make_dummy_torch_model()
+    surrogate.evaluate.return_value = {
+        "covariance_matrix": TEST_COVARIANCE_MATRIX.clone().unsqueeze(0)
+    }
+
+    wrapped = BeamOutputModel(surrogate, n_particles=100000, p0c=1e8)
+    beam = wrapped.final_particles
+
+    test_matrix = TEST_COVARIANCE_MATRIX.clone()
+    test_matrix[4, :] *= -constants.speed_of_light
+    test_matrix[:, 4] *= -constants.speed_of_light
+
+    cov = torch.tensor(beam.cov("x", "px", "y", "py", "z", "pz")).float()
+    assert torch.allclose(cov, test_matrix, atol=1e-3, rtol=1e-3)
