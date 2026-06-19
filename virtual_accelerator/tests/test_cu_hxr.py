@@ -1,6 +1,8 @@
 import os
 import importlib.util
 
+import numpy as np
+
 import pytest
 from virtual_accelerator.tests._bmad_model_test_utils import (
     HAS_BMAD_DEPS,
@@ -83,15 +85,13 @@ class TestCUHXRBmad:
         # make sure it changed
         assert not (image == updated_image).all()
 
-    @pytest.mark.xfail(reason="need to update klystron implementation")
     def test_cu_hxr_lcavity(self):
         model = get_cu_hxr_bmad_model(custom_beam_path=TEST_BEAM_PATH)
 
         enld = model.get("KLYS:LI21:31:ENLD")
-        enld = enld + 5
-        model.set({"KLYS:LI21:31:ENLD": enld})
+        model.set({"KLYS:LI21:31:ENLD": enld + 5.0})
         ampl = model.get("KLYS:LI21:31:ENLD")
-        assert ampl == enld
+        assert np.isclose(ampl, enld + 5.0)
 
     def test_quadrupole_pvs_match_tao_lattice(self):
         model = get_cu_hxr_bmad_model()

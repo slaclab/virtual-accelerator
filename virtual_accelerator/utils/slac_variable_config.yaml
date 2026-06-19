@@ -45,3 +45,14 @@ VerticalCorrector:
   BMAX: BmaxVariable
   STATCTRLSUB.T: StatusVariable
   CTRL: ControlStateVariable
+
+Klystron:
+  ENLD: KlystronENLDVariable # subclass of BmadScalarVariable
+  PACT: KlystronPACTVariable # subclass of BmadScalarVariable
+  PDES: KlystronPDESVariable # subclass of BmadScalarVariable
+  BEAMCODE1_STAT: KlystronStatVariable # subclass of BmadEnumVariable
+  BEAMCODE2_STAT: KlystronStatVariable # subclass of BmadEnumVariable
+  # SWRD: KlystronSWRDVariable # subclass of BmadIntVariable
+  # STAT: KlystronSTATVariable # subclass of BmadIntVariable
+  # HDSC: KlystronHDSCVariable # subclass of BmadIntVariable
+  # DSTA: KlystronDSTAVariable # subclass of NDVariable

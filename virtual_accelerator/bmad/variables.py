@@ -17,7 +17,7 @@ logger = logging.getLogger(__name__)
 
 # Pre-compile regex patterns for performance
 KLYSTRON_SEGMENT_PATTERN = re.compile(r"^(K\d+_\d+)[A-Z]$")
-KLYSTRON_PATTERN = re.compile(r"^(K\d+_\d+)[A-Z]?$")
+KLYSTRON_PATTERN = re.compile(r"^K\d{2}_\d[A-Z]#?$")
 
 # Mapping of element types to canonical types for variable configuration
 ELEMENT_TYPE_MAPPING = {
@@ -26,14 +26,63 @@ ELEMENT_TYPE_MAPPING = {
 }
 
 
+def set_overlay_aliases(tao: Tao):
+    elements = tao.lat_list("*", "ele.name")
+
+    elements = list(
+        dict.fromkeys(elem for elem in elements if elem not in ("BEGINNING", "END"))
+    )
+
+    # if an element matches the klystron segment pattern similar to K21_1D#1, normalize it to the base klystron name without the segment suffix K21_1
+    for elem in elements:
+        match = KLYSTRON_PATTERN.match(
+            elem.split("#")[0]
+        )  # ignore any alias suffixes for matching
+        if match:
+            overlay_element = elem[:-3]
+
+            # set the klystron overlay element alias to match the element alias
+            alias = tao.ele(elem).head.alias
+            logging.debug(
+                f"Setting alias for klystron overlay element {overlay_element} to {alias}"
+            )
+            tao.ele(overlay_element).head.alias = alias
+
+
+def get_overlay_alias(tao: Tao, element_name: str) -> str:
+    elements = tao.lat_list("*", "ele.name")
+
+    # find an element that contains the element_name as a substring
+    for elem in elements:
+        if element_name in elem:
+            return tao.ele(elem).head.alias
+
+
 def get_normalized_element_names(tao: Tao):
     elements = tao.lat_list("*", "ele.name")
 
     # Remove sentinel elements and preserve Tao's unique element IDs to avoid
     # ambiguous lookups when multiple elements share the same base name.
-    return list(
+    elements = list(
         dict.fromkeys(elem for elem in elements if elem not in ("BEGINNING", "END"))
     )
+
+    # if an element matches the klystron segment pattern similar to K21_1D#1, normalize it to the base klystron name without the segment suffix K21_1
+    normalized_elements = []
+    for elem in elements:
+        match = KLYSTRON_PATTERN.match(
+            elem.split("#")[0]
+        )  # ignore any alias suffixes for matching
+        if match:
+            normalized_elements.append(elem[:-3])
+
+        else:
+            normalized_elements.append(elem)
+
+    # remove duplicates while preserving order
+    normalized_elements = list(dict.fromkeys(normalized_elements))
+
+    return normalized_elements
 
 
 def get_element_type(tao: Tao, element_name: str) -> str:
@@ -51,6 +100,10 @@ def get_element_type(tao: Tao, element_name: str) -> str:
     # handle BPMs
     if element_type == "Monitor" and element_name.startswith("BPM"):
         element_type = "BPM"
+
+    # handle klystrons
+    if element_type == "Overlay" and element_name.startswith("K"):
+        element_type = "Klystron"
 
     # Apply element type mappings
     element_type = ELEMENT_TYPE_MAPPING.get(element_type, element_type)
@@ -78,9 +131,8 @@ def get_variables(
 
     Returns
     -------
-    dict[str, Variable]
-        Mapping of full PV name -> instantiated LUME Variable
-        (ScalarVariable or NDVariable).
+    list[Variable]
+        List of instantiated LUME Variables
 
     Notes
     -----
@@ -103,13 +155,19 @@ def get_variables(
             )
             continue
 
+        # get alias
+        if element_type == "Klystron":
+            alias = get_overlay_alias(tao, element_name)
+        else:
+            alias = tao.ele(element_name).head.alias
+
         # get the element pv suffix mapping for this element type from the variable configuration
         element_pv_suffix_mapping = element_attr_mapping[element_type]
 
         all_variables.extend(
             create_variables_from_element(
-                tao=tao,
                 element_name=element_name,
+                base_pv=alias,
                 class_mapping=element_pv_suffix_mapping,
             )
         )
@@ -118,8 +176,8 @@ def get_variables(
 
 
 def create_variables_from_element(
-    tao: Tao,
     element_name: str,
+    base_pv: str,
     class_mapping: dict[str, Any],
 ) -> list[Variable]:
     """
@@ -127,14 +185,12 @@ def create_variables_from_element(
 
     Parameters
     ----------
-    tao : Tao
-        Tao object containing the lattice elements.
     element_name : str
         Name of the element to create variables for.
+    base_pv : str
+        Base PV name to use for the variables.
     class_mapping : dict[str, Any]
         Mapping of PV attribute suffix -> variable specification.
-        Each value may be a variable class name string or a dict
-        containing a `variable_class` field.
 
     Returns
     -------
@@ -145,7 +201,6 @@ def create_variables_from_element(
 
     variables = []
 
-    base_pv = tao.ele(element_name).head.alias
     for attr, var_spec in class_mapping.items():
         pv_name = f"{base_pv}:{attr}"
 

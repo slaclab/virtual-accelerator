@@ -167,6 +167,7 @@ class ControlStateVariable(BmadEnumVariable, ReadOnlyActionMixin):
 class BPMXVariable(BmadScalarVariable, ReadOnlyActionMixin):
     """Action that operates on the X position of a BPM"""
 
+    unit: str = "mm"
     read_only: bool = True
 
     def _get(self, simulator: Tao) -> Any:
@@ -176,7 +177,77 @@ class BPMXVariable(BmadScalarVariable, ReadOnlyActionMixin):
 class BPMYVariable(BmadScalarVariable, ReadOnlyActionMixin):
     """Action that operates on the Y position of a BPM"""
 
+    unit: str = "mm"
     read_only: bool = True
 
     def _get(self, simulator: Tao) -> Any:
         return simulator.ele(self.element_name).orbit.y * 1e3  # convert from m to mm
+
+
+class KlystronENLDVariable(BmadScalarVariable, WritableActionMixin):
+    """
+    Action that operates on the amplitude of a klystron which acts on an overlay in Bmad
+    """
+
+    unit: str = "MeV"
+
+    def _get(self, simulator: Tao) -> Any:
+        return simulator.ele(self.element_name).control_vars["ENLD_MEV"]
+
+    def _set(self, simulator: Tao, value: Any) -> None:
+        simulator.cmd(f"set ele {self.element_name} ENLD_MEV = {value}")
+
+
+class KlystronPDESVariable(BmadScalarVariable, WritableActionMixin):
+    """
+    Action that operates on the phase of a klystron which acts on an overlay in Bmad
+    Note: the element_name for this variable should be set for a Bmad overlay element
+
+    """
+
+    unit: str = "degrees"
+
+    def _get(self, simulator: Tao) -> Any:
+        return simulator.ele(self.element_name).control_vars["PHASE_DEG"]
+
+    def _set(self, simulator: Tao, value: Any) -> None:
+        simulator.cmd(f"set ele {self.element_name} PHASE_DEG = {value}")
+
+
+class KlystronPACTVariable(BmadScalarVariable, ReadOnlyActionMixin):
+    """
+    Action that operates on the actual phase of a klystron which acts on an overlay in Bmad
+    Note: the element_name for this variable should be set for a Bmad overlay element
+
+    """
+
+    unit: str = "degrees"
+    read_only: bool = True
+
+    def _get(self, simulator: Tao) -> Any:
+        return simulator.ele(self.element_name).control_vars["PHASE_DEG"]
+
+
+class KlystronStatVariable(BmadEnumVariable, WritableActionMixin):
+    """
+    Action that operates on the status of a klystron which acts on an overlay in Bmad
+    Note: the element_name for this variable should be set for a Bmad overlay element
+
+    """
+
+    read_only: bool = True
+    options: list[str] = ["0", "1"]
+    default_value: str = "0"
+
+    _logic_mapping = {"0": True, "1": False}
+
+    def _get(self, simulator: Tao) -> Any:
+        inverse_logic_mapping = {v: k for k, v in self._logic_mapping.items()}
+        return inverse_logic_mapping[
+            simulator.ele(self.element_name).control_vars["IN_USE"]
+        ]
+
+    def _set(self, simulator: Tao, value: Any) -> None:
+        simulator.cmd(
+            f"set ele {self.element_name} IN_USE = {self._logic_mapping[value]}"
+        )

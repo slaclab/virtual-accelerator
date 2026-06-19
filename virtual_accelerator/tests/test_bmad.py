@@ -43,7 +43,9 @@ class TestBmadVariables:
         }
 
         for element in quadrupole_elements:
-            variables = create_variables_from_element(tao, element, mapping)
+            variables = create_variables_from_element(
+                element, base_pv=tao.ele(element).head.alias, class_mapping=mapping
+            )
 
             # element pv
             base_pv = tao.ele(element).head.alias
