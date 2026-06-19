@@ -10,7 +10,8 @@ logger = logging.getLogger(__name__)
 
 
 class BmadScalarVariable(ScalarVariable):
-    """ all bmad variables should have the bmad element name associated with them"""
+    """all bmad variables should have the bmad element name associated with them"""
+
     element_name: str
 
     def _get_ele_attr(self, simulator: Tao) -> dict[str, Any]:
@@ -19,10 +20,11 @@ class BmadScalarVariable(ScalarVariable):
     def _set_ele_attr(self, simulator: Tao, attribute_name: str, value: Any) -> None:
         simulator.cmd(f"set ele {self.element_name} {attribute_name} = {value}")
 
-class BmadEnumVariable(EnumVariable):
-    """ Base class for Bmad variables that have a discrete set of options. """
-    element_name: str
 
+class BmadEnumVariable(EnumVariable):
+    """Base class for Bmad variables that have a discrete set of options."""
+
+    element_name: str
 
 
 class _QuadrupoleGradientVariable(BmadScalarVariable):
@@ -54,7 +56,8 @@ class _ScaledElementAttributeVariable(BmadScalarVariable):
 
 
 class QuadrupoleBCTRLVariable(_QuadrupoleGradientVariable, WritableActionMixin):
-    """ Action that operates on the BCTRL/BDES property of Quadrupoles """
+    """Action that operates on the BCTRL/BDES property of Quadrupoles"""
+
     read_only: bool = False
     unit: str = "kG"
 
@@ -66,7 +69,8 @@ class QuadrupoleBCTRLVariable(_QuadrupoleGradientVariable, WritableActionMixin):
 
 
 class QuadrupoleBACTVariable(_QuadrupoleGradientVariable, ReadOnlyActionMixin):
-    """ Action that operates on the BACT property of Quadrupoles """
+    """Action that operates on the BACT property of Quadrupoles"""
+
     read_only: bool = True
     unit: str = "kG"
 
@@ -75,7 +79,7 @@ class QuadrupoleBACTVariable(_QuadrupoleGradientVariable, ReadOnlyActionMixin):
 
 
 class SolenoidBCTRLVariable(_ScaledElementAttributeVariable, WritableActionMixin):
-    """ Action that operates on the BCTRL/BDES property of Solenoids """
+    """Action that operates on the BCTRL/BDES property of Solenoids"""
 
     attribute_name: str = "BS_FIELD"
     bmad_to_external_scale: float = 10.0
@@ -88,7 +92,7 @@ class SolenoidBCTRLVariable(_ScaledElementAttributeVariable, WritableActionMixin
 
 
 class SolenoidBACTVariable(_ScaledElementAttributeVariable, ReadOnlyActionMixin):
-    """ Action that operates on the BACT property of Solenoids """
+    """Action that operates on the BACT property of Solenoids"""
 
     attribute_name: str = "BS_FIELD"
     bmad_to_external_scale: float = 10.0
@@ -99,7 +103,7 @@ class SolenoidBACTVariable(_ScaledElementAttributeVariable, ReadOnlyActionMixin)
 
 
 class KickerBCTRLVariable(_ScaledElementAttributeVariable, WritableActionMixin):
-    """ Action that operates on the BCTRL/BDES property of Kicker magnets """
+    """Action that operates on the BCTRL/BDES property of Kicker magnets"""
 
     attribute_name: str = "BL_KICK"
     bmad_to_external_scale: float = -10.0
@@ -112,7 +116,7 @@ class KickerBCTRLVariable(_ScaledElementAttributeVariable, WritableActionMixin):
 
 
 class KickerBACTVariable(_ScaledElementAttributeVariable, ReadOnlyActionMixin):
-    """ Action that operates on the BACT property of Kicker magnets """
+    """Action that operates on the BACT property of Kicker magnets"""
 
     attribute_name: str = "BL_KICK"
     bmad_to_external_scale: float = -10.0
@@ -123,28 +127,35 @@ class KickerBACTVariable(_ScaledElementAttributeVariable, ReadOnlyActionMixin):
 
 
 class StatusVariable(BmadScalarVariable, ReadOnlyActionMixin):
-    """ Action that operates on the status of a device (e.g. STATCTRLSUB.T) """
+    """Action that operates on the status of a device (e.g. STATCTRLSUB.T)"""
+
     read_only: bool = True
 
     def _get(self, simulator: Tao) -> Any:
         return 0  # TODO: add logic for status of device
-    
+
+
 class BminVariable(BmadScalarVariable, ReadOnlyActionMixin):
-    """ Action that operates on the BMIN/DRVL property of a device """
+    """Action that operates on the BMIN/DRVL property of a device"""
+
     read_only: bool = True
 
     def _get(self, simulator: Tao) -> Any:
         return -100  # TODO: add logic for these limits
-    
+
+
 class BmaxVariable(BmadScalarVariable, ReadOnlyActionMixin):
-    """ Action that operates on the BMAX/DRVH property of a device """
+    """Action that operates on the BMAX/DRVH property of a device"""
+
     read_only: bool = True
 
     def _get(self, simulator: Tao) -> Any:
         return 100  # TODO: add logic for these limits
-    
+
+
 class ControlStateVariable(BmadEnumVariable, ReadOnlyActionMixin):
-    """ Action that operates on the control state (e.g. CTRL) of a device """
+    """Action that operates on the control state (e.g. CTRL) of a device"""
+
     read_only: bool = True
     options: list[str] = ["Ready", "TRIM", "PERTURB", "BCON_TO_BDES", "BACT_TO_BDES"]
     default_value: str = "Ready"
@@ -152,15 +163,19 @@ class ControlStateVariable(BmadEnumVariable, ReadOnlyActionMixin):
     def _get(self, simulator: Tao) -> Any:
         return "Ready"
 
+
 class BPMXVariable(BmadScalarVariable, ReadOnlyActionMixin):
-    """ Action that operates on the X position of a BPM """
+    """Action that operates on the X position of a BPM"""
+
     read_only: bool = True
 
     def _get(self, simulator: Tao) -> Any:
         return simulator.ele(self.element_name).orbit.x * 1e3  # convert from m to mm
-    
+
+
 class BPMYVariable(BmadScalarVariable, ReadOnlyActionMixin):
-    """ Action that operates on the Y position of a BPM """
+    """Action that operates on the Y position of a BPM"""
+
     read_only: bool = True
 
     def _get(self, simulator: Tao) -> Any:

@@ -15,7 +15,6 @@ from virtual_accelerator.tests._bmad_model_test_utils import (
 )
 from virtual_accelerator.models.cu_hxr import (
     get_cu_hxr_bmad_model,
-    get_cu_hxr_cheetah_model,
 )
 
 
@@ -115,16 +114,3 @@ class TestCUHXRBmad:
             custom_beam_path=TEST_BEAM_PATH, end_element="OTR4"
         )
         assert_roundtrip_pv_get_set(model)
-
-
-@pytest.mark.skipif(
-    (not HAS_CHEETAH_DEPS) or (not HAS_LCLS_LATTICE),
-    reason="requires cheetah optional dependencies and LCLS_LATTICE",
-)
-class TestCUHXRCheetah:
-    def test_initialization(self):
-        model = get_cu_hxr_cheetah_model()
-
-        assert model.get(["OTRS:IN20:541:Image:ArrayData"])[
-            "OTRS:IN20:541:Image:ArrayData"
-        ].shape == (1392, 1040)

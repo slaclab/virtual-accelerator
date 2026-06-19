@@ -3,7 +3,14 @@ import os
 from pytao import Tao
 import pytest
 
-from virtual_accelerator.bmad.actions import *
+from virtual_accelerator.bmad.actions import (
+    BminVariable,
+    BmaxVariable,
+    ControlStateVariable,
+    StatusVariable,
+    QuadrupoleBACTVariable,
+    QuadrupoleBCTRLVariable,
+)
 from virtual_accelerator.bmad.variables import create_variables_from_element
 
 
@@ -37,14 +44,20 @@ class TestBmadVariables:
 
             # Check that the expected variable classes are present for each quadrupole element
             variable_classes = {var.name: var for var in variables}
-            assert isinstance(variable_classes[f"{base_pv}:BCTRL"], QuadrupoleBCTRLVariable)
-            assert isinstance(variable_classes[f"{base_pv}:BACT"], QuadrupoleBACTVariable)
+            assert isinstance(
+                variable_classes[f"{base_pv}:BCTRL"], QuadrupoleBCTRLVariable
+            )
+            assert isinstance(
+                variable_classes[f"{base_pv}:BACT"], QuadrupoleBACTVariable
+            )
             assert isinstance(variable_classes[f"{base_pv}:BMIN"], BminVariable)
             assert isinstance(variable_classes[f"{base_pv}:BMAX"], BmaxVariable)
             assert isinstance(variable_classes[f"{base_pv}:CTRL"], ControlStateVariable)
-            assert isinstance(variable_classes[f"{base_pv}:STATCTRLSUB.T"], StatusVariable)
-            assert isinstance(variable_classes[f"{base_pv}:BDES"], QuadrupoleBCTRLVariable)
+            assert isinstance(
+                variable_classes[f"{base_pv}:STATCTRLSUB.T"], StatusVariable
+            )
+            assert isinstance(
+                variable_classes[f"{base_pv}:BDES"], QuadrupoleBCTRLVariable
+            )
             assert isinstance(variable_classes[f"{base_pv}:BCTRL.DRVL"], BminVariable)
             assert isinstance(variable_classes[f"{base_pv}:BCTRL.DRVH"], BmaxVariable)
-
-
