@@ -27,12 +27,14 @@ def get_facet_bmad_model(
         Instance of the LUMEBmadModel for the FACET-II lattice.
     """
 
+    supported_screens = ("PR10571", "PR10711")
+    supported_screens_aliases = ("PROF:IN10:571", "PROF:IN10:711")
     spec = BmadModelSpec(
         feature="FACET-II Bmad model",
         lattice_env_var="FACET2_LATTICE",
         tao_init_relpath="bmad/models/f2_elec/tao.init",
         mapping_beampath=None,
-        screens=("PR10571", "PR10711"),
+        screens=supported_screens,
         profmon_config_filename="facet2_profmon_info.yaml",
         default_beam_relpath="beams/2024-10-22_oneBunch.h5",
         default_track_start="L0AFEND",
@@ -43,10 +45,9 @@ def get_facet_bmad_model(
         end_element=end_element,
         track_beam=track_beam,
         custom_beam_path=custom_beam_path,
+        custom_aliases=dict(zip(supported_screens, supported_screens_aliases)),
         custom_tao_commands=[
             "set bmad_com absolute_time_tracking=true",
-            "set ele PR10571 alias = PROF:IN10:571",
-            "set ele PR10711 alias = PROF:IN10:711",
         ],
     )
 

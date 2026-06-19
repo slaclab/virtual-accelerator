@@ -6,6 +6,9 @@ import yaml
 from virtual_accelerator.utils.optional_dependencies import import_optional
 from virtual_accelerator.utils.variables import get_element_attr_mapping
 
+import logging
+
+logger = logging.getLogger(__name__)
 
 @dataclass(frozen=True)
 class BmadModelSpec:
@@ -33,6 +36,7 @@ def build_bmad_model(
     track_beam: bool,
     custom_beam_path: str | None,
     custom_tao_commands: list[str] | None = None,
+    custom_aliases: dict[str, str] | None = None,
 ):
     """Build a lattice-specific LUMEBmadModel from a shared implementation."""
 
@@ -64,6 +68,13 @@ def build_bmad_model(
     if custom_tao_commands is not None:
         for cmd in custom_tao_commands:
             tao.cmd(cmd)
+
+    if custom_aliases is not None:
+        for element, alias in custom_aliases.items():
+            try:
+                tao.cmd(f"set ele {element} head alias {alias}")
+            except Exception as e:
+                logger.warning(f"Failed to set custom alias for element {element}: {e}")
 
     variables = get_variables(tao, get_element_attr_mapping())
 

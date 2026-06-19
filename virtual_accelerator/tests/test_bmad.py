@@ -14,6 +14,7 @@ from virtual_accelerator.bmad.actions import (
 from virtual_accelerator.bmad.variables import create_variables_from_element
 from virtual_accelerator.tests._bmad_model_test_utils import HAS_BMAD_DEPS
 
+
 @pytest.mark.skipif(not HAS_BMAD_DEPS, reason="requires bmad optional dependencies")
 class TestBmadVariables:
     @pytest.fixture
