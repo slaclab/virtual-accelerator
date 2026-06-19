@@ -10,6 +10,7 @@ import logging
 
 logger = logging.getLogger(__name__)
 
+
 @dataclass(frozen=True)
 class BmadModelSpec:
     feature: str

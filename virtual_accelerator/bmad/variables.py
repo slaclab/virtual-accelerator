@@ -2,6 +2,7 @@ from typing import Any
 from pytao import Tao
 import re
 from lume.variables import Variable
+from virtual_accelerator.bmad import actions as bmad_actions
 
 from lume_bmad.actions import (
     ScreenSpec,
@@ -153,8 +154,12 @@ def create_variables_from_element(
         else:
             var_class_name = var_spec
 
-        # use the configured class name to get the class from actions.py
-        var_class = globals()[var_class_name]
+        # Resolve variable class names from the actions module explicitly.
+        var_class = getattr(bmad_actions, var_class_name, None)
+        if var_class is None:
+            raise ValueError(
+                f"Unknown Bmad variable class {var_class_name!r} for {element_name}.{attr}"
+            )
         variable = var_class(name=pv_name, element_name=element_name)
         variables.append(variable)
 

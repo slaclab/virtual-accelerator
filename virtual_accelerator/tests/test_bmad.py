@@ -1,7 +1,12 @@
 import os
 
-from pytao import Tao
 import pytest
+from virtual_accelerator.tests._bmad_model_test_utils import HAS_BMAD_DEPS
+
+if not HAS_BMAD_DEPS:
+    pytest.skip("requires bmad optional dependencies", allow_module_level=True)
+
+from pytao import Tao
 
 from virtual_accelerator.bmad.actions import (
     BminVariable,
@@ -12,7 +17,6 @@ from virtual_accelerator.bmad.actions import (
     QuadrupoleBCTRLVariable,
 )
 from virtual_accelerator.bmad.variables import create_variables_from_element
-from virtual_accelerator.tests._bmad_model_test_utils import HAS_BMAD_DEPS
 
 
 @pytest.mark.skipif(not HAS_BMAD_DEPS, reason="requires bmad optional dependencies")
