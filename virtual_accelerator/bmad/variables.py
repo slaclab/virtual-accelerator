@@ -25,6 +25,7 @@ ELEMENT_TYPE_MAPPING = {
     "HKicker": "HorizontalCorrector",
 }
 
+skipped_types = ["Drift", "Marker"]
 
 def set_overlay_aliases(tao: Tao):
     elements = tao.lat_list("*", "ele.name")
@@ -147,6 +148,10 @@ def get_variables(
     for element_name in normalized_elements:
         element_type = get_element_type(tao, element_name)
 
+        # skip element types that are in the skipped_types list
+        if element_type in skipped_types:
+            continue
+
         # check if element type is in the variable configuration mapping, if not skip it with a warning
         if element_type not in element_attr_mapping:
             # raise warning and skip if element type is not in the variable configuration mapping
@@ -257,7 +262,7 @@ def get_screen_variables(
     screen_spec = ScreenSpec(
         element_name=screen_name,
         shape=tuple(shape),
-        pixel_size=float(pixel_size),
+        pixel_size=float(pixel_size) * 1e-6,  # convert from microns to meters
     )
 
     # create screen variables based on the configuration for this screen
