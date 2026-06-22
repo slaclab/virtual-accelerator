@@ -1,5 +1,6 @@
 from typing import Any
 from pytao import Tao
+from pytao.model import ElementNotFoundError
 import re
 from lume.variables import Variable
 from virtual_accelerator.bmad import actions as bmad_actions
@@ -25,9 +26,23 @@ ELEMENT_TYPE_MAPPING = {
     "HKicker": "HorizontalCorrector",
 }
 
-skipped_types = ["Drift", "Marker"]
+SKIPPED_TYPES = ["Drift", "Marker", "Instrument", "Fixer"]
+
 
 def set_overlay_aliases(tao: Tao):
+    """Propagate aliases from segmented klystron elements to overlay elements.
+
+    Parameters
+    ----------
+    tao : Tao
+        Active Tao instance containing the currently loaded lattice.
+
+    Notes
+    -----
+    Elements matching the klystron segment pattern (for example ``K21_1C#1``)
+    are normalized to their overlay root (for example ``K21_1``), and the
+    overlay alias is set to match the segment alias.
+    """
     elements = tao.lat_list("*", "ele.name")
 
     elements = list(
@@ -51,6 +66,20 @@ def set_overlay_aliases(tao: Tao):
 
 
 def get_overlay_alias(tao: Tao, element_name: str) -> str:
+    """Return the alias for the first lattice element matching a substring.
+
+    Parameters
+    ----------
+    tao : Tao
+        Active Tao instance containing the currently loaded lattice.
+    element_name : str
+        Substring used to locate a matching element name.
+
+    Returns
+    -------
+    str
+        Alias of the first matching element, if found.
+    """
     elements = tao.lat_list("*", "ele.name")
 
     # find an element that contains the element_name as a substring
@@ -60,6 +89,19 @@ def get_overlay_alias(tao: Tao, element_name: str) -> str:
 
 
 def get_normalized_element_names(tao: Tao):
+    """Return lattice element names normalized for variable generation.
+
+    Parameters
+    ----------
+    tao : Tao
+        Active Tao instance containing the currently loaded lattice.
+
+    Returns
+    -------
+    list[str]
+        Ordered element names with sentinels removed, klystron segments
+        normalized to overlay roots, and duplicates removed.
+    """
     elements = tao.lat_list("*", "ele.name")
 
     # Remove sentinel elements and preserve Tao's unique element IDs to avoid
@@ -68,14 +110,16 @@ def get_normalized_element_names(tao: Tao):
         dict.fromkeys(elem for elem in elements if elem not in ("BEGINNING", "END"))
     )
 
-    # if an element matches the klystron segment pattern similar to K21_1D#1, normalize it to the base klystron name without the segment suffix K21_1
     normalized_elements = []
+
+    # if an element has "#<number>" suffix then it is a split element, remove the suffix -- duplicates will be removed later while preserving order
+    elements = [elem.split("#")[0] for elem in elements]
+
+    # if an element matches the klystron segment pattern similar to K21_1D#1, normalize it to the base klystron name without the segment suffix K21_1
     for elem in elements:
-        match = KLYSTRON_PATTERN.match(
-            elem.split("#")[0]
-        )  # ignore any alias suffixes for matching
+        match = KLYSTRON_PATTERN.match(elem)
         if match:
-            normalized_elements.append(elem[:-3])
+            normalized_elements.append(elem[:-1])  # remove the segment suffix to get the overlay element name
 
         else:
             normalized_elements.append(elem)
@@ -87,7 +131,25 @@ def get_normalized_element_names(tao: Tao):
 
 
 def get_element_type(tao: Tao, element_name: str) -> str:
-    """Get the element type for an element, applying any necessary mappings or normalizations."""
+    """Get normalized device type for a lattice element.
+
+    Parameters
+    ----------
+    tao : Tao
+        Active Tao instance containing the currently loaded lattice.
+    element_name : str
+        Lattice element name to classify.
+
+    Returns
+    -------
+    str
+        Normalized element type key used for variable mapping.
+
+    Notes
+    -----
+    This helper applies BPM and klystron-specific remapping and then applies
+    canonical type aliases from ``ELEMENT_TYPE_MAPPING``.
+    """
     try:
         element_type = tao.ele_head(element_name)["key"]
     except Exception as exc:
@@ -102,6 +164,10 @@ def get_element_type(tao: Tao, element_name: str) -> str:
     if element_type == "Monitor" and element_name.startswith("BPM"):
         element_type = "BPM"
 
+    # handle screens
+    if element_type == "Monitor" and (element_name.startswith("OTR") or element_name.startswith("PR") or element_name.startswith("YAG")):
+        element_type = "Screen"
+
     # handle klystrons
     if element_type == "Overlay" and element_name.startswith("K"):
         element_type = "Klystron"
@@ -110,34 +176,51 @@ def get_element_type(tao: Tao, element_name: str) -> str:
     element_type = ELEMENT_TYPE_MAPPING.get(element_type, element_type)
     return element_type
 
-
-def get_variables(
-    tao: Tao,
-    element_attr_mapping: dict[str, dict[str, dict[str, Any]]] = None,
-):
-    """
-    Get variables for all controllable devices.
-
-    This function iterates over devices and
-    uses the provided device mapping and variable configuration to instantiate
-    LUME Variables for each device.
+def get_all_element_types(tao: Tao) -> dict[str, str]:
+    """Get a mapping of all lattice element names to their normalized types.
 
     Parameters
     ----------
     tao : Tao
-        Tao object containing the lattice elements.
+        Active Tao instance containing the currently loaded lattice.
+
+    Returns
+    -------
+    dict[str, str]
+        Mapping of element name -> normalized element type.
+    """
+    elements = get_normalized_element_names(tao)
+    return {elem: get_element_type(tao, elem) for elem in elements}
+
+
+def get_variables(
+    tao: Tao,
+    element_attr_mapping: dict[str, dict[str, dict[str, Any]]],
+    screen_config_dict: dict[str, dict[str, Any]],
+):
+    """
+    Build variables for supported lattice elements.
+
+    Parameters
+    ----------
+    tao : Tao
+        Active Tao instance containing the currently loaded lattice.
     element_attr_mapping : dict[str, dict[str, dict[str, Any]]], optional
-        Device-type -> PV attribute -> variable specification mapping
-        loaded from the SLAC variable YAML configuration.
+        Mapping of element type -> PV suffix -> variable specification.
+        If omitted, callers are expected to pass a mapping upstream.
+    screen_config_dict : dict[str, dict[str, Any]], optional
+        Mapping of screen element name -> screen configuration with ``shape``
+        and ``pixel_size``.
 
     Returns
     -------
     list[Variable]
-        List of instantiated LUME Variables
+        Instantiated variables for all supported elements.
 
     Notes
     -----
-    See `get_variables_from_element_name` for details on the specification of `element_attr_mapping`.
+    Elements in ``SKIPPED_TYPES`` are ignored. Unknown element types are logged
+    and skipped.
 
     """
     all_variables = []
@@ -148,9 +231,35 @@ def get_variables(
     for element_name in normalized_elements:
         element_type = get_element_type(tao, element_name)
 
-        # skip element types that are in the skipped_types list
-        if element_type in skipped_types:
+        # get alias
+        if element_type == "Klystron":
+            alias = get_overlay_alias(tao, element_name)
+        else:
+            try:
+                alias = tao.ele(element_name).head.alias
+            except ElementNotFoundError:
+                logger.warning(
+                    f"Element {element_name} not found in Tao lattice. Skipping variable generation for this element."
+                )
+                continue
+
+
+        # skip element types that are in the SKIPPED_TYPES list
+        if element_type in SKIPPED_TYPES:
             continue
+
+        # if the element is a screen, add screen variables based on the screen configuration
+        if element_type == "Screen":
+            if element_name not in screen_config_dict:
+                logger.warning(
+                    f"Screen {element_name} found in lattice but missing from screen configuration. Skipping screen variables for this element."
+                )
+                continue
+
+            screen_variables = get_screen_variables(tao, element_name, screen_config_dict)
+            all_variables.extend(screen_variables)
+            continue
+
 
         # check if element type is in the variable configuration mapping, if not skip it with a warning
         if element_type not in element_attr_mapping:
@@ -159,12 +268,6 @@ def get_variables(
                 f"Element type {element_type} for element {element_name} not found in variable configuration mapping. Skipping."
             )
             continue
-
-        # get alias
-        if element_type == "Klystron":
-            alias = get_overlay_alias(tao, element_name)
-        else:
-            alias = tao.ele(element_name).head.alias
 
         # get the element pv suffix mapping for this element type from the variable configuration
         element_pv_suffix_mapping = element_attr_mapping[element_type]
@@ -186,7 +289,7 @@ def create_variables_from_element(
     class_mapping: dict[str, Any],
 ) -> list[Variable]:
     """
-    Create variables for an element
+    Instantiate variables for one element from a PV-class mapping.
 
     Parameters
     ----------
@@ -200,7 +303,12 @@ def create_variables_from_element(
     Returns
     -------
     list[Variable]
-        List of instantiated LUME Variables for the given element based on the provided class mapping.
+        Instantiated variables for the given element.
+
+    Raises
+    ------
+    ValueError
+        If a configured variable class name cannot be resolved.
 
     """
 
@@ -232,21 +340,28 @@ def get_screen_variables(
     config_dict: dict[str, dict[str, Any]],
 ):
     """
-    Get variables for a screen element based on the provided configuration.
+    Build screen image-related variables from screen configuration.
 
     Parameters
     ----------
     tao : Tao
-        Tao object containing the lattice elements.
+        Active Tao instance containing the currently loaded lattice.
     screen_name : str
-        Name of the screen element to get variables for.
+        Screen element name to build variables for.
     config_dict : dict[str, dict[str, Any]]
-        Mapping of screen name -> variable configuration dict. The variable configuration dict should specify the PV attribute suffixes and corresponding variable class names to instantiate for that screen.
+        Mapping of screen name -> configuration with ``shape`` and
+        ``pixel_size``.
 
     Returns
     -------
     list[Variable]
-        List of instantiated LUME Variables for the given screen based on the provided configuration.
+        Screen variables including image array data, resolution, and array
+        dimensions.
+
+    Raises
+    ------
+    ValueError
+        If ``screen_name`` is missing from ``config_dict``.
 
     """
 

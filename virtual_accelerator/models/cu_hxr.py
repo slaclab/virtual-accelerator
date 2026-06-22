@@ -29,7 +29,6 @@ def get_cu_hxr_bmad_model(
         feature="CU HXR Bmad model",
         lattice_env_var="LCLS_LATTICE",
         tao_init_relpath="bmad/models/cu_hxr/tao.init",
-        screens=("OTR3", "OTR4", "OTR11", "OTR12", "OTR21"),
         profmon_config_filename="cu_hxr_profmon_info.yaml",
         default_beam_relpath="bmad/bmad_set_beam2000_pg",
         default_track_start="OTR2",

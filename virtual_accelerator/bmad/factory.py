@@ -3,6 +3,7 @@ from dataclasses import dataclass
 from pathlib import Path
 import yaml
 
+from virtual_accelerator.bmad.variables import get_all_element_types, get_variables
 from virtual_accelerator.utils.optional_dependencies import import_optional
 from virtual_accelerator.utils.variables import get_element_attr_mapping
 
@@ -16,7 +17,6 @@ class BmadModelSpec:
     feature: str
     lattice_env_var: str
     tao_init_relpath: str
-    screens: tuple[str, ...]
     profmon_config_filename: str
     mapping_beampath: str | None = None
     database_relpath: str = "bmad/conversion/from_oracle/lcls_elements.csv"
@@ -54,10 +54,6 @@ def build_bmad_model(
 
     from pytao import Tao
     from lume_bmad.model import LUMEBmadModel
-    from virtual_accelerator.bmad.variables import (
-        get_variables,
-        get_screen_variables,
-    )
 
     lattice_root = os.environ[spec.lattice_env_var]
     init_file = os.path.join(lattice_root, spec.tao_init_relpath)
@@ -66,38 +62,41 @@ def build_bmad_model(
     # set tracking to start_element
     tao.cmd(f"set beam track_start = {start_element}")
 
+    # apply any custom tao commands (e.g. for setting up custom aliases or other tao configuration needed for the model)
     if custom_tao_commands is not None:
         for cmd in custom_tao_commands:
             tao.cmd(cmd)
 
+    # handle custom aliases if provided 
     if custom_aliases is not None:
         for element, alias in custom_aliases.items():
             try:
-                tao.cmd(f"set ele {element} head alias {alias}")
+                tao.cmd(f"set ele {element} alias = {alias}")
             except Exception as e:
                 logger.warning(f"Failed to set custom alias for element {element}: {e}")
 
-    variables = get_variables(tao, get_element_attr_mapping())
-
-    # add screen variables based on configuration
+    # get screen configuration for the model based on the provided spec
     config_path = Path(__file__).parent / ".." / "utils" / spec.profmon_config_filename
     with config_path.open("r", encoding="utf-8") as f:
-        info = yaml.safe_load(f)
-    lattice_elements = {
-        element_name.split("#")[0] for element_name in tao.lat_list("*", "ele.name")
-    }
-    active_screens = tuple(
-        screen_name for screen_name in spec.screens if screen_name in lattice_elements
-    )
-    for screen_name in active_screens:
-        variables.extend(get_screen_variables(tao, screen_name, info))
+        screen_config_dict = yaml.safe_load(f)
 
+    # get variables for all elements in the lattice based on the element attribute mapping and screen configuration for the model
+    variables = get_variables(tao, get_element_attr_mapping(), screen_config_dict)
+
+    # get list of screens that are present in the lattice
+    element_types = get_all_element_types(tao)
+    active_screens = tuple(
+        element for element, element_type in element_types.items() if element_type == "Screen"
+    )
+
+    # create LUMEBmadModel with the Tao instance, variables, and active screens for beam dumping
     model = LUMEBmadModel(
         tao=tao,
         action_variables=variables,
         dump_locations=list(active_screens),
     )
 
+    # if tracking is enabled, set up the beam in the model based on the provided custom beam path or default beam path in the spec
     if track_beam:
         if custom_beam_path is not None:
             beam_path = custom_beam_path

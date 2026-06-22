@@ -1,7 +1,25 @@
 import tempfile
+from typing import Any
+from pytao import Tao
 
 from virtual_accelerator.bmad.factory import BmadModelSpec, build_bmad_model
+from lume.actions import WritableActionMixin
+from lume.variables import ScalarVariable
 
+class L0BPhaseFeedbackVariable(ScalarVariable, WritableActionMixin):
+    """Action to adjust the L0B RF phase feedback loop setpoint."""
+    name: str = "KLYS:LI10:41:SFB_PDES"
+    element_name: str = "L0BF"
+    unit: str = "degrees"
+    read_only: bool = False
+    
+    def _get(self, simulator: Tao) -> Any:
+        # Get the current L0BF RF phase setpoint from the simulator -- equivalent to getting the L0B RF phase
+        return simulator.ele_gen_attribs("L0BF")["PHI0"]
+    
+    def _set(self, simulator: Tao, value: Any) -> None:
+        # Set the L0BF RF phase setpoint in the simulator -- equivalent to setting the L0B RF phase
+        simulator.cmd(f"set ele L0BF PHI0 = {value}")
 
 def get_facet_bmad_model(
     start_element="L0AFEND", end_element="END", track_beam=False, custom_beam_path=None
@@ -34,7 +52,6 @@ def get_facet_bmad_model(
         lattice_env_var="FACET2_LATTICE",
         tao_init_relpath="bmad/models/f2_elec/tao.init",
         mapping_beampath=None,
-        screens=supported_screens,
         profmon_config_filename="facet2_profmon_info.yaml",
         default_beam_relpath="beams/2024-10-22_oneBunch.h5",
         default_track_start="L0AFEND",
@@ -50,6 +67,10 @@ def get_facet_bmad_model(
             "set bmad_com absolute_time_tracking=true",
         ],
     )
+
+    # Add the L0B RF phase feedback variable to the model if L0BF#1 is included in the model
+    if "L0BF#1" in model.get("name"):
+        model.register_action_variable(L0BPhaseFeedbackVariable())
 
     return model
 
