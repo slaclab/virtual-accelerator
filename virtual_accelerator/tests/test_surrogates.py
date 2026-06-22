@@ -1,7 +1,7 @@
 import pytest
 from unittest.mock import Mock
 from scipy import constants
-from virtual_accelerator.tests._bmad_model_test_utils import HAS_INJECTOR_SURROGATE_DEPS
+from virtual_accelerator.tests.dependency_profiles import HAS_INJECTOR_SURROGATE_DEPS
 
 pytestmark = [
     pytest.mark.requires_surrogate,

@@ -1,9 +1,11 @@
 import numpy as np
 
 import pytest
-from virtual_accelerator.tests._bmad_model_test_utils import (
+from virtual_accelerator.tests.dependency_profiles import (
     HAS_BMAD_DEPS,
     HAS_LCLS_LATTICE,
+)
+from virtual_accelerator.tests._bmad_model_test_utils import (
     TEST_BEAM_PATH,
     assert_bpm_pvs_match_tao_lattice,
     assert_bmad_model_initialization,
