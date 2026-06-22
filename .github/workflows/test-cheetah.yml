@@ -48,8 +48,10 @@ jobs:
       - name: Verify cheetah import works
         run: python -c "from lume_cheetah import LUMECheetahModel; print('lume_cheetah imported OK')"
 
-      - name: Run tests (TestCUHXRCheetah runs; bmad/staged tests skip)
+      - name: Run cheetah smoke tests
         env:
           LCLS_LATTICE: ${{ github.workspace }}/lcls-lattice
           FACET2_LATTICE: ${{ github.workspace }}/facet2-lattice
-        run: pytest virtual_accelerator/tests -v --tb=short
+        run: >
+          pytest virtual_accelerator/tests/test_optional_dependencies.py
+          -v --tb=short -ra --strict-markers

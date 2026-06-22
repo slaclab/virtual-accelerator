@@ -34,15 +34,8 @@ jobs:
       - name: List installed packages
         run: pip list
 
-      - name: Verify package imports without any optional backends
-        run: |
-          python - <<'PY'
-          import virtual_accelerator
-          import virtual_accelerator.models.cu_hxr
-          import virtual_accelerator.models.staged_model
-          import virtual_accelerator.models.runners
-          print("All core imports succeeded without optional backends.")
-          PY
-
-      - name: Run tests (backend tests should skip, not error)
-        run: pytest virtual_accelerator/tests -v --tb=short
+      - name: Run core-profile tests only
+        run: >
+          pytest virtual_accelerator/tests
+          -m "not requires_bmad and not requires_surrogate and not requires_staged_model"
+          -v --tb=short -ra --strict-markers

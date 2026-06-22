@@ -1,29 +1,28 @@
 import pytest
 from unittest.mock import Mock
 from scipy import constants
+from virtual_accelerator.tests.dependency_profiles import HAS_INJECTOR_SURROGATE_DEPS
 
-# Skip entire module at collection time when lume-torch is absent — avoids
-# an ImportError inside injector_surrogate.py before any skip logic fires.
-pytest.importorskip(
-    "lume_torch",
-    reason="requires lume-torch: pip install virtual-accelerator[surrogate]",
-)
-pytest.importorskip(
-    "cheetah",
-    reason="requires surrogate optional dependencies: pip install virtual-accelerator[surrogate]",
-)
-pytest.importorskip(
-    "lcls_cu_inj_model",
-    reason="requires packaged Cu injector model: pip install virtual-accelerator[surrogate]",
-)
-from lume_torch.variables import TorchNDVariable
-from lume_torch.models.torch_model import TorchModel
-import torch
+pytestmark = [
+    pytest.mark.requires_surrogate,
+]
 
-from virtual_accelerator.surrogates.injector_surrogate import (
-    InjectorSurrogate,
-)  # noqa: E402
-from virtual_accelerator.surrogates.beam_output import BeamOutputModel
+if HAS_INJECTOR_SURROGATE_DEPS:
+    from lume_torch.variables import TorchNDVariable
+    from lume_torch.models.torch_model import TorchModel
+    import torch
+
+    from virtual_accelerator.surrogates.injector_surrogate import InjectorSurrogate
+    from virtual_accelerator.surrogates.beam_output import BeamOutputModel
+
+    TEST_COVARIANCE_MATRIX = torch.diag(
+        torch.tensor([1.0e-3, 1.0e5, 1.0e-3, 1.0e5, 1.0e-3, 1.0e5], dtype=torch.float32)
+    )
+else:
+    pytest.skip(
+        "requires surrogate optional dependencies: pip install virtual-accelerator[surrogate]",
+        allow_module_level=True,
+    )
 
 
 def test_injector_surrogate():
@@ -69,12 +68,7 @@ def test_injector_surrogate_outputs_are_physical():
     assert 0.0 < norm_emit_y < 1.0e-3
 
 
-TEST_COVARIANCE_MATRIX = torch.diag(
-    torch.tensor([1.0e-3, 1.0e5, 1.0e-3, 1.0e5, 1.0e-3, 1.0e5], dtype=torch.float32)
-)
-
-
-def make_dummy_torch_model() -> TorchModel:
+def make_dummy_torch_model():
     """Return a minimal TorchModel-like object for BeamOutputWrapper tests."""
     model = Mock(spec=TorchModel)
     model.input_variables = []

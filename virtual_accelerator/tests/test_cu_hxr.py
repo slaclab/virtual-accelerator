@@ -1,11 +1,11 @@
-import os
-import importlib.util
-
 import numpy as np
 
 import pytest
-from virtual_accelerator.tests._bmad_model_test_utils import (
+from virtual_accelerator.tests.dependency_profiles import (
     HAS_BMAD_DEPS,
+    HAS_LCLS_LATTICE,
+)
+from virtual_accelerator.tests._bmad_model_test_utils import (
     TEST_BEAM_PATH,
     assert_bpm_pvs_match_tao_lattice,
     assert_bmad_model_initialization,
@@ -15,20 +15,21 @@ from virtual_accelerator.tests._bmad_model_test_utils import (
     assert_roundtrip_pv_get_set,
     assert_screen_image_pvs_in_supported_variables,
 )
-from virtual_accelerator.models.cu_hxr import (
-    get_cu_hxr_bmad_model,
-)
+
+pytestmark = [
+    pytest.mark.requires_bmad,
+    pytest.mark.requires_lcls_lattice,
+]
+
+if HAS_BMAD_DEPS and HAS_LCLS_LATTICE:
+    from virtual_accelerator.models.cu_hxr import get_cu_hxr_bmad_model
+else:
+    pytest.skip(
+        "requires bmad optional dependencies and LCLS_LATTICE",
+        allow_module_level=True,
+    )
 
 
-def _has_module(name: str) -> bool:
-    return importlib.util.find_spec(name) is not None
-
-
-HAS_CHEETAH_DEPS = _has_module("cheetah") and _has_module("lume_cheetah")
-HAS_LCLS_LATTICE = bool(os.environ.get("LCLS_LATTICE"))
-
-
-@pytest.mark.skipif(not HAS_BMAD_DEPS, reason="requires bmad optional dependencies")
 class TestCUHXRBmad:
     def test_initialization(self):
         assert_bmad_model_initialization(
