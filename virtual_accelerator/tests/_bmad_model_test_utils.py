@@ -2,8 +2,14 @@ import math
 import os
 from numbers import Real
 from pathlib import Path
-from lume.variables import ScalarVariable
 
+from .dependency_profiles import (
+    HAS_BMAD_DEPS,
+    HAS_FACET2_LATTICE,
+    HAS_FACET_SURROGATE_DEPS,
+    HAS_INJECTOR_SURROGATE_DEPS,
+    HAS_LCLS_LATTICE,
+)
 from virtual_accelerator.utils.variables import get_pvs_by_element_name
 
 TEST_BEAM_PATH = os.path.join(Path(__file__).parent, "../bmad", "test_beam")
@@ -314,9 +320,17 @@ def assert_roundtrip_pv_get_set(
         "No writable variables found in model.supported_variables"
     )
 
+    scalar_variable_cls = None
+    try:
+        from lume.variables import ScalarVariable as scalar_variable_cls
+    except ImportError:
+        pass
+
     for pv_name in writable_supported_variables:
         if pv_name != "track_type":
-            if isinstance(supported_variables[pv_name], ScalarVariable):
+            if scalar_variable_cls is not None and isinstance(
+                supported_variables[pv_name], scalar_variable_cls
+            ):
                 original_value = (
                     model.get(pv_name) + 0.001
                 )  # add small offset to ensure set does something

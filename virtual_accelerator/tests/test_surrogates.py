@@ -1,14 +1,10 @@
 import pytest
 from unittest.mock import Mock
 from scipy import constants
-from .dependency_profiles import HAS_INJECTOR_SURROGATE_DEPS
+from virtual_accelerator.tests._bmad_model_test_utils import HAS_INJECTOR_SURROGATE_DEPS
 
 pytestmark = [
     pytest.mark.requires_surrogate,
-    pytest.mark.skipif(
-        not HAS_INJECTOR_SURROGATE_DEPS,
-        reason="requires surrogate optional dependencies: pip install virtual-accelerator[surrogate]",
-    ),
 ]
 
 if HAS_INJECTOR_SURROGATE_DEPS:
@@ -23,12 +19,10 @@ if HAS_INJECTOR_SURROGATE_DEPS:
         torch.tensor([1.0e-3, 1.0e5, 1.0e-3, 1.0e5, 1.0e-3, 1.0e5], dtype=torch.float32)
     )
 else:
-    TorchNDVariable = None
-    TorchModel = object
-    InjectorSurrogate = None
-    BeamOutputModel = None
-    torch = None
-    TEST_COVARIANCE_MATRIX = None
+    pytest.skip(
+        "requires surrogate optional dependencies: pip install virtual-accelerator[surrogate]",
+        allow_module_level=True,
+    )
 
 
 def test_injector_surrogate():
@@ -71,11 +65,10 @@ def test_injector_surrogate_outputs_are_physical():
     assert 0.0 < yrms < 1.0e4
     assert 0.0 < sigma_z < 1.0e2
     assert 0.0 < norm_emit_x < 1.0e-3
-
     assert 0.0 < norm_emit_y < 1.0e-3
 
 
-def make_dummy_torch_model() -> TorchModel:
+def make_dummy_torch_model():
     """Return a minimal TorchModel-like object for BeamOutputWrapper tests."""
     model = Mock(spec=TorchModel)
     model.input_variables = []

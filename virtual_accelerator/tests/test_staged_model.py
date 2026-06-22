@@ -9,7 +9,13 @@ from .dependency_profiles import (
     HAS_STAGED_MODEL_DEPS,
 )
 
-if HAS_STAGED_MODEL_DEPS:
+TEST_BEAM_PATH = os.path.join(Path(__file__).parent, "../bmad", "test_beam")
+pytestmark = [
+    pytest.mark.requires_staged_model,
+    pytest.mark.requires_lcls_lattice,
+]
+
+if HAS_STAGED_MODEL_DEPS and HAS_LCLS_LATTICE:
     from virtual_accelerator.models.staged_model import (
         StagedModel,
         get_cu_hxr_staged_model,
@@ -18,21 +24,10 @@ if HAS_STAGED_MODEL_DEPS:
     from virtual_accelerator.models.facet2 import get_facet_staged_model
     from virtual_accelerator.surrogates.injector_surrogate import InjectorSurrogate
 else:
-    StagedModel = None
-    get_cu_hxr_staged_model = None
-    get_cu_hxr_bmad_model = None
-    get_facet_staged_model = None
-    InjectorSurrogate = None
-
-TEST_BEAM_PATH = os.path.join(Path(__file__).parent, "../bmad", "test_beam")
-pytestmark = [
-    pytest.mark.requires_staged_model,
-    pytest.mark.requires_lcls_lattice,
-    pytest.mark.skipif(
-        (not HAS_STAGED_MODEL_DEPS) or (not HAS_LCLS_LATTICE),
-        reason="requires staged-model optional dependencies and LCLS_LATTICE",
-    ),
-]
+    pytest.skip(
+        "requires staged-model optional dependencies and LCLS_LATTICE",
+        allow_module_level=True,
+    )
 
 
 # Fixtures for model initialization

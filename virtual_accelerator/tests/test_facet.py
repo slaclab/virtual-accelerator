@@ -12,24 +12,22 @@ from virtual_accelerator.tests._bmad_model_test_utils import (
     assert_screen_image_pvs_in_supported_variables,
 )
 
-if HAS_BMAD_DEPS:
+pytestmark = [
+    pytest.mark.requires_bmad,
+    pytest.mark.requires_facet2_lattice,
+]
+
+if HAS_BMAD_DEPS and HAS_FACET2_LATTICE:
     from virtual_accelerator.models.facet2 import (
         get_facet_bmad_model,
         get_facet_staged_model,
     )
+    from virtual_accelerator.utils.variables import get_pvs_by_element_name
 else:
-    get_facet_bmad_model = None
-    get_facet_staged_model = None
-from virtual_accelerator.utils.variables import get_pvs_by_element_name
-
-pytestmark = [
-    pytest.mark.requires_bmad,
-    pytest.mark.requires_facet2_lattice,
-    pytest.mark.skipif(
-        (not HAS_BMAD_DEPS) or (not HAS_FACET2_LATTICE),
-        reason="requires bmad optional dependencies and FACET2_LATTICE",
-    ),
-]
+    pytest.skip(
+        "requires bmad optional dependencies and FACET2_LATTICE",
+        allow_module_level=True,
+    )
 
 
 class TestFACET2Bmad:
