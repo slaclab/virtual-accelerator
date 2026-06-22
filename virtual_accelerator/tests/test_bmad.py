@@ -1,28 +1,38 @@
 import os
 
 import pytest
-from virtual_accelerator.tests._bmad_model_test_utils import HAS_BMAD_DEPS
-
-if not HAS_BMAD_DEPS:
-    pytest.skip("requires bmad optional dependencies", allow_module_level=True)
-
-from pytao import Tao
-
-from virtual_accelerator.bmad.actions import (
-    BminVariable,
-    BmaxVariable,
-    ControlStateVariable,
-    StatusVariable,
-    QuadrupoleBACTVariable,
-    QuadrupoleBCTRLVariable,
+from virtual_accelerator.tests._bmad_model_test_utils import (
+    HAS_BMAD_DEPS,
+    HAS_LCLS_LATTICE,
 )
-from virtual_accelerator.bmad.variables import create_variables_from_element
+
+pytestmark = [
+    pytest.mark.requires_bmad,
+    pytest.mark.requires_lcls_lattice,
+]
+
+if HAS_BMAD_DEPS and HAS_LCLS_LATTICE:
+    from pytao import Tao
+
+    from virtual_accelerator.bmad.actions import (
+        BminVariable,
+        BmaxVariable,
+        ControlStateVariable,
+        StatusVariable,
+        QuadrupoleBACTVariable,
+        QuadrupoleBCTRLVariable,
+    )
+    from virtual_accelerator.bmad.variables import create_variables_from_element
+else:
+    pytest.skip(
+        "requires bmad optional dependencies and LCLS_LATTICE",
+        allow_module_level=True,
+    )
 
 
-@pytest.mark.skipif(not HAS_BMAD_DEPS, reason="requires bmad optional dependencies")
 class TestBmadVariables:
     @pytest.fixture
-    def tao(self) -> Tao:
+    def tao(self):
         lattice_root = os.environ["LCLS_LATTICE"]
         init_file = os.path.join(lattice_root, "bmad/models/cu_hxr/tao.init")
         return Tao(f"-init {init_file} -noplot -slice_lattice YAG03:OTR4")

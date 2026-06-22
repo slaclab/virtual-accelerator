@@ -64,8 +64,11 @@ jobs:
       - name: Verify bmad import works
         run: python -c "from lume_bmad.model import LUMEBmadModel; print('lume_bmad imported OK')"
 
-      - name: Run tests (BMAD-backed tests including FACET2)
+      - name: Run bmad-profile tests only
         env:
           LCLS_LATTICE: ${{ github.workspace }}/lcls-lattice
           FACET2_LATTICE: ${{ github.workspace }}/facet2-lattice
-        run: pytest virtual_accelerator/tests -v --tb=short
+        run: >
+          pytest virtual_accelerator/tests
+          -m "requires_bmad and not requires_surrogate and not requires_staged_model"
+          -v --tb=short -ra --strict-markers
