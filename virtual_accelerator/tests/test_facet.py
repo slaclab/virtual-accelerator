@@ -1,9 +1,8 @@
-import importlib.util
-import os
-
 import pytest
 from virtual_accelerator.tests._bmad_model_test_utils import (
     HAS_BMAD_DEPS,
+    HAS_FACET2_LATTICE,
+    HAS_FACET_SURROGATE_DEPS,
     TEST_BEAM_PATH,
     assert_bpm_pvs_match_tao_lattice,
     assert_bmad_model_initialization,
@@ -12,24 +11,27 @@ from virtual_accelerator.tests._bmad_model_test_utils import (
     assert_magnet_pvs_match_tao_lattice,
     assert_screen_image_pvs_in_supported_variables,
 )
-from virtual_accelerator.models.facet2 import (
-    get_facet_bmad_model,
-    get_facet_staged_model,
-)
+
+if HAS_BMAD_DEPS:
+    from virtual_accelerator.models.facet2 import (
+        get_facet_bmad_model,
+        get_facet_staged_model,
+    )
+else:
+    get_facet_bmad_model = None
+    get_facet_staged_model = None
 from virtual_accelerator.utils.variables import get_pvs_by_element_name
 
+pytestmark = [
+    pytest.mark.requires_bmad,
+    pytest.mark.requires_facet2_lattice,
+    pytest.mark.skipif(
+        (not HAS_BMAD_DEPS) or (not HAS_FACET2_LATTICE),
+        reason="requires bmad optional dependencies and FACET2_LATTICE",
+    ),
+]
 
-HAS_FACET_LATTICE = bool(os.environ.get("FACET2_LATTICE"))
-HAS_FACET_SURROGATE_DEPS = (
-    importlib.util.find_spec("facet2_inj_ml_model") is not None
-    and importlib.util.find_spec("lume_torch") is not None
-)
 
-
-@pytest.mark.skipif(
-    (not HAS_BMAD_DEPS) or (not HAS_FACET_LATTICE),
-    reason="requires bmad optional dependencies and FACET2_LATTICE",
-)
 class TestFACET2Bmad:
     def test_initialization(self):
         assert_bmad_model_initialization(get_facet_bmad_model)
@@ -68,6 +70,7 @@ class TestFACET2Bmad:
         new_output = model.get(screen_pv)
         assert not (new_output == output).all()  # Check that the screen output changed
 
+    @pytest.mark.requires_surrogate
     @pytest.mark.skipif(
         not HAS_FACET_SURROGATE_DEPS,
         reason="requires staged-model optional dependencies",

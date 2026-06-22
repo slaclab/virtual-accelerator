@@ -1,4 +1,3 @@
-import importlib.util
 import math
 import os
 from numbers import Real
@@ -8,13 +7,6 @@ from lume.variables import ScalarVariable
 from virtual_accelerator.utils.variables import get_pvs_by_element_name
 
 TEST_BEAM_PATH = os.path.join(Path(__file__).parent, "../bmad", "test_beam")
-
-
-def has_module(name: str) -> bool:
-    return importlib.util.find_spec(name) is not None
-
-
-HAS_BMAD_DEPS = has_module("pytao") and has_module("lume_bmad")
 
 
 def assert_bmad_model_initialization(
