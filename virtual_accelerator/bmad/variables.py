@@ -119,7 +119,9 @@ def get_normalized_element_names(tao: Tao):
     for elem in elements:
         match = KLYSTRON_PATTERN.match(elem)
         if match:
-            normalized_elements.append(elem[:-1])  # remove the segment suffix to get the overlay element name
+            normalized_elements.append(
+                elem[:-1]
+            )  # remove the segment suffix to get the overlay element name
 
         else:
             normalized_elements.append(elem)
@@ -165,7 +167,11 @@ def get_element_type(tao: Tao, element_name: str) -> str:
         element_type = "BPM"
 
     # handle screens
-    if element_type == "Monitor" and (element_name.startswith("OTR") or element_name.startswith("PR") or element_name.startswith("YAG")):
+    if element_type == "Monitor" and (
+        element_name.startswith("OTR")
+        or element_name.startswith("PR")
+        or element_name.startswith("YAG")
+    ):
         element_type = "Screen"
 
     # handle klystrons
@@ -175,6 +181,7 @@ def get_element_type(tao: Tao, element_name: str) -> str:
     # Apply element type mappings
     element_type = ELEMENT_TYPE_MAPPING.get(element_type, element_type)
     return element_type
+
 
 def get_all_element_types(tao: Tao) -> dict[str, str]:
     """Get a mapping of all lattice element names to their normalized types.
@@ -243,7 +250,6 @@ def get_variables(
                 )
                 continue
 
-
         # skip element types that are in the SKIPPED_TYPES list
         if element_type in SKIPPED_TYPES:
             continue
@@ -256,10 +262,11 @@ def get_variables(
                 )
                 continue
 
-            screen_variables = get_screen_variables(tao, element_name, screen_config_dict)
+            screen_variables = get_screen_variables(
+                tao, element_name, screen_config_dict
+            )
             all_variables.extend(screen_variables)
             continue
-
 
         # check if element type is in the variable configuration mapping, if not skip it with a warning
         if element_type not in element_attr_mapping:

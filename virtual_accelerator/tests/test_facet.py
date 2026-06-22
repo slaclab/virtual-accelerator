@@ -107,7 +107,7 @@ class TestFACET2Bmad:
         assert "KLYS:LI10:41:SFB_PDES" in model.supported_variables
 
         # test that the L0B phase feedback variable is properly set up as a writable action variable
-        var = model.get("KLYS:LI10:41:SFB_PDES")
+        model.get("KLYS:LI10:41:SFB_PDES")
 
         # test that the variable is writable
         model.set({"KLYS:LI10:41:SFB_PDES": 10.0})

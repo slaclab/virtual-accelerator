@@ -67,7 +67,7 @@ def build_bmad_model(
         for cmd in custom_tao_commands:
             tao.cmd(cmd)
 
-    # handle custom aliases if provided 
+    # handle custom aliases if provided
     if custom_aliases is not None:
         for element, alias in custom_aliases.items():
             try:
@@ -86,7 +86,9 @@ def build_bmad_model(
     # get list of screens that are present in the lattice
     element_types = get_all_element_types(tao)
     active_screens = tuple(
-        element for element, element_type in element_types.items() if element_type == "Screen"
+        element
+        for element, element_type in element_types.items()
+        if element_type == "Screen"
     )
 
     # create LUMEBmadModel with the Tao instance, variables, and active screens for beam dumping
