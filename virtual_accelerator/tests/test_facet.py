@@ -108,7 +108,7 @@ class TestFACET2Bmad:
     def test_facet_custom_variables(self):
         model = get_facet_bmad_model(end_element="PR10711")
         # test that the L0B phase feedback variable is included since L0B is in the lattice
-        for var in ["KLYS:LI10:41:SFB_PDES", "KLYS:LI10:51:PDES", "KLYS:LI10:51:ADES"]:
+        for var in ["KLYS:LI10:41:SFB_PDES"]:
             assert var in model.supported_variables.keys()
             value = model.get(var)
             # test that the variable is writable

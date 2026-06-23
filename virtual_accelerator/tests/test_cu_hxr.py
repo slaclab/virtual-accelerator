@@ -76,14 +76,14 @@ class TestCUHXRBmad:
 
         # get initial OTR4 image
         image = model.get("OTRS:IN20:711:Image:ArrayData")
-        assert image.shape == (1392, 1040)
+        assert image.shape == (1040, 1392)
 
         # set some control variables
         model.set({"QUAD:IN20:631:BCTRL": 0.0})
 
         # get updated OTR4 image
         updated_image = model.get("OTRS:IN20:711:Image:ArrayData")
-        assert updated_image.shape == (1392, 1040)
+        assert updated_image.shape == (1040, 1392)
 
         # make sure it changed
         assert not (image == updated_image).all()

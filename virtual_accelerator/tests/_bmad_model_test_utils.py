@@ -199,7 +199,7 @@ def assert_screen_image_pvs_in_supported_variables(
 
 def assert_bpm_pvs_match_tao_lattice(
     model,
-    bpm_attrs: tuple[str, ...] = ("X", "Y"),
+    bpm_attrs: tuple[str, ...] = ("X", "Y", "TMIT"),
 ) -> None:
     """
     Verify that mapped BPM elements expose expected BPM PVs.
