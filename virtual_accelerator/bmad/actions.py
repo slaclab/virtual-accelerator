@@ -2,7 +2,7 @@ from typing import Any
 
 from lume.actions import ReadOnlyActionMixin, WritableActionMixin
 from lume.variables import ScalarVariable, EnumVariable
-from lume_bmad.actions import EleScalarVariable, ScaledEleScalarVariable
+from lume_bmad.actions import ScaledEleScalarVariable
 from pytao import Tao
 
 import logging
@@ -184,6 +184,7 @@ class BPMYVariable(BmadScalarVariable, ReadOnlyActionMixin):
     def _get(self, simulator: Tao) -> Any:
         return simulator.ele(self.element_name).orbit.y * 1e3  # convert from m to mm
 
+
 class BPMTMITDummyVariable(BmadScalarVariable, ReadOnlyActionMixin):
     """Dummy variable for BPM TMIT (total beam intensity) for testing purposes."""
 
@@ -193,6 +194,7 @@ class BPMTMITDummyVariable(BmadScalarVariable, ReadOnlyActionMixin):
     def _get(self, simulator: Tao) -> Any:
         # Return a dummy value for TMIT
         return 1.0  # This can be adjusted as needed for testing
+
 
 class KlystronENLDVariable(BmadScalarVariable, WritableActionMixin):
     """
@@ -262,20 +264,24 @@ class KlystronStatVariable(BmadEnumVariable, WritableActionMixin):
             f"set ele {self.element_name} IN_USE = {self._logic_mapping[value]}"
         )
 
+
 class CavityAREQVariable(ScaledEleScalarVariable):
     """
     Action that operates on the amplitude property of a cavity
 
     """
+
     unit: str = "MV"
     scale_factor: float = 1e6
     property_name: str = "VOLTAGE"
+
 
 class CavityPREQVariable(ScaledEleScalarVariable):
     """
     Action that operates on the phase property of a cavity
 
     """
+
     unit: str = "degrees"
     property_name: str = "PHI0"
 
@@ -294,7 +300,7 @@ class DummyEnumVariable(BmadEnumVariable, WritableActionMixin):
 
     def _get(self, simulator: Tao) -> Any:
         return self._value
-    
+
     def _set(self, simulator: Tao, value: Any) -> None:
         self._value = value
 
@@ -304,6 +310,7 @@ class CavityMODECFGVariable(DummyEnumVariable):
     Action that operates on the mode configuration property of a cavity
 
     """
+
     options: list[str] = ["Disable", "ACCEL", "STDBY", "ACCEL_STDBY"]
     default_value: str = "ACCEL_STDBY"
 

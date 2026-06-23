@@ -112,5 +112,5 @@ class TestFACET2Bmad:
             assert var in model.supported_variables.keys()
             value = model.get(var)
             # test that the variable is writable
-            model.set({var: value*1.1})
-            assert np.isclose(model.get(var), value*1.1)
+            model.set({var: value * 1.1})
+            assert np.isclose(model.get(var), value * 1.1)

@@ -19,9 +19,7 @@ HAS_FACET_SURROGATE_DEPS = HAS_SURROGATE_RUNTIME_DEPS and has_module(
     "facet2_inj_ml_model"
 )
 HAS_INJECTOR_SURROGATE_DEPS = (
-    HAS_SURROGATE_RUNTIME_DEPS
-    and HAS_CHEETAH_DEPS
-    and has_module("lcls_cu_inj_model")
+    HAS_SURROGATE_RUNTIME_DEPS and HAS_CHEETAH_DEPS and has_module("lcls_cu_inj_model")
 )
 HAS_SURROGATE_DEPS = HAS_INJECTOR_SURROGATE_DEPS
 

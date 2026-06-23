@@ -1,7 +1,7 @@
 import tempfile
 
 from virtual_accelerator.bmad.factory import BmadModelSpec, build_bmad_model
-from lume_bmad.actions import EleScalarVariable, ScaledEleScalarVariable
+from lume_bmad.actions import EleScalarVariable
 from lume_bmad.model import LUMEBmadModel
 
 import logging
@@ -21,8 +21,15 @@ def add_facet_custom_variables(model: LUMEBmadModel) -> None:
     # Add the L0B RF phase feedback variable to the model if L0BF#1 is included in the model
     if "L0BF#1" in model.get("name"):
         logger.debug("Adding L0B RF phase feedback variable to the model.")
-        model.register_action_variable(EleScalarVariable(name="KLYS:LI10:41:SFB_PDES", element_name="L0BF", property_name="PHI0", unit="degrees"))
-        
+        model.register_action_variable(
+            EleScalarVariable(
+                name="KLYS:LI10:41:SFB_PDES",
+                element_name="L0BF",
+                property_name="PHI0",
+                unit="degrees",
+            )
+        )
+
 
 def get_facet_bmad_model(
     start_element="L0AFEND", end_element="END", track_beam=False, custom_beam_path=None
