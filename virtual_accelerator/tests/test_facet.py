@@ -1,4 +1,5 @@
 import pytest
+import numpy as np
 from virtual_accelerator.tests.dependency_profiles import (
     HAS_BMAD_DEPS,
     HAS_FACET2_LATTICE,
@@ -107,11 +108,9 @@ class TestFACET2Bmad:
     def test_facet_custom_variables(self):
         model = get_facet_bmad_model(end_element="PR10711")
         # test that the L0B phase feedback variable is included since L0B is in the lattice
-        assert "KLYS:LI10:41:SFB_PDES" in model.supported_variables
-
-        # test that the L0B phase feedback variable is properly set up as a writable action variable
-        model.get("KLYS:LI10:41:SFB_PDES")
-
-        # test that the variable is writable
-        model.set({"KLYS:LI10:41:SFB_PDES": 10.0})
-        assert model.get("KLYS:LI10:41:SFB_PDES") == 10.0
+        for var in ["KLYS:LI10:41:SFB_PDES", "KLYS:LI10:51:PDES", "KLYS:LI10:51:ADES"]:
+            assert var in model.supported_variables.keys()
+            value = model.get(var)
+            # test that the variable is writable
+            model.set({var: value*1.1})
+            assert np.isclose(model.get(var), value*1.1)

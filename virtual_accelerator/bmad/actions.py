@@ -2,6 +2,7 @@ from typing import Any
 
 from lume.actions import ReadOnlyActionMixin, WritableActionMixin
 from lume.variables import ScalarVariable, EnumVariable
+from lume_bmad.actions import EleScalarVariable, ScaledEleScalarVariable
 from pytao import Tao
 
 import logging
@@ -183,6 +184,15 @@ class BPMYVariable(BmadScalarVariable, ReadOnlyActionMixin):
     def _get(self, simulator: Tao) -> Any:
         return simulator.ele(self.element_name).orbit.y * 1e3  # convert from m to mm
 
+class BPMTMITDummyVariable(BmadScalarVariable, ReadOnlyActionMixin):
+    """Dummy variable for BPM TMIT (total beam intensity) for testing purposes."""
+
+    unit: str = "arbitrary units"
+    read_only: bool = True
+
+    def _get(self, simulator: Tao) -> Any:
+        # Return a dummy value for TMIT
+        return 1.0  # This can be adjusted as needed for testing
 
 class KlystronENLDVariable(BmadScalarVariable, WritableActionMixin):
     """
@@ -251,3 +261,50 @@ class KlystronStatVariable(BmadEnumVariable, WritableActionMixin):
         simulator.cmd(
             f"set ele {self.element_name} IN_USE = {self._logic_mapping[value]}"
         )
+
+class CavityAREQVariable(ScaledEleScalarVariable):
+    """
+    Action that operates on the amplitude property of a cavity
+
+    """
+    unit: str = "MV"
+    scale_factor: float = 1e6
+    property_name: str = "VOLTAGE"
+
+class CavityPREQVariable(ScaledEleScalarVariable):
+    """
+    Action that operates on the phase property of a cavity
+
+    """
+    unit: str = "degrees"
+    property_name: str = "PHI0"
+
+
+class DummyEnumVariable(BmadEnumVariable, WritableActionMixin):
+    """
+    Dummy variable for testing purposes. This variable does not correspond to any real element or property in the Bmad model.
+    It is used to test the behavior of the model when a variable is requested that does not exist in the model.
+
+    """
+
+    options: list[str] = ["0", "1"]
+    default_value: str = "0"
+
+    _value: str = "0"
+
+    def _get(self, simulator: Tao) -> Any:
+        return self._value
+    
+    def _set(self, simulator: Tao, value: Any) -> None:
+        self._value = value
+
+
+class CavityMODECFGVariable(DummyEnumVariable):
+    """
+    Action that operates on the mode configuration property of a cavity
+
+    """
+    options: list[str] = ["Disable", "ACCEL", "STDBY", "ACCEL_STDBY"]
+    default_value: str = "ACCEL_STDBY"
+
+    _value: str = "ACCEL_STDBY"

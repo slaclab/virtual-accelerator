@@ -174,6 +174,10 @@ def get_element_type(tao: Tao, element_name: str) -> str:
     ):
         element_type = "Screen"
 
+    # handle transverse deflecting cavities
+    if element_type == "Lcavity" and element_name.startswith("TC"):
+        element_type = "TransverseDeflectingCavity"
+
     # handle klystrons
     if element_type == "Overlay" and element_name.startswith("K"):
         element_type = "Klystron"
@@ -384,14 +388,19 @@ def get_screen_variables(
     screen_spec = ScreenSpec(
         element_name=screen_name,
         shape=tuple(shape),
-        pixel_size=float(pixel_size) * 1e-6,  # convert from microns to meters
+        pixel_size=float(pixel_size),
     )
 
     # create screen variables based on the configuration for this screen
+    image_screen_spec = ScreenSpec(
+        element_name=screen_name,
+        shape=tuple(shape),
+        pixel_size=float(pixel_size)*1e-6,  # convert from microns to meters
+    )
     variables = [
         ScreenImageVariable.from_screen_spec(
             name=f"{base_pv}:Image:ArrayData",
-            screen_spec=screen_spec,
+            screen_spec=image_screen_spec,
         ),
         ScreenResolutionVariable.from_screen_spec(
             name=f"{base_pv}:RESOLUTION",
@@ -400,12 +409,12 @@ def get_screen_variables(
         ScreenImageShapeVariable.from_screen_spec(
             name=f"{base_pv}:Image:ArraySize0_RBV",
             screen_spec=screen_spec,
-            index=0,
+            index=1, # need to reverse the order of the shape for the ArraySize0_RBV and ArraySize1_RBV variables since they are in row-major order
         ),
         ScreenImageShapeVariable.from_screen_spec(
             name=f"{base_pv}:Image:ArraySize1_RBV",
             screen_spec=screen_spec,
-            index=1,
+            index=0, # need to reverse the order of the shape for the ArraySize0_RBV and ArraySize1_RBV variables since they are in row-major order
         ),
     ]
 

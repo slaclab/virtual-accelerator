@@ -42,20 +42,12 @@ def main():
 
     from virtual_accelerator.models.cu_hxr import (
         get_cu_hxr_bmad_model,
-        get_cu_hxr_cheetah_model,
     )
     from virtual_accelerator.models.facet2 import get_facet_bmad_model
 
     # Get the appropriate model based on user input
     if args.model == "cu_hxr_bmad":
         model = get_cu_hxr_bmad_model(end_element=args.end_element)
-    elif args.model == "cu_hxr_cheetah":  # cu_hxr_cheetah
-        if args.end_element != "END":
-            parser.error(
-                "--end-element is only supported for BMAD models "
-                "(cu_hxr_bmad, facet_bmad)."
-            )
-        model = get_cu_hxr_cheetah_model()
     elif args.model == "facet_bmad":
         model = get_facet_bmad_model(end_element=args.end_element, track_beam=True)
     elif args.model == "facet_staged":

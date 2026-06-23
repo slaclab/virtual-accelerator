@@ -1,6 +1,8 @@
 import numpy as np
+from pathlib import Path
 
 import pytest
+import yaml
 from virtual_accelerator.tests.dependency_profiles import (
     HAS_BMAD_DEPS,
     HAS_LCLS_LATTICE,
@@ -85,6 +87,25 @@ class TestCUHXRBmad:
 
         # make sure it changed
         assert not (image == updated_image).all()
+
+    def test_cu_hxr_screen_resolution_matches_yaml_and_expected_range(self):
+        config_path = (
+            Path(__file__).resolve().parents[1] / "utils" / "cu_hxr_profmon_info.yaml"
+        )
+        with config_path.open("r", encoding="utf-8") as config_file:
+            screen_config = yaml.safe_load(config_file)
+
+        otr4_config = screen_config["OTR4"]
+        resolution_pv = f"{otr4_config['name']}:RESOLUTION"
+        expected_resolution = float(otr4_config["pixel_size"])
+
+        model = get_cu_hxr_bmad_model(
+            end_element="OTR4", track_beam=True, custom_beam_path=TEST_BEAM_PATH
+        )
+        resolution = float(model.get(resolution_pv))
+
+        assert np.isclose(resolution, expected_resolution)
+        assert 10.0 < resolution < 20.0
 
     def test_cu_hxr_lcavity(self):
         model = get_cu_hxr_bmad_model(custom_beam_path=TEST_BEAM_PATH)

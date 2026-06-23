@@ -1,51 +1,51 @@
 OTRH1:
    name: OTRS:IN20:465
    shape:
-   - 1392
    - 1040
+   - 1392
    pixel_size: 18.59
 
 OTRH2:
    name: OTRS:IN20:471
    shape:
-   - 1392
    - 1040
+   - 1392
    pixel_size: 19.16
 OTR2:
    name: OTRS:IN20:571
    shape:
-   - 1392
    - 1040
+   - 1392
    pixel_size: 12.66
 OTR3:
    name: OTRS:IN20:621
    shape:
-   - 1392
    - 1040
+   - 1392
    pixel_size: 12.12
 OTR4:
    name: OTRS:IN20:711
    shape:
-   - 1392
    - 1040
+   - 1392
    pixel_size: 17.06
 OTR11:
    name: OTRS:LI21:237
    shape:
-   - 1392
    - 1040
+   - 1392
    pixel_size: 18.15
 OTR12:
    name: OTRS:LI21:291
    shape:
-   - 1392
    - 1040
+   - 1392
    pixel_size: 10.93
 OTR21:
    name: OTRS:LI24:807
    shape:
-   - 1392
    - 1040
+   - 1392
    pixel_size: 17.09
 OTRDMP:
    name: OTRS:DMPH:695
