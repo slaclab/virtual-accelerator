@@ -1,6 +1,34 @@
 import tempfile
 
 from virtual_accelerator.bmad.factory import BmadModelSpec, build_bmad_model
+from lume_bmad.actions import EleScalarVariable
+from lume_bmad.model import LUMEBmadModel
+
+import logging
+
+logger = logging.getLogger(__name__)
+
+
+def add_facet_custom_variables(model: LUMEBmadModel) -> None:
+    """
+    Add custom variables to the FACET-II model.
+
+    Parameters
+    ----------
+    model : LUMEBmadModel
+        The FACET-II model to which custom variables will be added.
+    """
+    # Add the L0B RF phase feedback variable to the model if L0BF#1 is included in the model
+    if "L0BF#1" in model.get("name"):
+        logger.debug("Adding L0B RF phase feedback variable to the model.")
+        model.register_action_variable(
+            EleScalarVariable(
+                name="KLYS:LI10:41:SFB_PDES",
+                element_name="L0BF",
+                property_name="PHI0",
+                unit="degrees",
+            )
+        )
 
 
 def get_facet_bmad_model(
@@ -26,25 +54,37 @@ def get_facet_bmad_model(
     LUMEBmadModel
         Instance of the LUMEBmadModel for the FACET-II lattice.
     """
+    custom_aliases = {
+        "PR10241": "PROF:IN10:241",
+        "PR10571": "PROF:IN10:571",
+        "PR10711": "PROF:IN10:711",
+        "TCY10490": "KLYS:LI10:51",
+    }
 
     spec = BmadModelSpec(
         feature="FACET-II Bmad model",
         lattice_env_var="FACET2_LATTICE",
         tao_init_relpath="bmad/models/f2_elec/tao.init",
         mapping_beampath=None,
-        screens=("PR10571", "PR10711"),
         profmon_config_filename="facet2_profmon_info.yaml",
         default_beam_relpath="beams/2024-10-22_oneBunch.h5",
         default_track_start="L0AFEND",
     )
-    return build_bmad_model(
+    model = build_bmad_model(
         spec=spec,
         start_element=start_element,
         end_element=end_element,
         track_beam=track_beam,
         custom_beam_path=custom_beam_path,
-        custom_tao_commands=["set bmad_com absolute_time_tracking=true"],
+        custom_aliases=custom_aliases,
+        custom_tao_commands=[
+            "set bmad_com absolute_time_tracking=true",
+        ],
     )
+
+    add_facet_custom_variables(model)
+
+    return model
 
 
 def get_facet_staged_model(n_particles=10000, surrogate_inputs="machine", **kwargs):

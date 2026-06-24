@@ -1,53 +1,33 @@
 import os
-import importlib.util
 from pathlib import Path
+
 import pytest
 from beamphysics.particles import ParticleGroup
-
-# Guard collection: lume_torch is required by InjectorSurrogate at import
-# time; skip the whole module instead of raising an ImportError.
-pytest.importorskip(
-    "lume_torch",
-    reason="requires lume-torch: pip install virtual-accelerator[surrogate]",
+from .dependency_profiles import (
+    HAS_FACET2_LATTICE,
+    HAS_LCLS_LATTICE,
+    HAS_STAGED_MODEL_DEPS,
 )
-pytest.importorskip(
-    "facet2_inj_ml_model",
-    reason="requires facet2_inj_ml_model: pip install virtual-accelerator[surrogate]",
-)
-pytest.importorskip(
-    "lcls_cu_inj_model",
-    reason="requires packaged Cu injector model: pip install virtual-accelerator[surrogate]",
-)
-
-from virtual_accelerator.models.staged_model import (  # noqa: E402
-    StagedModel,
-    get_cu_hxr_staged_model,
-)
-from virtual_accelerator.models.cu_hxr import get_cu_hxr_bmad_model  # noqa: E402
-from virtual_accelerator.models.facet2 import get_facet_staged_model  # noqa: E402
-from virtual_accelerator.surrogates.injector_surrogate import InjectorSurrogate  # noqa: E402
 
 TEST_BEAM_PATH = os.path.join(Path(__file__).parent, "../bmad", "test_beam")
+pytestmark = [
+    pytest.mark.requires_staged_model,
+    pytest.mark.requires_lcls_lattice,
+]
 
-
-def _has_module(name: str) -> bool:
-    return importlib.util.find_spec(name) is not None
-
-
-pytestmark = pytest.mark.skipif(
-    not all(
-        _has_module(module_name)
-        for module_name in (
-            "pytao",
-            "lume_bmad",
-            "cheetah",
-            "lume_cheetah",
-            "lume_torch",
-            "facet2_inj_ml_model",
-        )
-    ),
-    reason="requires staged-model optional dependencies",
-)
+if HAS_STAGED_MODEL_DEPS and HAS_LCLS_LATTICE:
+    from virtual_accelerator.models.staged_model import (
+        StagedModel,
+        get_cu_hxr_staged_model,
+    )
+    from virtual_accelerator.models.cu_hxr import get_cu_hxr_bmad_model
+    from virtual_accelerator.models.facet2 import get_facet_staged_model
+    from virtual_accelerator.surrogates.injector_surrogate import InjectorSurrogate
+else:
+    pytest.skip(
+        "requires staged-model optional dependencies and LCLS_LATTICE",
+        allow_module_level=True,
+    )
 
 
 # Fixtures for model initialization
@@ -174,10 +154,8 @@ class TestStagedModelStaging:
         assert "a.beta" in result
         assert "b.beta" in result
 
-    @pytest.mark.skipif(
-        not os.environ.get("FACET2_LATTICE"),
-        reason="requires FACET2_LATTICE",
-    )
+    @pytest.mark.requires_facet2_lattice
+    @pytest.mark.skipif(not HAS_FACET2_LATTICE, reason="requires FACET2_LATTICE")
     def test_facet_model(self):
         staged_model = get_facet_staged_model(end_element="PR10711")
         staged_model.get(list(staged_model.supported_variables.keys()))

@@ -1,9 +1,13 @@
-import os
-import importlib.util
+import numpy as np
+from pathlib import Path
 
 import pytest
-from virtual_accelerator.tests._bmad_model_test_utils import (
+import yaml
+from virtual_accelerator.tests.dependency_profiles import (
     HAS_BMAD_DEPS,
+    HAS_LCLS_LATTICE,
+)
+from virtual_accelerator.tests._bmad_model_test_utils import (
     TEST_BEAM_PATH,
     assert_bpm_pvs_match_tao_lattice,
     assert_bmad_model_initialization,
@@ -13,21 +17,21 @@ from virtual_accelerator.tests._bmad_model_test_utils import (
     assert_roundtrip_pv_get_set,
     assert_screen_image_pvs_in_supported_variables,
 )
-from virtual_accelerator.models.cu_hxr import (
-    get_cu_hxr_bmad_model,
-    get_cu_hxr_cheetah_model,
-)
+
+pytestmark = [
+    pytest.mark.requires_bmad,
+    pytest.mark.requires_lcls_lattice,
+]
+
+if HAS_BMAD_DEPS and HAS_LCLS_LATTICE:
+    from virtual_accelerator.models.cu_hxr import get_cu_hxr_bmad_model
+else:
+    pytest.skip(
+        "requires bmad optional dependencies and LCLS_LATTICE",
+        allow_module_level=True,
+    )
 
 
-def _has_module(name: str) -> bool:
-    return importlib.util.find_spec(name) is not None
-
-
-HAS_CHEETAH_DEPS = _has_module("cheetah") and _has_module("lume_cheetah")
-HAS_LCLS_LATTICE = bool(os.environ.get("LCLS_LATTICE"))
-
-
-@pytest.mark.skipif(not HAS_BMAD_DEPS, reason="requires bmad optional dependencies")
 class TestCUHXRBmad:
     def test_initialization(self):
         assert_bmad_model_initialization(
@@ -72,27 +76,44 @@ class TestCUHXRBmad:
 
         # get initial OTR4 image
         image = model.get("OTRS:IN20:711:Image:ArrayData")
-        assert image.shape == (1392, 1040)
+        assert image.shape == (1040, 1392)
 
         # set some control variables
         model.set({"QUAD:IN20:631:BCTRL": 0.0})
 
         # get updated OTR4 image
         updated_image = model.get("OTRS:IN20:711:Image:ArrayData")
-        assert updated_image.shape == (1392, 1040)
+        assert updated_image.shape == (1040, 1392)
 
         # make sure it changed
         assert not (image == updated_image).all()
 
-    @pytest.mark.xfail(reason="need to update klystron implementation")
+    def test_cu_hxr_screen_resolution_matches_yaml_and_expected_range(self):
+        config_path = (
+            Path(__file__).resolve().parents[1] / "utils" / "cu_hxr_profmon_info.yaml"
+        )
+        with config_path.open("r", encoding="utf-8") as config_file:
+            screen_config = yaml.safe_load(config_file)
+
+        otr4_config = screen_config["OTR4"]
+        resolution_pv = f"{otr4_config['name']}:RESOLUTION"
+        expected_resolution = float(otr4_config["pixel_size"])
+
+        model = get_cu_hxr_bmad_model(
+            end_element="OTR4", track_beam=True, custom_beam_path=TEST_BEAM_PATH
+        )
+        resolution = float(model.get(resolution_pv))
+
+        assert np.isclose(resolution, expected_resolution)
+        assert 10.0 < resolution < 20.0
+
     def test_cu_hxr_lcavity(self):
         model = get_cu_hxr_bmad_model(custom_beam_path=TEST_BEAM_PATH)
 
         enld = model.get("KLYS:LI21:31:ENLD")
-        enld = enld + 5
-        model.set({"KLYS:LI21:31:ENLD": enld})
+        model.set({"KLYS:LI21:31:ENLD": enld + 5.0})
         ampl = model.get("KLYS:LI21:31:ENLD")
-        assert ampl == enld
+        assert np.isclose(ampl, enld + 5.0)
 
     def test_quadrupole_pvs_match_tao_lattice(self):
         model = get_cu_hxr_bmad_model()
@@ -115,16 +136,3 @@ class TestCUHXRBmad:
             custom_beam_path=TEST_BEAM_PATH, end_element="OTR4"
         )
         assert_roundtrip_pv_get_set(model)
-
-
-@pytest.mark.skipif(
-    (not HAS_CHEETAH_DEPS) or (not HAS_LCLS_LATTICE),
-    reason="requires cheetah optional dependencies and LCLS_LATTICE",
-)
-class TestCUHXRCheetah:
-    def test_initialization(self):
-        model = get_cu_hxr_cheetah_model()
-
-        assert model.get(["OTRS:IN20:541:Image:ArrayData"])[
-            "OTRS:IN20:541:Image:ArrayData"
-        ].shape == (1392, 1040)

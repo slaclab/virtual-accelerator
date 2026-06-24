@@ -1,24 +1,20 @@
 PR10241:
    name: PROF:IN10:241
-   nCol: 1392
-   nRow: 1040
-   bitdepth: 12
-   res: 17.94
-   orientX: 1
-   orientY: 1
+   shape:
+   - 1392
+   - 1040
+   pixel_size: 17.94
+
 PR10571:
    name: PROF:IN10:571
-   nCol: 1392
-   nRow: 1040
-   bitdepth: 12
-   res: 11.1732
-   orientX: 1
-   orientY: 1
+   shape:
+   - 1392
+   - 1040
+   pixel_size: 11.1732
+
 PR10711:
    name: PROF:IN10:711
-   nCol: 1392
-   nRow: 1040
-   bitdepth: 12
-   res: 11.71
-   orientX: 1
-   orientY: 1
+   shape:
+   - 1392
+   - 1040
+   pixel_size: 11.71

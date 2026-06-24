@@ -60,4 +60,4 @@ jobs:
         env:
           LCLS_LATTICE: ${{ github.workspace }}/lcls-lattice
           FACET2_LATTICE: ${{ github.workspace }}/facet2-lattice
-        run: pytest virtual_accelerator/tests
+        run: pytest virtual_accelerator/tests -v --tb=short -ra --strict-markers
