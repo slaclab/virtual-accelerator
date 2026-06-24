@@ -71,6 +71,35 @@ class TestFACET2Bmad:
         new_output = model.get(screen_pv)
         assert not (new_output == output).all()  # Check that the screen output changed
 
+    def test_tcav(self):
+        # test that the TCAV works as expected
+        model = get_facet_bmad_model(track_beam=True, custom_beam_path=TEST_BEAM_PATH, end_element="PR10711")
+
+        # set the TCAV voltage
+        model.set({
+            "KLYS:LI10:51:REFPOC": 10.0, 
+            "KLYS:LI10:51:ADES": 0.3, 
+            "KLYS:LI10:51:MODECFG": "ACCEL_STDBY"
+        })  # Set TCAV voltage to 0.3  MV, phase to 10 degrees, and enable the TCAV
+        assert model.tao.ele_gen_attribs("TCY10490")["VOLTAGE"] == 0.3e6  # Check that the TCAV voltage was set correctly
+        assert np.isclose(model.tao.ele_gen_attribs("TCY10490")["PHI0"], 10.0 / 360.0)  # Check that the TCAV phase is 10 degrees
+        assert model.tao.ele("TCY10490").head.is_on  # Check that the TCAV is enabled
+
+        # measure the deflaction at the downstream bpm
+        assert np.isclose(model.get("BPMS:IN10:651:X"), 0.0)  # Check that the beam is not deflected in X
+        assert np.isclose(model.get("BPMS:IN10:651:Y"), 1.939, rtol=1e-2)  # Check that the beam is deflected in Y by 2 mm
+
+        # disable the TCAV
+        model.set({"KLYS:LI10:51:MODECFG": "STDBY"})  # Set TCAV to standby mode
+
+        # measure the deflection at the downstream bpm again
+        assert np.isclose(model.get("BPMS:IN10:651:Y"), 0.0)  # Check that the beam is no longer deflected
+
+        # re-enable the TCAV
+        model.set({"KLYS:LI10:51:MODECFG": "ACCEL_STDBY"})  # Set TCAV back to ACCEL_STDBY mode
+        assert np.isclose(model.get("BPMS:IN10:651:Y"), 1.939, rtol=1e-2)  # Check that the TCAV deflected the beam again
+
+
     @pytest.mark.requires_surrogate
     @pytest.mark.skipif(
         not HAS_FACET_SURROGATE_DEPS,

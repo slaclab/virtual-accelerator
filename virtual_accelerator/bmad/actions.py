@@ -1,5 +1,7 @@
 from typing import Any
 
+import numpy as np
+
 from lume.actions import ReadOnlyActionMixin, WritableActionMixin
 from lume.variables import ScalarVariable, EnumVariable
 from lume_bmad.actions import ScaledEleScalarVariable
@@ -284,7 +286,7 @@ class CavityPREQVariable(ScaledEleScalarVariable):
 
     unit: str = "degrees"
     property_name: str = "PHI0"
-
+    scale_factor: float = 1 / 360.0  # scale degrees to rad / 2pi
 
 class DummyEnumVariable(BmadEnumVariable, WritableActionMixin):
     """
@@ -305,13 +307,21 @@ class DummyEnumVariable(BmadEnumVariable, WritableActionMixin):
         self._value = value
 
 
-class CavityMODECFGVariable(DummyEnumVariable):
+class CavityMODECFGVariable(BmadEnumVariable, WritableActionMixin):
     """
     Action that operates on the mode configuration property of a cavity
-
     """
 
     options: list[str] = ["Disable", "ACCEL", "STDBY", "ACCEL_STDBY"]
     default_value: str = "ACCEL_STDBY"
 
-    _value: str = "ACCEL_STDBY"
+    def _get(self, simulator: Tao) -> Any:
+        return "ACCEL_STDBY" if simulator.ele(self.element_name).head.is_on else "STDBY"
+    
+    def _set(self, simulator: Tao, value: Any) -> None:
+        if value == "ACCEL_STDBY":
+            simulator.cmd(f"set ele {self.element_name} is_on = True")
+        elif value == "STDBY":
+            simulator.cmd(f"set ele {self.element_name} is_on = False")
+        else:
+            raise ValueError(f"Invalid value for CavityMODECFGVariable: {value}")

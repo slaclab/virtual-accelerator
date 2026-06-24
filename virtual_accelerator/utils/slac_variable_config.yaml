@@ -58,7 +58,7 @@ Klystron:
   # HDSC: KlystronHDSCVariable # subclass of BmadIntVariable
   # DSTA: KlystronDSTAVariable # subclass of NDVariable
 
-TransverseDeflectingCavity:
+Crab_Cavity:
   AREQ: CavityAREQVariable
   ADES: CavityAREQVariable
   AFBENB: DummyEnumVariable
