@@ -91,6 +91,7 @@ class TestFACET2Bmad:
         assert np.isclose(
             model.tao.ele_gen_attribs("TCY10490")["PHI0"], 10.0 / 360.0
         )  # Check that the TCAV phase is 10 degrees
+        assert model.tao.ele("TCY10490").key == "Crab_Cavity"  # Check that the TCAV is a crab cavity
         assert model.tao.ele("TCY10490").head.is_on  # Check that the TCAV is enabled
 
         # measure the deflection at the downstream bpm
