@@ -37,7 +37,7 @@ jobs:
         uses: actions/checkout@v4
         with:
           repository: slaclab/facet2-lattice
-          ref: b1d170e
+          ref: b1d170ebf51582c1dc675595d810f5191866a443
           path: facet2-lattice
 
       - name: Set up conda environment

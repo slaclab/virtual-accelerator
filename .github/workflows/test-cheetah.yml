@@ -30,7 +30,7 @@ jobs:
         with:
           repository: slaclab/facet2-lattice
           path: facet2-lattice
-          ref: b1d170e
+          ref: b1d170ebf51582c1dc675595d810f5191866a443
       - name: Set up Python ${{ matrix.python-version }}
         uses: actions/setup-python@v5
         with:
