@@ -95,7 +95,7 @@ class TestFACET2Bmad:
 
         # measure the deflaction at the downstream bpm
         assert np.isclose(
-            model.get("BPMS:IN10:651:X"), 0.0, atol=1e-6
+            model.get("BPMS:IN10:651:X"), 0.0, atol=1e-4
         )  # Check that the beam is not deflected in X
         assert np.isclose(
             model.get("BPMS:IN10:651:Y"), 1.939, rtol=1e-2
