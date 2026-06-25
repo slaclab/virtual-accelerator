@@ -1,6 +1,5 @@
 from typing import Any
 
-import numpy as np
 
 from lume.actions import ReadOnlyActionMixin, WritableActionMixin
 from lume.variables import ScalarVariable, EnumVariable
@@ -283,6 +282,7 @@ class CavityPREQVariable(ScaledEleScalarVariable):
 class CavityPREQReadbackVariable(_ReadbackFromControlMixin, CavityPREQVariable):
     """Read-only variant of cavity phase request variable."""
 
+
 class DummyEnumVariable(BmadEnumVariable, WritableActionMixin):
     """
     Dummy variable for testing purposes. This variable does not correspond to any real element or property in the Bmad model.
@@ -312,7 +312,7 @@ class CavityMODECFGVariable(BmadEnumVariable, WritableActionMixin):
 
     def _get(self, simulator: Tao) -> Any:
         return "ACCEL_STDBY" if simulator.ele(self.element_name).head.is_on else "STDBY"
-    
+
     def _set(self, simulator: Tao, value: Any) -> None:
         if value == "ACCEL_STDBY":
             simulator.cmd(f"set ele {self.element_name} is_on = True")

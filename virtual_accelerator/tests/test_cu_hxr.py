@@ -63,10 +63,9 @@ class TestCUHXRBmad:
         model = get_cu_hxr_bmad_model(
             end_element="OTR4", track_beam=True, custom_beam_path=TEST_BEAM_PATH
         )
-        
+
         with pytest.raises(ReadOnlyError, match="is read-only"):
             model.set({"QUAD:IN20:631:BACT": 0.0})
-
 
     def test_cu_hxr_twiss(self):
         assert_bmad_model_twiss_outputs(get_cu_hxr_bmad_model)
