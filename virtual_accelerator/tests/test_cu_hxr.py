@@ -3,6 +3,8 @@ from pathlib import Path
 
 import pytest
 import yaml
+
+from lume.exceptions import ReadOnlyError
 from virtual_accelerator.tests.dependency_profiles import (
     HAS_BMAD_DEPS,
     HAS_LCLS_LATTICE,
@@ -56,6 +58,14 @@ class TestCUHXRBmad:
             end_element="TD11", track_beam=True, custom_beam_path=TEST_BEAM_PATH
         )
         _ = model.get(list(model.supported_variables))
+
+    def test_bact_readback_is_not_writable(self):
+        model = get_cu_hxr_bmad_model(
+            end_element="OTR4", track_beam=True, custom_beam_path=TEST_BEAM_PATH
+        )
+
+        with pytest.raises(ReadOnlyError, match="is read-only"):
+            model.set({"QUAD:IN20:631:BACT": 0.0})
 
     def test_cu_hxr_twiss(self):
         assert_bmad_model_twiss_outputs(get_cu_hxr_bmad_model)

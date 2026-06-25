@@ -174,10 +174,6 @@ def get_element_type(tao: Tao, element_name: str) -> str:
     ):
         element_type = "Screen"
 
-    # handle transverse deflecting cavities
-    if element_type == "Lcavity" and element_name.startswith("TC"):
-        element_type = "TransverseDeflectingCavity"
-
     # handle klystrons
     if element_type == "Overlay" and element_name.startswith("K"):
         element_type = "Klystron"
