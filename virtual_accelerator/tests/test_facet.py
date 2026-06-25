@@ -93,7 +93,7 @@ class TestFACET2Bmad:
         )  # Check that the TCAV phase is 10 degrees
         assert model.tao.ele("TCY10490").head.is_on  # Check that the TCAV is enabled
 
-        # measure the deflaction at the downstream bpm
+        # measure the deflection at the downstream bpm
         assert np.isclose(
             model.get("BPMS:IN10:651:X"), 0.0, atol=1e-4
         )  # Check that the beam is not deflected in X

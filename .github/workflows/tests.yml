@@ -39,6 +39,7 @@ jobs:
         with:
           repository: slaclab/facet2-lattice
           path: facet2-lattice
+          ref: b1d170e
       - name: Set up conda environment
         uses: conda-incubator/setup-miniconda@v3
         with:
