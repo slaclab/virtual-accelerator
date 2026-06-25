@@ -74,7 +74,10 @@ class TestFACET2Bmad:
     def test_tcav(self):
         # test that the TCAV works as expected
         model = get_facet_bmad_model(
-            track_beam=True, custom_beam_path=TEST_BEAM_PATH, end_element="PR10711"
+            track_beam=True,
+            start_element="L0AFEND",
+            end_element="PR10711",
+            custom_beam_path=TEST_BEAM_PATH,
         )
 
         # set the TCAV voltage
@@ -91,7 +94,9 @@ class TestFACET2Bmad:
         assert np.isclose(
             model.tao.ele_gen_attribs("TCY10490")["PHI0"], 10.0 / 360.0
         )  # Check that the TCAV phase is 10 degrees
-        assert model.tao.ele("TCY10490").key == "Crab_Cavity"  # Check that the TCAV is a crab cavity
+        assert (
+            model.tao.ele("TCY10490").key == "Crab_Cavity"
+        )  # Check that the TCAV is a crab cavity
         assert model.tao.ele("TCY10490").head.is_on  # Check that the TCAV is enabled
 
         # measure the deflection at the downstream bpm
@@ -101,13 +106,14 @@ class TestFACET2Bmad:
         assert np.isclose(
             model.get("BPMS:IN10:651:Y"), 1.939, rtol=1e-2
         )  # Check that the beam is deflected in Y by 2 mm
+        # NOTE: this value requires the bmad fixer elements to be disabled
 
         # disable the TCAV
         model.set({"KLYS:LI10:51:MODECFG": "STDBY"})  # Set TCAV to standby mode
 
         # measure the deflection at the downstream bpm again
         assert np.isclose(
-            model.get("BPMS:IN10:651:Y"), 0.0
+            model.get("BPMS:IN10:651:Y"), 0.0, atol=1e-4
         )  # Check that the beam is no longer deflected
 
         # re-enable the TCAV

@@ -82,6 +82,7 @@ def get_facet_bmad_model(
             "set bmad_com lr_wakes_on=false",
             "set bmad_com sr_wakes_on=false",
             "set ele lcavity::* n_rf_steps=1000",
+            "set ele fixer::* is_on=false",
         ],
     )
 
