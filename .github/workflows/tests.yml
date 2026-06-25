@@ -39,7 +39,6 @@ jobs:
         with:
           repository: slaclab/facet2-lattice
           path: facet2-lattice
-          ref: temp_fix_fixer
       - name: Set up conda environment
         uses: conda-incubator/setup-miniconda@v3
         with:

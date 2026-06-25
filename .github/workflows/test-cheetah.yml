@@ -30,7 +30,6 @@ jobs:
         with:
           repository: slaclab/facet2-lattice
           path: facet2-lattice
-          ref: temp_fix_fixer
       - name: Set up Python ${{ matrix.python-version }}
         uses: actions/setup-python@v5
         with:

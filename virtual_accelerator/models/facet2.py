@@ -81,8 +81,7 @@ def get_facet_bmad_model(
             "set bmad_com absolute_time_tracking=true",
             "set bmad_com lr_wakes_on=false",
             "set bmad_com sr_wakes_on=false",
-            "set ele lcavity::* n_rf_steps=10",
-            "set ele lcavity::* n_cell=-1",
+            "set ele lcavity::* n_rf_steps=1000",
         ],
     )
 
