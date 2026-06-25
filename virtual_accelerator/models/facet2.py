@@ -53,6 +53,17 @@ def get_facet_bmad_model(
     -------
     LUMEBmadModel
         Instance of the LUMEBmadModel for the FACET-II lattice.
+
+    Notes
+    -----
+    - The model is built using the BmadModelSpec for FACET-II
+    - To match real PVs custom aliases are added for the PROF and KLYS elements.
+    - Custom tao commands are added to the model to disable certain effects and set parameters including:
+        - absolute_time_tracking=true
+        - lr_wakes_on=false
+        - sr_wakes_on=false
+        - n_rf_steps=1000 for lcavity elements
+        - is_on=false for fixer elements
     """
     custom_aliases = {
         "PR10241": "PROF:IN10:241",
