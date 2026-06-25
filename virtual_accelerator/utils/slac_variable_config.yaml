@@ -63,10 +63,10 @@ Crab_Cavity:
   ADES: CavityAREQVariable
   AFBENB: DummyEnumVariable
   AFBST: DummyEnumVariable
-  AMPL_W0CH0: CavityAREQVariable
+  AMPL_W0CH0: CavityAREQReadbackVariable
   MODECFG: CavityMODECFGVariable
   PREQ: CavityPREQVariable
-  PACT_AVGNT: CavityPREQVariable
+  PACT_AVGNT: CavityPREQReadbackVariable
   PFBENB: DummyEnumVariable
   PFBST: DummyEnumVariable
   RF_ENABLE: DummyEnumVariable

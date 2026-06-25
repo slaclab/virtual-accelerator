@@ -30,6 +30,19 @@ class BmadEnumVariable(EnumVariable):
     element_name: str
 
 
+class _ReadbackFromControlMixin(ReadOnlyActionMixin):
+    """Common readback behavior for variables that share control get logic."""
+
+    read_only: bool = True
+
+    def _get(self, simulator: Tao) -> Any:
+        # Skip ReadOnlyActionMixin's abstract _get and delegate to the next class.
+        return super(ReadOnlyActionMixin, self)._get(simulator)
+
+    def _set(self, simulator: Tao, value: Any) -> None:
+        raise RuntimeError(f"{self.name} is read-only")
+
+
 class _QuadrupoleGradientVariable(BmadScalarVariable):
     """Shared quadrupole conversion helpers."""
 
@@ -71,14 +84,8 @@ class QuadrupoleBCTRLVariable(_QuadrupoleGradientVariable, WritableActionMixin):
         self._set_bctrl_value(simulator, value)
 
 
-class QuadrupoleBACTVariable(_QuadrupoleGradientVariable, ReadOnlyActionMixin):
+class QuadrupoleBACTVariable(_ReadbackFromControlMixin, QuadrupoleBCTRLVariable):
     """Action that operates on the BACT property of Quadrupoles"""
-
-    read_only: bool = True
-    unit: str = "kG"
-
-    def _get(self, simulator: Tao) -> Any:
-        return self._get_bctrl_value(simulator)
 
 
 class SolenoidBCTRLVariable(_ScaledElementAttributeVariable, WritableActionMixin):
@@ -94,15 +101,8 @@ class SolenoidBCTRLVariable(_ScaledElementAttributeVariable, WritableActionMixin
         self._set_scaled_value(simulator, value)
 
 
-class SolenoidBACTVariable(_ScaledElementAttributeVariable, ReadOnlyActionMixin):
+class SolenoidBACTVariable(_ReadbackFromControlMixin, SolenoidBCTRLVariable):
     """Action that operates on the BACT property of Solenoids"""
-
-    attribute_name: str = "BS_FIELD"
-    bmad_to_external_scale: float = 10.0
-    read_only: bool = True
-
-    def _get(self, simulator: Tao) -> Any:
-        return self._get_scaled_value(simulator)
 
 
 class KickerBCTRLVariable(_ScaledElementAttributeVariable, WritableActionMixin):
@@ -118,15 +118,8 @@ class KickerBCTRLVariable(_ScaledElementAttributeVariable, WritableActionMixin):
         self._set_scaled_value(simulator, value)
 
 
-class KickerBACTVariable(_ScaledElementAttributeVariable, ReadOnlyActionMixin):
+class KickerBACTVariable(_ReadbackFromControlMixin, KickerBCTRLVariable):
     """Action that operates on the BACT property of Kicker magnets"""
-
-    attribute_name: str = "BL_KICK"
-    bmad_to_external_scale: float = -10.0
-    read_only: bool = True
-
-    def _get(self, simulator: Tao) -> Any:
-        return self._get_scaled_value(simulator)
 
 
 class StatusVariable(BmadScalarVariable, ReadOnlyActionMixin):
@@ -228,18 +221,12 @@ class KlystronPDESVariable(BmadScalarVariable, WritableActionMixin):
         simulator.cmd(f"set ele {self.element_name} PHASE_DEG = {value}")
 
 
-class KlystronPACTVariable(BmadScalarVariable, ReadOnlyActionMixin):
+class KlystronPACTVariable(_ReadbackFromControlMixin, KlystronPDESVariable):
     """
     Action that operates on the actual phase of a klystron which acts on an overlay in Bmad
     Note: the element_name for this variable should be set for a Bmad overlay element
 
     """
-
-    unit: str = "degrees"
-    read_only: bool = True
-
-    def _get(self, simulator: Tao) -> Any:
-        return simulator.ele(self.element_name).control_vars["PHASE_DEG"]
 
 
 class KlystronStatVariable(BmadEnumVariable, WritableActionMixin):
@@ -278,6 +265,10 @@ class CavityAREQVariable(ScaledEleScalarVariable):
     property_name: str = "VOLTAGE"
 
 
+class CavityAREQReadbackVariable(_ReadbackFromControlMixin, CavityAREQVariable):
+    """Read-only variant of cavity amplitude request variable."""
+
+
 class CavityPREQVariable(ScaledEleScalarVariable):
     """
     Action that operates on the phase property of a cavity
@@ -287,6 +278,10 @@ class CavityPREQVariable(ScaledEleScalarVariable):
     unit: str = "degrees"
     property_name: str = "PHI0"
     scale_factor: float = 1 / 360.0  # scale degrees to rad / 2pi
+
+
+class CavityPREQReadbackVariable(_ReadbackFromControlMixin, CavityPREQVariable):
+    """Read-only variant of cavity phase request variable."""
 
 class DummyEnumVariable(BmadEnumVariable, WritableActionMixin):
     """
