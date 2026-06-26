@@ -173,7 +173,6 @@ class TestFACET2Bmad:
             )
             assert screen_pv in staged_model.supported_variables
 
-    # @pytest.mark.xfail(reason="known FACET2 quadrupoles are missing EPICS mappings")
     def test_quadrupole_pvs_match_tao_lattice(self):
         model = get_facet_bmad_model(end_element="PR10711")
         assert_magnet_pvs_match_tao_lattice(model, "Quadrupole")

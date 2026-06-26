@@ -70,6 +70,12 @@ class _SBendFieldVariable(BmadScalarVariable):
         g = ele_attr["G"]  # 1/m
         dg = ele_attr["DG"]
         p0c = ele_attr["P0C"]  # eV
+
+        if g == 0:
+            logger.warning(
+                f"Element {self.element_name} has g=0, cannot compute BCTRL value. Returning 0."
+            )
+            return 0
         p = p0c * (1 + dg / g)
         return p * 1e-9
 
