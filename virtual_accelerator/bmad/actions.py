@@ -55,6 +55,33 @@ class _QuadrupoleGradientVariable(BmadScalarVariable):
         self._set_ele_attr(simulator, "B1_GRADIENT", bmad_value)
 
 
+class _SBendFieldVariable(BmadScalarVariable):
+    """
+    Shared sbend conversion helpers.
+
+    SLAC PV units are in GeV/c, which needs to be mapped
+    to the Bmad dg parameter:
+    dg = g_0 * dp, where dp = (p - p_0) / p_0, and g_0 is the nominal g value for the sbend. The Bmad dg parameter is in units of 1/m, so we need to convert from GeV/c to 1/m.
+
+    """
+
+    def _get_bctrl_value(self, simulator: Tao) -> Any:
+        ele_attr = self._get_ele_attr(simulator)
+        g = ele_attr["G"]  # 1/m
+        dg = ele_attr["DG"]
+        p0c = ele_attr["P0C"]  # eV
+        p = p0c * (1 + dg / g)
+        return p * 1e-9
+
+    def _set_bctrl_value(self, simulator: Tao, value: Any) -> None:
+        ele_attr = self._get_ele_attr(simulator)
+        p0c = ele_attr["P0C"]  # eV
+        g = ele_attr["G"]  # 1/m
+        dp = (value * 1e9 - p0c) / p0c
+        dg = dp * g
+        simulator.cmd(f"set ele {self.element_name} DG = {dg}")
+
+
 class _ScaledElementAttributeVariable(BmadScalarVariable):
     """Shared linear scaling helpers for element attributes."""
 
@@ -102,6 +129,23 @@ class SolenoidBCTRLVariable(_ScaledElementAttributeVariable, WritableActionMixin
 
 class SolenoidBACTVariable(_ReadbackFromControlMixin, SolenoidBCTRLVariable):
     """Action that operates on the BACT property of Solenoids"""
+
+
+class SBendBCTRLVariable(_SBendFieldVariable, WritableActionMixin):
+    """Action that operates on the BCTRL/BDES property of SBends"""
+
+    read_only: bool = False
+    unit: str = "GeV/c"
+
+    def _get(self, simulator: Tao) -> Any:
+        return self._get_bctrl_value(simulator)
+
+    def _set(self, simulator: Tao, value: Any) -> None:
+        self._set_bctrl_value(simulator, value)
+
+
+class SBendBACTVariable(_ReadbackFromControlMixin, SBendBCTRLVariable):
+    """Action that operates on the BACT property of SBends"""
 
 
 class KickerBCTRLVariable(_ScaledElementAttributeVariable, WritableActionMixin):

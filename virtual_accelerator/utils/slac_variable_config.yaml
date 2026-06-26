@@ -25,6 +25,17 @@ Solenoid:
   STATCTRLSUB.T: StatusVariable
   CTRL: ControlStateVariable
 
+SBend:
+  BCTRL: SBendBCTRLVariable
+  BCTRL.DRVL: BminVariable
+  BCTRL.DRVH: BmaxVariable
+  BACT: SBendBACTVariable
+  BDES: SBendBCTRLVariable
+  BMIN: BminVariable
+  BMAX: BmaxVariable
+  STATCTRLSUB.T: StatusVariable
+  CTRL: ControlStateVariable
+
 HorizontalCorrector:
   BCTRL: KickerBCTRLVariable
   BCTRL.DRVL: BminVariable
