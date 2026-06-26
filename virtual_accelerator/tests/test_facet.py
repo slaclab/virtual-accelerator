@@ -71,6 +71,38 @@ class TestFACET2Bmad:
         new_output = model.get(screen_pv)
         assert not (new_output == output).all()  # Check that the screen output changed
 
+    def test_sbend(self):
+        model = get_facet_bmad_model(
+            track_beam=True,
+            start_element="L0AFEND",
+            end_element="BPM10781",
+            custom_beam_path=TEST_BEAM_PATH,
+        )
+
+        nominal_value = model.get("BEND:IN10:661:BCTRL")
+        assert np.isclose(
+            nominal_value, 0.125, rtol=1e-2
+        )  # Check that the nominal value is correct
+
+        # change the setpoint by a fixed percentage
+        scale_factor = 0.01
+        new_value = nominal_value * (1 + scale_factor)
+        model.set({"BEND:IN10:661:BCTRL": new_value})
+        updated_value = model.get("BEND:IN10:661:BCTRL")
+        assert np.isclose(
+            updated_value, new_value, rtol=1e-2
+        )  # Check that the updated value is correct
+        ele_attrs = model.tao.ele_gen_attribs("BX10661")
+
+        # Check that the DG/G ratio is correct
+        assert np.isclose(ele_attrs["DG"] / ele_attrs["G"], scale_factor, rtol=1e-4)
+
+        # This change should also affect the downstream BPM reading
+        bpm_reading = model.get("BPMS:IN10:781:X")
+        assert (
+            bpm_reading < -1.0
+        )  # check that there is a significant deflection in the negative X direction
+
     def test_tcav(self):
         # test that the TCAV works as expected
         model = get_facet_bmad_model(
@@ -141,7 +173,6 @@ class TestFACET2Bmad:
             )
             assert screen_pv in staged_model.supported_variables
 
-    # @pytest.mark.xfail(reason="known FACET2 quadrupoles are missing EPICS mappings")
     def test_quadrupole_pvs_match_tao_lattice(self):
         model = get_facet_bmad_model(end_element="PR10711")
         assert_magnet_pvs_match_tao_lattice(model, "Quadrupole")
@@ -153,6 +184,10 @@ class TestFACET2Bmad:
     def test_vkicker_pvs_match_tao_lattice(self):
         model = get_facet_bmad_model(end_element="PR10711")
         assert_magnet_pvs_match_tao_lattice(model, "VKicker")
+
+    def test_sbend_pvs_match_tao_lattice(self):
+        model = get_facet_bmad_model(end_element="PR10711")
+        assert_magnet_pvs_match_tao_lattice(model, "SBend")
 
     def test_bpm_pvs_match_tao_lattice(self):
         model = get_facet_bmad_model(end_element="PR10711")
