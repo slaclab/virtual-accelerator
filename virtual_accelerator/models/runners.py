@@ -22,6 +22,13 @@ def main():
         help="End lattice element for BMAD models (default: END)",
     )
     parser.add_argument(
+        "--n-particles",
+        type=int,
+        default=10000,
+        help="Number of particles for model if used (default: 10000)",
+    )
+
+    parser.add_argument(
         "--log-level",
         default="INFO",
         choices=["DEBUG", "INFO", "WARNING", "ERROR", "CRITICAL"],
@@ -51,7 +58,7 @@ def main():
     elif args.model == "facet_bmad":
         model = get_facet_bmad_model(end_element=args.end_element, track_beam=True)
     elif args.model == "facet_staged":
-        model = get_facet_staged_model(end_element=args.end_element, n_particles=10000)
+        model = get_facet_staged_model(end_element=args.end_element, n_particles=args.n_particles)
     else:
         raise ValueError(f"Invalid model choice. Please choose one of {choices}.")
 
