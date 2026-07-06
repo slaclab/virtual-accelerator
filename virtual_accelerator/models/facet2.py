@@ -1,5 +1,6 @@
 import tempfile
 
+from virtual_accelerator.bmad.actions import CavityPREQReadbackVariable
 from virtual_accelerator.bmad.factory import BmadModelSpec, build_bmad_model
 from lume_bmad.actions import EleScalarVariable
 from lume_bmad.model import LUMEBmadModel
@@ -27,6 +28,15 @@ def add_facet_custom_variables(model: LUMEBmadModel) -> None:
                 element_name="L0BF",
                 property_name="PHI0",
                 unit="degrees",
+            )
+        )
+
+    if "TCY10490#1" in model.get("name"):
+        logger.debug("Adding TCY10490 phase readback variable to the model.")
+        model.register_action_variable(
+            CavityPREQReadbackVariable(
+                name="KLYS:LI10:51:PACT05",
+                element_name="TCY10490",
             )
         )
 
