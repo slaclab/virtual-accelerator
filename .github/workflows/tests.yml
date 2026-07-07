@@ -28,20 +28,20 @@ jobs:
         with:
           fetch-depth: 1
       - name: Checkout lcls-lattice
-        uses: actions/checkout@v4
+        uses: actions/checkout@4f1f4aec02e41874fa0262ea8ff5172d7978ad1e
         with:
           repository: slaclab/lcls-lattice
           # temp change branch to address bmad bug TODO: should remove when bug is resolved
           ref: temp_remove_fixers
           path: lcls-lattice
       - name: Checkout facet2-lattice
-        uses: actions/checkout@v4
+        uses: actions/checkout@4f1f4aec02e41874fa0262ea8ff5172d7978ad1e
         with:
           repository: slaclab/facet2-lattice
           path: facet2-lattice
           ref: b1d170ebf51582c1dc675595d810f5191866a443
       - name: Set up conda environment
-        uses: conda-incubator/setup-miniconda@v3
+        uses: conda-incubator/setup-miniconda@6bd9d14c76e9fc5223db3dd28e004f2c458599e8
         with:
           miniforge-version: latest
           python-version: ${{ matrix.python-version }}

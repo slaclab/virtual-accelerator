@@ -14,19 +14,19 @@ jobs:
       matrix:
         python-version: ["3.11", "3.12", "3.13"]
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@4f1f4aec02e41874fa0262ea8ff5172d7978ad1e
         with:
           submodules: recursive
           fetch-depth: 1
 
       - name: Checkout lcls-lattice
-        uses: actions/checkout@v4
+        uses: actions/checkout@4f1f4aec02e41874fa0262ea8ff5172d7978ad1e
         with:
           repository: slaclab/lcls-lattice
           ref: temp_remove_fixers
           path: lcls-lattice
       - name: Checkout facet2-lattice
-        uses: actions/checkout@v4
+        uses: actions/checkout@4f1f4aec02e41874fa0262ea8ff5172d7978ad1e
         with:
           repository: slaclab/facet2-lattice
           path: facet2-lattice
