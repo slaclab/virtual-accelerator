@@ -49,7 +49,7 @@ jobs:
           channel-priority: strict
           activate-environment: va-env
       - name: Install pytao (includes bmad)
-        run: conda install -y pytao
+        run: conda install -y pytao || echo "pytao not available for Python ${{ matrix.python-version }}, bmad tests will be skipped"
       - name: Install CPU-only PyTorch
         run: pip install --upgrade --index-url https://download.pytorch.org/whl/cpu torch
       - name: Install package and remaining dependencies

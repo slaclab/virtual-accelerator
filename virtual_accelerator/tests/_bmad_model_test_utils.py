@@ -332,4 +332,4 @@ def assert_roundtrip_pv_get_set(
                 )
                 model.set({pv_name: original_value})
                 roundtrip_value = model.get(pv_name)
-        assert_value_equal(pv_name, original_value, roundtrip_value)
+                assert_value_equal(pv_name, original_value, roundtrip_value)
