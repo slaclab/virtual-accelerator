@@ -8,6 +8,7 @@ from .dependency_profiles import (
     HAS_LCLS_LATTICE,
     HAS_STAGED_MODEL_DEPS,
 )
+from lume.staged_model import StagedModel
 
 TEST_BEAM_PATH = os.path.join(Path(__file__).parent, "../bmad", "test_beam")
 pytestmark = [
@@ -16,11 +17,10 @@ pytestmark = [
 ]
 
 if HAS_STAGED_MODEL_DEPS and HAS_LCLS_LATTICE:
-    from virtual_accelerator.models.staged_model import (
-        StagedModel,
+    from virtual_accelerator.models.cu_hxr import (
+        get_cu_hxr_bmad_model,
         get_cu_hxr_staged_model,
     )
-    from virtual_accelerator.models.cu_hxr import get_cu_hxr_bmad_model
     from virtual_accelerator.models.facet2 import get_facet_staged_model
     from virtual_accelerator.surrogates.injector_surrogate import InjectorSurrogate
 else:

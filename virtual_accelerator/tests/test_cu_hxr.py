@@ -84,6 +84,10 @@ class TestCUHXRBmad:
             end_element="OTR4", track_beam=True, custom_beam_path=TEST_BEAM_PATH
         )
 
+        # get OTR2 image
+        image = model.get("OTRS:IN20:571:Image:ArrayData")
+        assert image.shape == (1040, 1392)
+
         # get initial OTR4 image
         image = model.get("OTRS:IN20:711:Image:ArrayData")
         assert image.shape == (1040, 1392)

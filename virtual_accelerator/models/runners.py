@@ -8,13 +8,13 @@ import logging
 
 def main():
     parser = argparse.ArgumentParser(
-        description="Run the CU HXR model with BMAD or CHEETAH backend"
+        description="Run the CU HXR model with BMAD backend"
     )
-    choices = ["cu_hxr_bmad", "cu_hxr_cheetah", "facet_bmad", "facet_staged"]
+    choices = ["cu_hxr_bmad", "cu_hxr_staged", "facet_bmad", "facet_staged"]
     parser.add_argument(
         "model",
         choices=choices,
-        help="Model backend to run (cu_hxr_bmad, cu_hxr_cheetah, facet_bmad, or facet_staged)",
+        help="Model backend to run (cu_hxr_bmad, cu_hxr_staged, facet_bmad, or facet_staged)",
     )
     parser.add_argument(
         "--end-element",
@@ -49,16 +49,23 @@ def main():
 
     from virtual_accelerator.models.cu_hxr import (
         get_cu_hxr_bmad_model,
+        get_cu_hxr_staged_model,
     )
     from virtual_accelerator.models.facet2 import get_facet_bmad_model
 
     # Get the appropriate model based on user input
     if args.model == "cu_hxr_bmad":
-        model = get_cu_hxr_bmad_model(end_element=args.end_element)
+        model = get_cu_hxr_bmad_model(end_element=args.end_element, track_beam=True)
+    elif args.model == "cu_hxr_staged":
+        model = get_cu_hxr_staged_model(
+            end_element=args.end_element, n_particles=args.n_particles
+        )
     elif args.model == "facet_bmad":
         model = get_facet_bmad_model(end_element=args.end_element, track_beam=True)
     elif args.model == "facet_staged":
-        model = get_facet_staged_model(end_element=args.end_element, n_particles=args.n_particles)
+        model = get_facet_staged_model(
+            end_element=args.end_element, n_particles=args.n_particles
+        )
     else:
         raise ValueError(f"Invalid model choice. Please choose one of {choices}.")
 
