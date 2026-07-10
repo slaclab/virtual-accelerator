@@ -1,5 +1,6 @@
 import torch
 
+from lume.variables import EnumVariable, ScalarVariable
 from virtual_accelerator.surrogates.beam_output import BeamOutputModel
 
 from lcls_cu_inj_model import load_model
@@ -61,6 +62,63 @@ class InjectorSurrogate(BeamOutputModel):
     def __init__(self, **kwargs):
         super().__init__(load_model(), **kwargs)
         self.p0c = 135.0e6  # eV/c
+
+    def _get(self, variable_names: list[str]) -> dict[str, Any]:
+        """Wrap the generic `get` method to handle BACT and BDES variables which map to BCTRL variables"""
+
+        results = {}
+        for name in variable_names:
+            if name.endswith(":BACT") or name.endswith(":BDES"):
+                full_name = ":".join(name.split(":")[:-1]) + ":BCTRL"
+                results[name] = super()._get([full_name])[full_name]
+            elif name.endswith(":BMIN") or name.endswith(":BCTRL.DRVL"):
+                results[name] = -100.0  # default value for BMIN
+            elif name.endswith(":BMAX") or name.endswith(":BCTRL.DRVH"):
+                results[name] = 100.0  # default value for BMAX
+            elif name.endswith(":STATCTRLSUB.T"):
+                results[name] = "Ready"  # default value for STATCTRLSUB.T
+            elif name.endswith(":CTRL"):
+                results[name] = "Ready"  # default value for CTRL
+            else:
+                results[name] = super()._get([name])[name]
+
+        return results
+
+    def _set(self, values: Mapping[str, Any]):
+        """Wrap the generic `set` method to handle BDES variables which map to BCTRL variables"""
+        new_values = {}
+        for name, value in values.items():
+            if name.endswith(":BDES"):
+                new_values["".join(name.split(":")[:-1]) + ":BCTRL"] = value
+            else:
+                new_values[name] = value
+
+        super()._set(new_values)
+
+    @property
+    def supported_variables(self) -> Mapping[str, Any]:
+        """Wrap the generic `supported_variables` method to add BDES and BACT variables for quadrupoles"""
+        vars = super().supported_variables
+        new_vars = {}
+        for name in vars.keys():
+            if name.endswith(":BCTRL"):
+                base_name = ":".join(name.split(":")[:-1])
+                unit = vars[name].unit
+                for suffix in [":BACT", ":BMIN", ":BMAX", ":BCTRL.DRVL", ":BCTRL.DRVH"]:
+                    new_vars[base_name + suffix] = ScalarVariable(
+                        unit=unit, name=base_name + suffix, read_only=True
+                    )
+
+                new_vars[base_name + ":BDES"] = ScalarVariable(
+                    unit=unit, name=base_name + ":BDES", read_only=False
+                )
+
+                for suffix in [":STATCTRLSUB.T", ":CTRL"]:
+                    new_vars[base_name + suffix] = EnumVariable(
+                        name=base_name + suffix, options=["Ready"], read_only=True
+                    )
+
+        return {**vars, **new_vars}
 
     def update_state(self):
         """Wrap the generic `update_state` method to calculate the custom covariance matrix"""

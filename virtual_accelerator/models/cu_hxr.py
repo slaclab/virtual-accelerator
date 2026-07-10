@@ -43,6 +43,23 @@ def get_cu_hxr_bmad_model(
     )
 
 
+def get_cu_hxr_injector_surrogate_model(
+    n_particles: int = 1000,
+):
+    """
+    Get the surrogate model for the CU_HXR injector to OTR2.
+    Parameters
+    ----------
+    n_particles: int
+        Number of particles to simulate.
+    """
+
+    from virtual_accelerator.surrogates.injector_surrogate import InjectorSurrogate
+
+    injector_surrogate = InjectorSurrogate(n_particles=n_particles)
+    return injector_surrogate
+
+
 # get lume model instances for each stage of the accelerator
 def get_cu_hxr_staged_model(n_particles: int = 1000, **kwargs) -> StagedModel:
     """
@@ -60,10 +77,7 @@ def get_cu_hxr_staged_model(n_particles: int = 1000, **kwargs) -> StagedModel:
         Instance of the StagedModel for the CU_HXR lattice.
     """
 
-    from virtual_accelerator.surrogates.injector_surrogate import InjectorSurrogate
-    from virtual_accelerator.models.cu_hxr import get_cu_hxr_bmad_model
-
-    injector_surrogate = InjectorSurrogate(n_particles=n_particles)
+    injector_surrogate = get_cu_hxr_injector_surrogate_model(n_particles=n_particles)
     cu_hxr_bmad_model = get_cu_hxr_bmad_model(
         track_beam=True, start_element="OTR2", **kwargs
     )

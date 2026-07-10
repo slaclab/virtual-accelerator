@@ -1,4 +1,4 @@
-from typing import Any, Iterable, Mapping
+from typing import Any, Mapping
 
 import numpy as np
 import torch
@@ -63,7 +63,7 @@ class BeamOutputModel(LUMEModel, FinalParticlesMixIn):
         self.set({})  # Initializing with defaults of NN model
         self.update_state()
 
-    def _get(self, names: Iterable[str]) -> dict[str, Any]:
+    def _get(self, names: list[str]) -> dict[str, Any]:
         return {name: self._cache[name] for name in names}
 
     def _set(self, values: Mapping[str, Any]) -> None:
