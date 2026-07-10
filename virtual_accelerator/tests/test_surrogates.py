@@ -40,6 +40,20 @@ def test_injector_surrogate():
     assert not (initial_beam.x == updated_beam.x).all()
     assert surrogate.get("QUAD:IN20:525:BCTRL") == -5.0
 
+    # try getting all of the other PVs
+    all_pvs = surrogate.get(surrogate.supported_variables.keys())
+    for suffix in [
+        "BCTRL",
+        "BACT",
+        "BMIN",
+        "BMAX",
+        "CTRL",
+        "STATCTRLSUB.T",
+        "BCTRL.DRVL",
+        "BCTRL.DRVH",
+    ]:
+        assert all_pvs[f"QUAD:IN20:525:{suffix}"] is not None
+
 
 def test_injector_surrogate_outputs_are_physical():
     "Avoids bugs due to YAML/loading errors that can be silent"
