@@ -24,7 +24,7 @@ pip install .[all]
 | --- | --- | --- |
 | `get_cu_hxr_bmad_model` | `bmad` | Requires BMAD/PyTAO backend. |
 | `get_facet_bmad_model` | `bmad` | FACET-II BMAD model; requires `FACET2_LATTICE`. |
-| `InjectorSurrogate` | `surrogate` | Uses torch surrogate + cheetah particles. |
+| `get_cu_hxr_injector_surrogate_model` | `surrogate` | Uses torch surrogate + cheetah particles. |
 | `get_facet_staged_model` | `surrogate`, `bmad` | FACET-II staged model (injector surrogate + FACET-II BMAD). |
 | `get_cu_hxr_staged_model` | `surrogate`, `bmad` | Stages `InjectorSurrogate` + CU HXR BMAD model. |
 | `virtual_accelerator.models.runners` CLI | `pva` (+ model backend key) | Runner requires `pva`; selected model backend must also be installed. |
