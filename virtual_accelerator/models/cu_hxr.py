@@ -1,10 +1,6 @@
 import os
 
 from lume.staged_model import StagedModel
-from virtual_accelerator.utils.optional_dependencies import (
-    import_optional,
-    import_optional_symbol,
-)
 
 
 def get_cu_hxr_bmad_model(
@@ -96,50 +92,19 @@ def get_cu_hxr_staged_model(n_particles: int = 1000, **kwargs) -> StagedModel:
 
 def get_cu_hxr_cheetah_model():
     """
-    Get the LUMECheetahModel for the CU_HXR lattice from GUN to OTR2.
+    Get the LUMECheetahModel for the CU_HXR lattice.
 
     Returns
     -------
     LUMECheetahModel
         Instance of the LUMECheetahModel for the CU_HXR lattice.
     """
-    LUMECheetahModel = import_optional_symbol(
-        "lume_cheetah",
-        "LUMECheetahModel",
-        feature="CU HXR Cheetah model",
-        extra="cheetah",
-    )
-    CheetahSimulator = import_optional_symbol(
-        "lume_cheetah",
-        "CheetahSimulator",
-        feature="CU HXR Cheetah model",
-        extra="cheetah",
-    )
-    Segment = import_optional_symbol(
-        "cheetah.accelerator",
-        "Segment",
-        feature="CU HXR Cheetah model",
-        extra="cheetah",
-    )
-    ParticleBeam = import_optional_symbol(
-        "cheetah.particles",
-        "ParticleBeam",
-        feature="CU HXR Cheetah model",
-        extra="cheetah",
-    )
-    get_variables_from_segment = import_optional_symbol(
-        "virtual_accelerator.cheetah.variables",
-        "get_variables_from_segment",
-        feature="CU HXR Cheetah model",
-        extra="cheetah",
-    )
-    get_mad_control_mapping = import_optional_symbol(
-        "virtual_accelerator.cheetah.utils",
-        "get_mad_control_mapping",
-        feature="CU HXR Cheetah model",
-        extra="cheetah",
-    )
-    torch = import_optional("torch", feature="CU HXR Cheetah model", extra="cheetah")
+    import torch
+    from cheetah.accelerator import Segment
+    from cheetah.particles import ParticleBeam
+    from lume_cheetah import LUMECheetahModel, CheetahSimulator
+    from virtual_accelerator.cheetah.utils import get_mad_control_mapping
+    from virtual_accelerator.cheetah.variables import get_variables_from_segment
 
     # Get path to beam distributions
     # beam_dist = os.environ.get(
@@ -171,9 +136,6 @@ def get_cu_hxr_cheetah_model():
         os.path.join(lcls_lattice, "cheetah/nc_hxr.json")
     )
 
-    # Set end destination from full lattice
-    segment = segment.subcell(end="otr2")
-
     # Define the simulator using lattice and particle beam
     simulator = CheetahSimulator(
         segment=segment,
@@ -191,6 +153,9 @@ def get_cu_hxr_cheetah_model():
     variables = get_variables_from_segment(segment, element_name_to_control_name)
 
     # Create model using action-based variable integration.
-    model = LUMECheetahModel(simulator=simulator, action_variables=list(variables.values()))
+    model = LUMECheetahModel(
+        simulator=simulator,
+        action_variables=list(variables.values()),
+    )
 
     return model
