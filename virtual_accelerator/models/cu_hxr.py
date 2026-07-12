@@ -90,7 +90,7 @@ def get_cu_hxr_staged_model(n_particles: int = 1000, **kwargs) -> StagedModel:
     return staged_model
 
 
-def get_cu_hxr_cheetah_model():
+def get_cu_hxr_cheetah_model(n_particles: int = 1000) -> "LUMECheetahModel":
     """
     Get the LUMECheetahModel for the CU_HXR lattice.
 
@@ -121,7 +121,7 @@ def get_cu_hxr_cheetah_model():
         beta_y=torch.tensor(9.34),
         alpha_y=torch.tensor(-1.6946),
         emittance_y=torch.tensor(1e-7),
-        num_particles=1000,
+        num_particles=n_particles,
         energy=torch.tensor(90e6),
     )
     incoming_beam.particle_charges = torch.tensor(1.0)

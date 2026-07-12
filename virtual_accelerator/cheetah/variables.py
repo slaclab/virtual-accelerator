@@ -14,7 +14,21 @@ from virtual_accelerator.utils.variables import (
 )
 
 
-SKIPPED_ELEMENT_TYPES = {"Drift", "Marker", "Cavity", "Undulator", "Dipole"}
+SKIPPED_ELEMENT_TYPES = {
+    "Drift",
+    "Marker",
+    "Cavity",
+    "Undulator",
+    "Dipole",
+    "Aperture",
+}
+
+# Some helper correctors in the CU HXR Cheetah lattice are intentionally
+# unmapped to controls and should be silently skipped when no device mapping exists.
+SKIPPED_UNMAPPED_ELEMENT_TYPES = {
+    "HorizontalCorrector",
+    "VerticalCorrector",
+}
 
 # Element-type aliases bridge Cheetah runtime names to SLAC config keys.
 ELEMENT_TYPE_ALIASES = {
@@ -176,6 +190,8 @@ def get_variables_from_segment(
 
         control_name = _resolve_control_name(element.name, device_mapping)
         if control_name is None:
+            if element_type in SKIPPED_UNMAPPED_ELEMENT_TYPES:
+                continue
             warnings.warn(f"Element {element.name} not found in device mapping")
             continue
 
