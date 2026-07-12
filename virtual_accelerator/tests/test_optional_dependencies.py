@@ -31,7 +31,7 @@ def test_import_optional_propagates_nested_module_not_found(monkeypatch):
 
     with pytest.raises(ModuleNotFoundError):
         import_optional(
-            "virtual_accelerator.cheetah.transformer",
+            "virtual_accelerator.cheetah.actions",
             feature="test feature",
             extra="cheetah",
         )

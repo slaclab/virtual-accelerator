@@ -54,4 +54,5 @@ jobs:
           FACET2_LATTICE: ${{ github.workspace }}/facet2-lattice
         run: >
           pytest virtual_accelerator/tests/test_optional_dependencies.py
+          virtual_accelerator/tests/test_cheetah_actions.py
           -v --tb=short -ra --strict-markers
