@@ -1,328 +1,27 @@
-import pandas as pd
-import torch
+"""Cheetah utility helpers that are independent from action variable logic.
+
+The action conversion and PV-mapping layer now lives in
+``virtual_accelerator.cheetah.actions``. This module keeps only static mapping
+helpers used to load MAD/controls naming tables from CSV.
+"""
+
 import os
 from pathlib import Path
 
+import pandas as pd
 
-class NoSetMethodError(Exception):
-    pass
-
-
-class FieldAccessor:
-    """
-    A class to access and set arbitrary attributes of Cheetah elements when logic
-    is more complex than simple attribute access (ie. nested attributes).
-
-    This class is used to map process variable (PV) attributes to Cheetah element attributes.
-    It allows both getting and setting values of the attributes by providing a getter and setter function.
-    """
-
-    def __init__(self, getter, setter=None):
-        self.get = getter
-        self.set = setter
-
-    def __call__(self, element, energy, value=None):
-        if value is None:
-            return self.get(element, energy)
-        else:
-            if self.set is None:
-                raise NoSetMethodError("Cannot set value for this attribute")
-            self.set(element, energy, value)
-
-
-def get_magnetic_rigidity(energy):
-    """
-    Calculate the magnetic rigidity (Bρ) in kG-m given the beam energy in eV.
-    """
-    return 33.356 * energy / 1e9
-
-
-# define mappings for different element types
-
-BCTRL_LIMIT = 100.0
-
-# -- include conversions for cheetah attributes to SLAC EPICS attributes
-QUADRUPOLE_MAPPING = {
-    "BCTRL": FieldAccessor(
-        lambda e, energy: e.k1 * e.length * get_magnetic_rigidity(energy),
-        lambda e, energy, k1: setattr(
-            e, "k1", k1 / get_magnetic_rigidity(energy) / e.length
-        ),
-    ),
-    "BACT": FieldAccessor(
-        lambda e, energy: e.k1 * e.length * get_magnetic_rigidity(energy)
-    ),
-    "BMAX": FieldAccessor(lambda e, energy: BCTRL_LIMIT),
-    "BMIN": FieldAccessor(lambda e, energy: -BCTRL_LIMIT),
-    "BCTRL.DRVL": FieldAccessor(lambda e, energy: -BCTRL_LIMIT),
-    "BCTRL.DRVH": FieldAccessor(lambda e, energy: BCTRL_LIMIT),
-    "CTRL": FieldAccessor(lambda e, energy: "Ready"),
-    "BCON": FieldAccessor(lambda e, energy: 1.0),
-    "BDES": FieldAccessor(
-        lambda e, energy: e.k1 * e.length * get_magnetic_rigidity(energy)
-    ),
-}
-
-SOLENOID_MAPPING = {
-    "BCTRL": FieldAccessor(
-        lambda e, energy: e.k * get_magnetic_rigidity(energy),
-        lambda e, energy, k: setattr(e, "k", k / (2 * get_magnetic_rigidity(energy))),
-    ),
-    "BACT": FieldAccessor(lambda e, energy: e.k * get_magnetic_rigidity(energy)),
-    "BMAX": FieldAccessor(lambda e, energy: BCTRL_LIMIT),
-    "BMIN": FieldAccessor(lambda e, energy: -BCTRL_LIMIT),
-    "BCTRL.DRVL": FieldAccessor(lambda e, energy: -BCTRL_LIMIT),
-    "BCTRL.DRVH": FieldAccessor(lambda e, energy: BCTRL_LIMIT),
-    "CTRL": FieldAccessor(lambda e, energy: "Ready"),
-    "BCON": FieldAccessor(lambda e, energy: 1.0),
-    "BDES": FieldAccessor(lambda e, energy: e.k * get_magnetic_rigidity(energy)),
-}
-
-CORRECTOR_MAPPING = {
-    "BCTRL": FieldAccessor(
-        lambda e, energy: e.angle * get_magnetic_rigidity(energy),
-        lambda e, energy, a: setattr(e, "angle", a / get_magnetic_rigidity(energy)),
-    ),
-    "BACT": FieldAccessor(lambda e, energy: e.angle * get_magnetic_rigidity(energy)),
-    "BMAX": FieldAccessor(lambda e, energy: BCTRL_LIMIT),
-    "BMIN": FieldAccessor(lambda e, energy: -BCTRL_LIMIT),
-    "BCTRL.DRVL": FieldAccessor(lambda e, energy: -BCTRL_LIMIT),
-    "BCTRL.DRVH": FieldAccessor(lambda e, energy: BCTRL_LIMIT),
-    "CTRL": FieldAccessor(lambda e, energy: "Ready"),
-    "BCON": FieldAccessor(lambda e, energy: 1.0),
-    "BDES": FieldAccessor(lambda e, energy: e.angle * get_magnetic_rigidity(energy)),
-}
-
-TRANSVERSE_DEFLECTING_CAVITY_MAPPING = {
-    "AREQ": "voltage",
-    "PREQ": "phase",
-    "AFBENB": FieldAccessor(lambda e, energy: 0.0),
-    "AFBST": FieldAccessor(lambda e, energy: 0.0),
-    "AMPL_W0CH0": FieldAccessor(lambda e, energy: 0.0),
-    "MODECFG": FieldAccessor(lambda e, energy: 0.0),
-    "PACT_AVGNT": FieldAccessor(lambda e, energy: 0.0),
-    "PFBENB": FieldAccessor(lambda e, energy: 0.0),
-    "PFBST": FieldAccessor(lambda e, energy: 0.0),
-    "RF_ENABLE": FieldAccessor(lambda e, energy: 1.0),
-}
-
-BPM_MAPPING = {
-    "X": FieldAccessor(lambda e, energy: e.reading[0]),
-    "Y": FieldAccessor(lambda e, energy: e.reading[1]),
-    "XSCDT1H": FieldAccessor(lambda e, energy: e.reading[0]),
-    "YSCDT1H": FieldAccessor(lambda e, energy: e.reading[1]),
-    "TMIT": FieldAccessor(lambda e, energy: 1.0),
-}
-
-# multiply image intensity by 16 bit number range (is similar to real machine?)
-SCREEN_MAPPING = {
-    "Image:ArrayData": FieldAccessor(lambda e, energy: e.reading.T * 65535),
-    "PNEUMATIC": "is_active",
-    "Image:ArraySize1_RBV": FieldAccessor(lambda e, energy: e.resolution[0]),
-    "Image:ArraySize0_RBV": FieldAccessor(lambda e, energy: e.resolution[1]),
-    "RESOLUTION": FieldAccessor(lambda e, energy: e.pixel_size[0] * 1e6),
-    "IMAGE": FieldAccessor(lambda e, energy: e.reading.T * 65535),
-    "N_OF_ROW": FieldAccessor(lambda e, energy: e.resolution[0]),
-    "N_OF_COL": FieldAccessor(lambda e, energy: e.resolution[1]),
-}
-
-# CHEETAH ELEMENT MAPPINGS
-MAPPINGS = {
-    "Quadrupole": QUADRUPOLE_MAPPING,
-    "Solenoid": SOLENOID_MAPPING,
-    "HorizontalCorrector": CORRECTOR_MAPPING,
-    "VerticalCorrector": CORRECTOR_MAPPING,
-    "BPM": BPM_MAPPING,
-    "Screen": SCREEN_MAPPING,
-    "TransverseDeflectingCavity": TRANSVERSE_DEFLECTING_CAVITY_MAPPING,
-}
-
-LCLS_ELEMENTS = os.path.join(
-    Path(__file__).parent.resolve(),
-    "lcls_elements.csv",
-)
-
-
-def handle_quadrupole_composite(elements, pv_attribute, energy, set_value):
-    """
-    Handle composite quadrupole devices split into multiple subelements.
-
-    Quadrupoles require special handling because their control system
-    variables (e.g., BCTRL, BDES) represent integrated magnetic strength.
-
-    For a composite quadrupole:
-        - The total strength depends on the *sum of subelement lengths*
-        - All subelements share the same normalized strength (k1)
-
-    Behavior:
-        - GET:
-            Returns the integrated strength using total length.
-        - SET:
-            Computes a single k1 using total length and applies it to all subelements.
-
-    Args:
-        elements (list[Quadrupole]):
-            List of quadrupole subelements.
-
-        pv_attribute (str):
-            Attribute name (e.g., 'BCTRL', 'BDES', 'BACT').
-
-        energy (torch.Tensor or float):
-            Beam energy for magnetic rigidity calculation.
-
-        set_value (torch.Tensor or float or None):
-            Value to set, if performing a set operation.
-
-    Returns:
-        torch.Tensor or float or None:
-            Attribute value if getting, otherwise None.
-    """
-    total_length = sum(e.length for e in elements)
-
-    if set_value is not None and pv_attribute in {"BCTRL", "BDES"}:
-        new_k1 = set_value / get_magnetic_rigidity(energy) / total_length
-
-        for e in elements:
-            e.k1 = new_k1
-        return
-
-    if pv_attribute in {"BCTRL", "BACT", "BDES"}:
-        return elements[0].k1 * total_length * get_magnetic_rigidity(energy)
-
-    # fallback behavior
-    return default_composite_handler(elements, pv_attribute, energy, set_value)
-
-
-def default_composite_handler(elements, pv_attribute, energy, set_value):
-    """
-    Default handler for composite devices.
-    Assumes all subelements share identical attributes.
-
-    Behavior:
-        - GET:
-            Returns the attribute from the first subelement.
-        - SET:
-            Applies the value to all subelements.
-
-    Args:
-        elements (list[object]):
-            List of subelements of the same type.
-
-        pv_attribute (str):
-            Attribute name.
-
-        energy (torch.Tensor or float):
-            Beam energy.
-
-        set_value (torch.Tensor or float or None):
-            Value to set, if performing a set operation.
-
-    Returns:
-        torch.Tensor or float or None:
-            Attribute value if getting, otherwise None.
-    """
-
-    if set_value is not None:
-        for e in elements:
-            access_cheetah_attribute(e, pv_attribute, energy, set_value)
-        return
-
-    return access_cheetah_attribute(elements[0], pv_attribute, energy)
-
-
-COMPOSITE_HANDLERS = {
-    "Quadrupole": handle_quadrupole_composite,
-    "TransverseDeflectingCavity": default_composite_handler,
-}
-
-
-def access_cheetah_attribute(element, pv_attribute, energy, set_value=None):
-    """
-
-    Return or set a Cheetah element attribute based on the PV attribute.
-    If `set_value` is provided, it sets the value of the Cheetah attribute.
-
-
-    This function supports both single elements and composite devices
-    represented as lists of subelements (e.g., split quadrupoles or TCAVs).
-
-    For composite devices, behavior is delegated to a device-specific handler.
-
-    Args:
-        element (element or list[element]):
-        A single Cheetah element or a list of subelements representing
-        a single logical device.
-
-        pv_attribute (str): The process variable attribute to map.
-
-        energy (float): The beam energy in eV.
-
-        set_value (optional): If provided, sets the value of the Cheetah attribute.
-
-    Returns:
-        value: The corresponding Cheetah attribute value if `set_value` is None, otherwise sets the value and returns None.
-    """
-
-    # implementing fix for quads, will rethink for tcavs
-    # simplest case, each subelement has sub_length = length/len(sub_elements)
-    # handling composite elements
-
-    if isinstance(element, list):
-        if len(element) == 0:
-            raise ValueError("Cannot access attribute on empty element list")
-        element_type = type(element[0]).__name__
-        if any(type(sub).__name__ != element_type for sub in element):
-            raise ValueError("All subelements in element list must have same type")
-
-        handler = COMPOSITE_HANDLERS.get(element_type, default_composite_handler)
-        return handler(element, pv_attribute, energy, set_value)
-
-    # handling for normal elements
-
-    element_type = type(element).__name__
-    if element_type not in MAPPINGS:
-        raise ValueError(f"Unsupported element type: {element_type}")
-
-    mapping = MAPPINGS[element_type]
-    if pv_attribute not in mapping:
-        raise ValueError(
-            f"Unsupported PV attribute: {pv_attribute} for element type: {element_type}"
-        )
-
-    accessor = mapping[pv_attribute]
-
-    # convert to tensor if the value is a float or int
-    if isinstance(set_value, (float, int)):
-        set_value = torch.tensor(set_value)
-
-    if isinstance(accessor, str):
-        if set_value is None:
-            return getattr(element, accessor)
-        else:
-            try:
-                setattr(element, accessor, set_value)
-            except NoSetMethodError as e:
-                raise ValueError(
-                    f"Cannot set value for {pv_attribute} of element type {element_type}"
-                ) from e
-
-    elif isinstance(accessor, FieldAccessor):
-        try:
-            return accessor(element, energy, set_value)
-        except NoSetMethodError as e:
-            raise ValueError(
-                f"Cannot set value for {pv_attribute} of element type {element_type}"
-            ) from e
+LCLS_ELEMENTS = os.path.join(Path(__file__).parent.resolve(), "lcls_elements.csv")
 
 
 def get_mad_control_mapping(fname: str | None = None):
     """
-    Create a mapping from madnames to control names and device types
-    from a CSV file.
+    Create a mapping from MAD element names to control-system names.
 
-
-    Args:
-        fname (str): Path to the CSV file containing the mapping.
+    Parameters
+    ----------
+    fname : str | None
+        Optional path to a CSV file containing ``Element`` and
+        ``Control System Name`` columns.
 
     """
     if fname is None:
@@ -337,10 +36,13 @@ def get_mad_control_mapping(fname: str | None = None):
 
 def get_control_mad_mapping(fname: str | None = None):
     """
-    Create a mapping from control system names to element names from a CSV file.
+    Create a mapping from control-system names to MAD element names.
 
-    Args:
-        fname (str): Path to the CSV file containing the mapping.
+    Parameters
+    ----------
+    fname : str | None
+        Optional path to a CSV file containing ``Control System Name`` and
+        ``Element`` columns.
 
     """
 

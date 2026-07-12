@@ -1,8 +1,8 @@
 """Variable factory utilities for action-based Cheetah model integration.
 
 This module builds action variables from a Cheetah lattice segment and SLAC PV
-configuration mappings. It replaces the transformer-oriented path by resolving
-per-element variable classes from ``virtual_accelerator.cheetah.actions``.
+configuration mappings by resolving per-element variable classes from
+``virtual_accelerator.cheetah.actions``.
 """
 
 from typing import Any
