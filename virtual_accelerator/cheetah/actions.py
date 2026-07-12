@@ -8,7 +8,8 @@ classes.
 from typing import Any
 
 from lume.actions import ReadOnlyActionMixin, WritableActionMixin
-from lume.variables import EnumVariable, NDVariable, ScalarVariable
+from lume.variables import EnumVariable
+from lume_torch.variables import TorchNDVariable, TorchScalarVariable
 
 
 BCTRL_LIMIT = 100.0
@@ -107,14 +108,14 @@ class _CheetahElementAccessMixin:
             setattr(subelement, attribute_name, value)
 
 
-class CheetahScalarVariable(_CheetahElementAccessMixin, ScalarVariable):
+class CheetahScalarVariable(_CheetahElementAccessMixin, TorchScalarVariable):
     """Base scalar action variable for Cheetah-backed PVs."""
 
     element_name: str
     pv_attribute: str
 
 
-class CheetahNDVariable(_CheetahElementAccessMixin, NDVariable):
+class CheetahNDVariable(_CheetahElementAccessMixin, TorchNDVariable):
     """Base array-valued action variable for Cheetah-backed PVs."""
 
     element_name: str
@@ -213,7 +214,7 @@ class SolenoidBCTRLVariable(CheetahWritableScalarVariable):
 
     def _set(self, simulator, value):
         element, energy = self._resolve_element_and_energy(simulator)
-        new_k = value / (2 * get_magnetic_rigidity(energy))
+        new_k = value / get_magnetic_rigidity(energy)
         for subelement in self._elements(element):
             subelement.k = new_k
 
@@ -467,7 +468,7 @@ class ScreenPneumaticVariable(CheetahWritableScalarVariable):
     """Writable scalar representing screen insertion/activation control."""
 
     def _get(self, simulator):
-        return self._get_direct_attribute(simulator, "is_active")
+        return 1.0 if bool(self._get_direct_attribute(simulator, "is_active")) else 0.0
 
     def _set(self, simulator, value):
-        self._set_direct_attribute(simulator, "is_active", value)
+        self._set_direct_attribute(simulator, "is_active", bool(value))

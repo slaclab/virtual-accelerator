@@ -313,23 +313,23 @@ def assert_roundtrip_pv_get_set(
         "No writable variables found in model.supported_variables"
     )
 
-    scalar_variable_cls = None
-    try:
-        from lume.variables import ScalarVariable as scalar_variable_cls
-    except ImportError:
-        pass
-
     for pv_name in writable_supported_variables:
-        if pv_name != "track_type":
-            if scalar_variable_cls is not None and isinstance(
-                supported_variables[pv_name], scalar_variable_cls
-            ):
-                original_value = (
-                    model.get(pv_name) + 0.001
-                )  # add small offset to ensure set does something
-                assert original_value != 0, (
-                    f"Original value for {pv_name} is zero, cannot perform roundtrip test with offset"
-                )
-                model.set({pv_name: original_value})
-                roundtrip_value = model.get(pv_name)
-        assert_value_equal(pv_name, original_value, roundtrip_value)
+        if pv_name == "track_type":
+            continue
+
+        current_value = model.get(pv_name)
+
+        if isinstance(current_value, bool):
+            target_value = not current_value
+        elif isinstance(current_value, Real):
+            if pv_name.endswith(":PNEUMATIC"):
+                target_value = 0.0 if float(current_value) >= 0.5 else 1.0
+            else:
+                target_value = float(current_value) + 0.001
+        else:
+            # Roundtrip helper currently targets scalar-like writable controls.
+            continue
+
+        model.set({pv_name: target_value})
+        roundtrip_value = model.get(pv_name)
+        assert_value_equal(pv_name, target_value, roundtrip_value)

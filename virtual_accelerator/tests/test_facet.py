@@ -173,21 +173,10 @@ class TestFACET2Bmad:
             )
             assert screen_pv in staged_model.supported_variables
 
-    def test_quadrupole_pvs_match_tao_lattice(self):
+    @pytest.mark.parametrize("element_type", ["Quadrupole", "HKicker", "VKicker", "SBend"])
+    def test_magnet_pvs_match_tao_lattice(self, element_type):
         model = get_facet_bmad_model(end_element="PR10711")
-        assert_magnet_pvs_match_tao_lattice(model, "Quadrupole")
-
-    def test_hkicker_pvs_match_tao_lattice(self):
-        model = get_facet_bmad_model(end_element="PR10711")
-        assert_magnet_pvs_match_tao_lattice(model, "HKicker")
-
-    def test_vkicker_pvs_match_tao_lattice(self):
-        model = get_facet_bmad_model(end_element="PR10711")
-        assert_magnet_pvs_match_tao_lattice(model, "VKicker")
-
-    def test_sbend_pvs_match_tao_lattice(self):
-        model = get_facet_bmad_model(end_element="PR10711")
-        assert_magnet_pvs_match_tao_lattice(model, "SBend")
+        assert_magnet_pvs_match_tao_lattice(model, element_type)
 
     def test_bpm_pvs_match_tao_lattice(self):
         model = get_facet_bmad_model(end_element="PR10711")

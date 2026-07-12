@@ -14,7 +14,7 @@ from virtual_accelerator.utils.variables import (
 )
 
 
-SKIPPED_ELEMENT_TYPES = {"Drift", "Marker", "Cavity"}
+SKIPPED_ELEMENT_TYPES = {"Drift", "Marker", "Cavity", "Undulator", "Dipole"}
 
 # Element-type aliases bridge Cheetah runtime names to SLAC config keys.
 ELEMENT_TYPE_ALIASES = {
