@@ -48,7 +48,7 @@ class TestCheetahActions:
         variable = QuadrupoleBCTRLVariable(
             name="QUAD:IN20:511:BCTRL",
             element_name="Q1",
-            pv_attribute="BCTRL",
+            element_attribute="k1",
         )
 
         initial_value = float(variable._get(simulator))
@@ -64,7 +64,7 @@ class TestCheetahActions:
         variable = QuadrupoleBACTVariable(
             name="QUAD:IN20:511:BACT",
             element_name="Q1",
-            pv_attribute="BACT",
+            element_attribute="k1",
         )
 
         with pytest.raises(RuntimeError):

@@ -48,6 +48,13 @@ SCREEN_VARIABLE_CLASS_MAPPING = {
     "N_OF_COL": "ScreenImageArraySizeVariable",
 }
 
+SCREEN_ARRAY_SIZE_INDEX_BY_SUFFIX = {
+    "Image:ArraySize1_RBV": 0,
+    "N_OF_ROW": 0,
+    "Image:ArraySize0_RBV": 1,
+    "N_OF_COL": 1,
+}
+
 
 def _resolve_variable_class_name(var_spec: Any) -> str:
     """Extract the variable class name from config entries.
@@ -77,7 +84,9 @@ def _resolve_element_variable_mapping(
     return element_attr_mapping.get(mapping_key)
 
 
-def _resolve_control_name(element_name: str, device_mapping: dict[str, str]) -> str | None:
+def _resolve_control_name(
+    element_name: str, device_mapping: dict[str, str]
+) -> str | None:
     """Resolve control-system base PV from an element name.
 
     Supports direct element-name matches and split-element fallback by removing
@@ -133,6 +142,14 @@ def _instantiate_element_variables(
 
         if issubclass(var_class, cheetah_actions.CheetahReadOnlyNDVariable):
             init_kwargs["shape"] = image_shape or (1,)
+
+        if var_class_name == "ScreenImageArraySizeVariable":
+            size_index = SCREEN_ARRAY_SIZE_INDEX_BY_SUFFIX.get(attr)
+            if size_index is None:
+                raise ValueError(
+                    f"No screen array-size index configured for suffix {attr!r}"
+                )
+            init_kwargs["index"] = size_index
 
         element_variables[variable_name] = var_class(**init_kwargs)
 
@@ -199,7 +216,9 @@ def get_variables_from_segment(
             continue
         processed_control_names.add(control_name)
 
-        class_mapping = _resolve_element_variable_mapping(element_type, element_attr_mapping)
+        class_mapping = _resolve_element_variable_mapping(
+            element_type, element_attr_mapping
+        )
         if class_mapping is None:
             warnings.warn(
                 f"Element type {element_type} for {element.name} not found in variable mapping"

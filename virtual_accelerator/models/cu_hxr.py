@@ -90,7 +90,7 @@ def get_cu_hxr_staged_model(n_particles: int = 1000, **kwargs) -> StagedModel:
     return staged_model
 
 
-def get_cu_hxr_cheetah_model(n_particles: int = 1000) -> "LUMECheetahModel":
+def get_cu_hxr_cheetah_model(n_particles: int = 1000):
     """
     Get the LUMECheetahModel for the CU_HXR lattice.
 

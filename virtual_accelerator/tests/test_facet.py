@@ -173,7 +173,9 @@ class TestFACET2Bmad:
             )
             assert screen_pv in staged_model.supported_variables
 
-    @pytest.mark.parametrize("element_type", ["Quadrupole", "HKicker", "VKicker", "SBend"])
+    @pytest.mark.parametrize(
+        "element_type", ["Quadrupole", "HKicker", "VKicker", "SBend"]
+    )
     def test_magnet_pvs_match_tao_lattice(self, element_type):
         model = get_facet_bmad_model(end_element="PR10711")
         assert_magnet_pvs_match_tao_lattice(model, element_type)

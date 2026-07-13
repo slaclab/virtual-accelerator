@@ -5,8 +5,6 @@ package. Conversion and composite-device behavior live directly on action
 classes.
 """
 
-from typing import Any
-
 from lume_cheetah.actions import (
     CheetahReadOnlyEnumVariable,
     CheetahReadOnlyNDVariable,
@@ -26,6 +24,10 @@ def get_magnetic_rigidity(energy):
     return 33.356 * energy / 1e9
 
 
+class _ReadOnlyActionMixin(ReadOnlyActionMixin):
+    read_only: bool = True
+
+
 class _ReadbackFromControlMixin(ReadOnlyActionMixin):
     """Read-only mixin for readbacks that reuse control `_get` logic."""
 
@@ -39,7 +41,6 @@ class _ReadbackFromControlMixin(ReadOnlyActionMixin):
         raise RuntimeError(f"{self.name} is read-only")
 
 
-
 class QuadrupoleBCTRLVariable(CheetahWritableScalarVariable):
     """Quadrupole control/desired magnetic strength (BCTRL/BDES) in kG."""
 
@@ -48,7 +49,11 @@ class QuadrupoleBCTRLVariable(CheetahWritableScalarVariable):
 
     def _get(self, simulator):
         element, energy = self._resolve_element_and_energy(simulator, self.element_name)
-        return getattr(element, self.element_attribute) * element.length * get_magnetic_rigidity(energy)
+        return (
+            getattr(element, self.element_attribute)
+            * element.length
+            * get_magnetic_rigidity(energy)
+        )
 
     def _set(self, simulator, value):
         element, energy = self._resolve_element_and_energy(simulator, self.element_name)
@@ -136,32 +141,36 @@ class KickerBACTVariable(_ReadbackFromControlMixin, KickerBCTRLVariable):
     """Horizontal/vertical corrector readback variable (BACT) in kG."""
 
 
-class StatusVariable(TorchScalarVariable, ReadOnlyActionMixin):
+class StatusVariable(TorchScalarVariable, _ReadOnlyActionMixin):
     """Read-only device status scalar value."""
+
     element_name: str
 
     def _get(self, simulator):
         return 1.0
 
 
-class BminVariable(TorchScalarVariable, ReadOnlyActionMixin):
+class BminVariable(TorchScalarVariable, _ReadOnlyActionMixin):
     """Read-only lower operating limit variable for magnet-like devices."""
+
     element_name: str
 
     def _get(self, simulator):
         return -BCTRL_LIMIT
 
 
-class BmaxVariable(TorchScalarVariable, ReadOnlyActionMixin):
+class BmaxVariable(TorchScalarVariable, _ReadOnlyActionMixin):
     """Read-only upper operating limit variable for magnet-like devices."""
+
     element_name: str
 
     def _get(self, simulator):
         return BCTRL_LIMIT
 
 
-class ControlStateVariable(EnumVariable, ReadOnlyActionMixin):
+class ControlStateVariable(EnumVariable, _ReadOnlyActionMixin):
     """Read-only high-level control state enum for magnet-like devices."""
+
     element_name: str
 
     options: list[str] = ["Ready", "TRIM", "PERTURB", "BCON_TO_BDES", "BACT_TO_BDES"]
@@ -191,8 +200,9 @@ class BPMYVariable(CheetahReadOnlyScalarVariable):
         return super()._get(simulator)[1]
 
 
-class BPMTMITDummyVariable(TorchScalarVariable, ReadOnlyActionMixin):
+class BPMTMITDummyVariable(TorchScalarVariable, _ReadOnlyActionMixin):
     """Read-only placeholder BPM intensity variable for interface parity."""
+
     element_name: str
 
     unit: str = "arbitrary units"
@@ -255,6 +265,7 @@ class CavityMODECFGVariable(CheetahReadOnlyEnumVariable):
 
 class ScreenImageVariable(CheetahReadOnlyNDVariable):
     """Read-only screen image array variable."""
+
     element_attribute: str = "reading"
 
     def _get(self, simulator):
@@ -263,6 +274,7 @@ class ScreenImageVariable(CheetahReadOnlyNDVariable):
 
 class ScreenImageArraySizeVariable(CheetahReadOnlyScalarVariable):
     """Read-only scalar for screen image dimension metadata values."""
+
     element_attribute: str = "resolution"
     index: int
 
@@ -282,6 +294,7 @@ class ScreenResolutionVariable(CheetahReadOnlyScalarVariable):
 
 class ScreenPneumaticVariable(CheetahWritableScalarVariable):
     """Writable scalar representing screen insertion/activation control."""
+
     element_attribute: str = "is_active"
 
     def _get(self, simulator):
