@@ -8,10 +8,10 @@ configuration mappings by resolving per-element variable classes from
 from typing import Any
 import warnings
 from lume.variables import Variable
-from virtual_accelerator.cheetah import actions as cheetah_actions
 from virtual_accelerator.utils.variables import (
     get_element_attr_mapping,
 )
+from virtual_accelerator.cheetah import actions as cheetah_actions
 
 
 SKIPPED_ELEMENT_TYPES = {
@@ -129,10 +129,9 @@ def _instantiate_element_variables(
         init_kwargs = {
             "name": variable_name,
             "element_name": element_name,
-            "pv_attribute": attr,
         }
 
-        if issubclass(var_class, cheetah_actions.CheetahNDVariable):
+        if issubclass(var_class, cheetah_actions.CheetahReadOnlyNDVariable):
             init_kwargs["shape"] = image_shape or (1,)
 
         element_variables[variable_name] = var_class(**init_kwargs)
