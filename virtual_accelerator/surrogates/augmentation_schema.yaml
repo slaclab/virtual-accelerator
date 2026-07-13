@@ -1,0 +1,26 @@
+schema_version: 1
+required:
+  - augmentations
+augmentations:
+  type: list
+  item_schema:
+    required:
+      - type
+    supported_types:
+      bctrl_family:
+        optional:
+          source_suffix: string
+          min_value: number
+          max_value: number
+          status_value: string
+      injector_covariance:
+        optional:
+          energy_eV: number
+          field_mapping: mapping
+        field_mapping:
+          optional:
+            sigma_x: string
+            sigma_y: string
+            sigma_z: string
+            norm_emit_x: string
+            norm_emit_y: string

@@ -1,6 +1,7 @@
 import pytest
 from unittest.mock import Mock
 from scipy import constants
+import yaml
 from virtual_accelerator.tests.dependency_profiles import HAS_INJECTOR_SURROGATE_DEPS
 
 pytestmark = [
@@ -8,11 +9,19 @@ pytestmark = [
 ]
 
 if HAS_INJECTOR_SURROGATE_DEPS:
-    from lume_torch.variables import TorchNDVariable
+    from lume_torch.variables import TorchNDVariable, TorchScalarVariable
     from lume_torch.models.torch_model import TorchModel
     import torch
 
-    from virtual_accelerator.surrogates.injector_surrogate import InjectorSurrogate
+    from virtual_accelerator.surrogates.augmentations import (
+        BCTRLFamilyAugmentation,
+        InjectorCovarianceAugmentation,
+        load_augmentations_from_yaml,
+    )
+    from virtual_accelerator.surrogates.injector_surrogate import (
+        InjectorSurrogate,
+        compute_covariance_matrix,
+    )
     from virtual_accelerator.surrogates.beam_output import BeamOutputModel
 
     TEST_COVARIANCE_MATRIX = torch.diag(
@@ -82,15 +91,45 @@ def test_injector_surrogate_outputs_are_physical():
     assert 0.0 < norm_emit_y < 1.0e-3
 
 
-def make_dummy_torch_model():
+def make_dummy_torch_model(include_bctrl: bool = False):
     """Return a minimal TorchModel-like object for BeamOutputWrapper tests."""
     model = Mock(spec=TorchModel)
     model.input_variables = []
+    model.input_names = []
+
+    if include_bctrl:
+        model.input_variables.append(
+            TorchScalarVariable(
+                name="QUAD:IN20:525:BCTRL", unit="kG", default_value=0.0
+            )
+        )
+        model.input_names.append("QUAD:IN20:525:BCTRL")
+
     model.output_variables = [
         TorchNDVariable(name="covariance_matrix", unit="", shape=(6, 6))
     ]
-    model.input_names = []
     model.evaluate.return_value = {"covariance_matrix": TEST_COVARIANCE_MATRIX.clone()}
+    return model
+
+
+def make_injector_scalar_dummy_torch_model():
+    model = Mock(spec=TorchModel)
+    model.input_variables = []
+    model.input_names = []
+    model.output_variables = [
+        TorchScalarVariable(name="OTRS:IN20:571:XRMS", unit="um"),
+        TorchScalarVariable(name="OTRS:IN20:571:YRMS", unit="um"),
+        TorchScalarVariable(name="sigma_z", unit="um"),
+        TorchScalarVariable(name="norm_emit_x", unit="m"),
+        TorchScalarVariable(name="norm_emit_y", unit="m"),
+    ]
+    model.evaluate.return_value = {
+        "OTRS:IN20:571:XRMS": torch.tensor(50.0),
+        "OTRS:IN20:571:YRMS": torch.tensor(75.0),
+        "sigma_z": torch.tensor(30.0),
+        "norm_emit_x": torch.tensor(2.0e-6),
+        "norm_emit_y": torch.tensor(3.0e-6),
+    }
     return model
 
 
@@ -128,3 +167,59 @@ def test_beam_output_model_accepts_singleton_batched_covariance():
 
     cov = torch.tensor(beam.cov("x", "px", "y", "py", "z", "pz")).float()
     assert torch.allclose(cov, test_matrix, atol=1e-3, rtol=1e-3)
+
+
+def test_beam_output_model_bctrl_family_augmentation_round_trip():
+    surrogate = make_dummy_torch_model(include_bctrl=True)
+    wrapped = BeamOutputModel(
+        surrogate,
+        n_particles=10000,
+        p0c=1e8,
+        augmentations=[BCTRLFamilyAugmentation()],
+    )
+
+    wrapped.set({"QUAD:IN20:525:BDES": -5.0})
+
+    assert wrapped.get("QUAD:IN20:525:BCTRL") == -5.0
+    assert wrapped.get("QUAD:IN20:525:BACT") == -5.0
+    assert wrapped.get("QUAD:IN20:525:BMIN") == -100.0
+    assert wrapped.get("QUAD:IN20:525:BMAX") == 100.0
+    assert wrapped.get("QUAD:IN20:525:CTRL") == "Ready"
+    assert wrapped.get("QUAD:IN20:525:STATCTRLSUB.T") == "Ready"
+
+
+def test_injector_covariance_augmentation_derives_covariance_matrix():
+    surrogate = make_injector_scalar_dummy_torch_model()
+    augmentation = InjectorCovarianceAugmentation(energy_eV=135.0e6)
+    wrapped = BeamOutputModel(
+        surrogate,
+        n_particles=1000,
+        p0c=135.0e6,
+        augmentations=[augmentation],
+    )
+
+    covariance_matrix = torch.as_tensor(wrapped.get("covariance_matrix"))
+    expected_covariance_matrix = torch.from_numpy(
+        compute_covariance_matrix(wrapped._cache, energy=135.0e6)
+    )
+
+    assert covariance_matrix.shape == (6, 6)
+    assert torch.allclose(covariance_matrix, expected_covariance_matrix)
+
+
+def test_load_surrogate_augmentations_from_yaml(tmp_path):
+    config = {
+        "schema_version": 1,
+        "augmentations": [
+            {"type": "bctrl_family"},
+            {"type": "injector_covariance", "energy_eV": 135.0e6},
+        ],
+    }
+    config_path = tmp_path / "augmentations.yaml"
+    config_path.write_text(yaml.safe_dump(config), encoding="utf-8")
+
+    augmentations = load_augmentations_from_yaml(config_path)
+
+    assert len(augmentations) == 2
+    assert isinstance(augmentations[0], BCTRLFamilyAugmentation)
+    assert isinstance(augmentations[1], InjectorCovarianceAugmentation)

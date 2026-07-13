@@ -1,4 +1,6 @@
-from typing import Any, Mapping
+from __future__ import annotations
+
+from typing import Any, Mapping, Sequence
 
 import numpy as np
 import torch
@@ -10,6 +12,26 @@ from lume_torch.models.torch_model import TorchModel
 from scipy import constants
 import beamphysics
 from distgen import Generator
+
+
+class BeamOutputAugmentation:
+    """Extension hooks for adding model-specific variables and behaviors."""
+
+    def augment_supported_variables(
+        self, supported_variables: Mapping[str, Any]
+    ) -> Mapping[str, Any]:
+        return {}
+
+    def map_set_values(self, values: Mapping[str, Any]) -> Mapping[str, Any]:
+        return values
+
+    def resolve_get_value(
+        self, name: str, cache: Mapping[str, Any]
+    ) -> tuple[bool, Any]:
+        return False, None
+
+    def update_outputs(self, outputs: dict[str, Any], model: BeamOutputModel) -> None:
+        return
 
 
 class BeamOutputModel(LUMEModel, FinalParticlesMixIn):
@@ -32,6 +54,7 @@ class BeamOutputModel(LUMEModel, FinalParticlesMixIn):
         t0: float = 0.0,
         z0: float = 0.0,
         total_charge: float = 1e-9,
+        augmentations: Sequence[BeamOutputAugmentation] | None = None,
     ) -> None:
         """
          Initialize wrapper with surrogate model and internal cache copy.
@@ -59,28 +82,60 @@ class BeamOutputModel(LUMEModel, FinalParticlesMixIn):
         self.t0 = t0
         self.z0 = z0
         self.total_charge = total_charge
+        self._augmentations: tuple[BeamOutputAugmentation, ...] = tuple(
+            augmentations or ()
+        )
         self._cache: dict[str, Any] = {"output_beam": None}
         self.set({})  # Initializing with defaults of NN model
         self.update_state()
 
     def _get(self, names: list[str]) -> dict[str, Any]:
-        return {name: self._cache[name] for name in names}
+        results: dict[str, Any] = {}
+        for name in names:
+            handled = False
+            for augmentation in self._augmentations:
+                was_handled, value = augmentation.resolve_get_value(name, self._cache)
+                if was_handled:
+                    handled = True
+                    results[name] = value
+                    break
+
+            if not handled:
+                results[name] = self._cache[name]
+
+        return results
 
     def _set(self, values: Mapping[str, Any]) -> None:
         """Update model state and regenerate exported output beam."""
+        mapped_values: Mapping[str, Any] = dict(values)
+        for augmentation in self._augmentations:
+            mapped_values = augmentation.map_set_values(mapped_values)
+
         # handle updates to input variables
-        for name, value in values.items():
+        for name, value in mapped_values.items():
             self._cache[name] = value
 
         # update surrogate model with new input variables
-        self.surrogate.set(dict(values))
+        self.surrogate.set(dict(mapped_values))
 
         self.update_state()
 
     @property
     def supported_variables(self) -> dict[str, Any]:
         """Return supported variables without mutating wrapped model metadata."""
-        return self.surrogate.supported_variables
+        supported = dict(self.surrogate.supported_variables)
+
+        for augmentation in self._augmentations:
+            additions = dict(augmentation.augment_supported_variables(supported))
+            duplicate_names = sorted(set(additions).intersection(supported))
+            if duplicate_names:
+                raise ValueError(
+                    "Augmentation attempted to overwrite existing supported variable(s): "
+                    + ", ".join(duplicate_names)
+                )
+            supported.update(additions)
+
+        return supported
 
     def reset(self):
         self.surrogate.reset()
@@ -94,7 +149,14 @@ class BeamOutputModel(LUMEModel, FinalParticlesMixIn):
         for key, value in outputs.items():
             if isinstance(value, torch.Tensor):
                 if key != "covariance_matrix":
-                    outputs[key] = value.detach().cpu().numpy()
+                    converted_value = value.detach().cpu().numpy()
+                    if converted_value.size == 1:
+                        outputs[key] = converted_value.item()
+                    else:
+                        outputs[key] = converted_value
+
+        for augmentation in self._augmentations:
+            augmentation.update_outputs(outputs, self)
 
         self._cache.update(outputs)
         self._generate_output_beam()
