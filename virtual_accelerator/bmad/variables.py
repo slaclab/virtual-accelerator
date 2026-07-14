@@ -412,6 +412,8 @@ def get_screen_variables(
             screen_spec=screen_spec,
             index=0,  # need to reverse the order of the shape for the ArraySize0_RBV and ArraySize1_RBV variables since they are in row-major order
         ),
+        bmad_actions.BPMXVariable(name=f"{base_pv}:X", element_name=screen_name),
+        bmad_actions.BPMYVariable(name=f"{base_pv}:Y", element_name=screen_name),
     ]
 
     return variables

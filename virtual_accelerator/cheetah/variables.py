@@ -37,15 +37,13 @@ SCREEN_VARIABLE_CLASS_MAPPING = {
     "Image:ArraySize0_RBV": "ScreenImageArraySizeVariable",
     "RESOLUTION": "ScreenResolutionVariable",
     "IMAGE": "ScreenImageVariable",
-    "N_OF_ROW": "ScreenImageArraySizeVariable",
-    "N_OF_COL": "ScreenImageArraySizeVariable",
+    "X": "ScreenXVariable",
+    "Y": "ScreenYVariable",
 }
 
 SCREEN_ARRAY_SIZE_INDEX_BY_SUFFIX = {
     "Image:ArraySize1_RBV": 0,
-    "N_OF_ROW": 0,
     "Image:ArraySize0_RBV": 1,
-    "N_OF_COL": 1,
 }
 
 

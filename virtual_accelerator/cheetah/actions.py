@@ -5,6 +5,7 @@ package. Conversion and composite-device behavior live directly on action
 classes.
 """
 
+from cheetah.accelerator import Screen
 from lume_cheetah.actions import (
     CheetahReadOnlyEnumVariable,
     CheetahReadOnlyNDVariable,
@@ -314,3 +315,30 @@ class ScreenPneumaticVariable(CheetahWritableScalarVariable):
 
     def _set(self, simulator, value):
         super()._set(simulator, 1.0 if bool(value) else 0.0)
+
+class ScreenCentroidVariable(TorchScalarVariable, _ReadOnlyActionMixin):
+    """Read-only scalar for beam centroid multiplied by 1e3 (to convert to mm, mrad)."""
+
+    element_name: str
+    centroid_axis: str
+    unit: str
+
+    def _get(self, simulator):
+        element = getattr(simulator.segment, self.element_name)
+        if not isinstance(element, Screen):
+            raise ValueError(
+                f"Element {self.element_name!r} is not a Screen and cannot provide X readback"
+            )
+        return getattr(element.get_read_beam(), self.centroid_axis).mean().item() * 1e3
+
+class ScreenXVariable(ScreenCentroidVariable):
+    """Read-only scalar for beam x centroid."""
+
+    centroid_axis: str = "x"
+    unit: str = "mm"
+
+class ScreenYVariable(ScreenCentroidVariable):
+    """Read-only scalar for beam y centroid."""
+
+    centroid_axis: str = "y"
+    unit: str = "mm"
