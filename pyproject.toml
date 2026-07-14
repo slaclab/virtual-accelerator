@@ -37,12 +37,12 @@ Documentation = "https://github.com/slaclab/virtual-accelerator"
 
 [project.optional-dependencies]
 bmad = [
-    "lume-bmad @ git+https://github.com/lume-science/lume-bmad",
+    "lume-bmad",
 ]
 cheetah = [
     "torch",
-    "lume-cheetah @ git+https://github.com/lume-science/lume-cheetah",
-    "lume-torch @ git+https://github.com/lume-science/lume-torch",
+    "lume-cheetah",
+    "lume-torch",
 ]
 impact = [
     "lume-impact @ git+https://github.com/ChristopherMayes/lume-impact"
@@ -52,20 +52,20 @@ pva = [
 ]
 surrogate = [
     "torch",
-    "lume-torch @ git+https://github.com/lume-science/lume-torch",
-    "lume-cheetah @ git+https://github.com/lume-science/lume-cheetah",
-    "distgen @ git+https://github.com/ColwynGulliford/distgen",
+    "lume-torch",
+    "lume-cheetah",
+    "distgen",
     "facet2-inj-ml-model @ git+https://github.com/slaclab/facet2_inj_ml_model",
     "lcls-cu-inj-model @ git+https://github.com/slaclab/lcls_cu_injector_ml_model.git",
 ]
 all = [
     "torch",
-    "lume-bmad @ git+https://github.com/lume-science/lume-bmad",
-    "lume-cheetah @ git+https://github.com/lume-science/lume-cheetah",
+    "lume-bmad",
+    "lume-cheetah",
     "lume-impact @ git+https://github.com/ChristopherMayes/lume-impact",
-    "lume-torch @ git+https://github.com/lume-science/lume-torch",
+    "lume-torch",
     "lume-pva @ git+https://github.com/lume-science/lume-pva",
-    "distgen @ git+https://github.com/ColwynGulliford/distgen",
+    "distgen",
     "facet2-inj-ml-model @ git+https://github.com/slaclab/facet2_inj_ml_model",
     "lcls-cu-inj-model @ git+https://github.com/slaclab/lcls_cu_injector_ml_model.git",
 ]
