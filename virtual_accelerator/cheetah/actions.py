@@ -328,7 +328,7 @@ class ScreenCentroidVariable(TorchScalarVariable, _ReadOnlyActionMixin):
         element = getattr(simulator.segment, self.element_name)
         if not isinstance(element, Screen):
             raise ValueError(
-                f"Element {self.element_name!r} is not a Screen and cannot provide X readback"
+                f"Element {self.element_name!r} is not a Screen and cannot provide {self.centroid_axis.upper()} readback"
             )
         return getattr(element.get_read_beam(), self.centroid_axis).mean().item() * 1e3
 
