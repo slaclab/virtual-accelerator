@@ -15,11 +15,14 @@ from virtual_accelerator.models.cu_hxr import (
     get_cu_hxr_cheetah_model,
 )
 from virtual_accelerator.tests._bmad_model_test_utils import (
+    assert_bpm_pvs_match_cheetah_segment,
+    assert_screen_image_pvs_match_cheetah_segment,
     TEST_BEAM_PATH,
     assert_bpm_pvs_match_tao_lattice,
     assert_bmad_model_initialization,
     assert_bmad_model_twiss_outputs,
     assert_bmad_model_track_beam_custom_path,
+    assert_magnet_pvs_match_cheetah_segment,
     assert_magnet_pvs_match_tao_lattice,
     assert_roundtrip_pv_get_set,
     assert_screen_image_pvs_in_supported_variables,
@@ -226,46 +229,30 @@ class TestCUHXRCheetah:
         assert np.isclose(resolution, expected_resolution)
         assert 5.0 < resolution < 30.0
 
-    def test_quadrupole_pvs_have_expected_suffixes(self):
+    def test_screen_pvs_match_cheetah_segment(self):
         model = get_cu_hxr_cheetah_model()
-
-        expected_suffixes = {
-            "BCTRL",
-            "BACT",
-            "BDES",
-            "BMIN",
-            "BMAX",
-            "STATCTRLSUB.T",
-            "CTRL",
-        }
-
-        quadrupole_control_pvs = [
-            name
-            for name in model.supported_variables
-            if name.startswith("QUAD:") and name.endswith(":BCTRL")
-        ]
-        assert quadrupole_control_pvs
-
-        for control_pv in quadrupole_control_pvs:
-            base_pv = control_pv.rsplit(":", 1)[0]
-            for suffix in expected_suffixes:
-                assert f"{base_pv}:{suffix}" in model.supported_variables
+        assert_screen_image_pvs_match_cheetah_segment(model)
 
     def test_bpm_pvs_have_expected_suffixes(self):
         model = get_cu_hxr_cheetah_model()
-
-        bpm_x_pvs = [
-            name
-            for name in model.supported_variables
-            if name.startswith("BPMS:") and name.endswith(":X")
-        ]
-        assert bpm_x_pvs
-
-        for x_pv in bpm_x_pvs:
-            base_pv = x_pv.rsplit(":", 1)[0]
-            assert f"{base_pv}:Y" in model.supported_variables
-            assert f"{base_pv}:TMIT" in model.supported_variables
+        assert_bpm_pvs_match_cheetah_segment(model)
 
     def test_roundtrip_pv_get_set(self):
         model = get_cu_hxr_cheetah_model()
         assert_roundtrip_pv_get_set(model)
+
+    @pytest.mark.parametrize(
+        ("element_type", "excluded_elements"),
+        [
+            ("Quadrupole", ()),
+            ("HorizontalCorrector", ("xcapm2",)),
+            ("VerticalCorrector", ("ycapm2",)),
+        ],
+    )
+    def test_magnet_pvs_match_cheetah_segment(self, element_type, excluded_elements):
+        model = get_cu_hxr_cheetah_model()
+        assert_magnet_pvs_match_cheetah_segment(
+            model,
+            element_type,
+            excluded_elements=excluded_elements,
+        )
