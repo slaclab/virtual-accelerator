@@ -8,6 +8,25 @@ from virtual_accelerator.utils.variables import get_pvs_by_element_name
 
 TEST_BEAM_PATH = os.path.join(Path(__file__).parent, "../bmad", "test_beam")
 
+DEFAULT_MAGNET_PV_ATTRS = (
+    "BCTRL",
+    "BACT",
+    "BDES",
+    "BMIN",
+    "BMAX",
+    "STATCTRLSUB.T",
+    "CTRL",
+)
+DEFAULT_SCREEN_PV_ATTRS = (
+    "Image:ArrayData",
+    "Image:ArraySize1_RBV",
+    "Image:ArraySize0_RBV",
+    "RESOLUTION",
+    "X",
+    "Y",
+)
+DEFAULT_BPM_PV_ATTRS = ("X", "Y", "TMIT")
+
 
 def _normalize_element_name(element_name: str) -> str:
     """Return an element name without any split-index suffix.
@@ -261,15 +280,7 @@ def assert_magnet_pvs_match_tao_lattice(
     model,
     element_key: str,
     excluded_elements: Iterable[str] = (),
-    element_attrs: tuple[str, ...] = (
-        "BCTRL",
-        "BACT",
-        "BDES",
-        "BMIN",
-        "BMAX",
-        "STATCTRLSUB.T",
-        "CTRL",
-    ),
+    element_attrs: tuple[str, ...] = DEFAULT_MAGNET_PV_ATTRS,
 ) -> None:
     """Assert magnet PV coverage for a Tao-backed model.
 
@@ -299,15 +310,7 @@ def assert_magnet_pvs_match_cheetah_segment(
     model,
     element_key: str,
     excluded_elements: Iterable[str] = (),
-    element_attrs: tuple[str, ...] = (
-        "BCTRL",
-        "BACT",
-        "BDES",
-        "BMIN",
-        "BMAX",
-        "STATCTRLSUB.T",
-        "CTRL",
-    ),
+    element_attrs: tuple[str, ...] = DEFAULT_MAGNET_PV_ATTRS,
 ) -> None:
     """Assert magnet PV coverage for a Cheetah-backed model.
 
@@ -339,15 +342,7 @@ def assert_magnet_pvs_match_lattice_elements(
     element_names: Sequence[str],
     element_keys: Sequence[str],
     excluded_elements: Iterable[str] = (),
-    element_attrs: tuple[str, ...] = (
-        "BCTRL",
-        "BACT",
-        "BDES",
-        "BMIN",
-        "BMAX",
-        "STATCTRLSUB.T",
-        "CTRL",
-    ),
+    element_attrs: tuple[str, ...] = DEFAULT_MAGNET_PV_ATTRS,
 ) -> None:
     """Assert magnet PV coverage from explicit lattice metadata sequences.
 
@@ -397,12 +392,7 @@ def assert_magnet_pvs_match_lattice_elements(
 def assert_screen_image_pvs_in_supported_variables(
     model,
     screen_elements: tuple[str, ...] | list[str] | None = None,
-    screen_attrs: tuple[str, ...] = (
-        "Image:ArrayData",
-        "Image:ArraySize1_RBV",
-        "Image:ArraySize0_RBV",
-        "RESOLUTION",
-    ),
+    screen_attrs: tuple[str, ...] = DEFAULT_SCREEN_PV_ATTRS,
 ) -> None:
     """
     Verify image-related PVs for screen elements are present in supported variables.
@@ -434,14 +424,9 @@ def assert_screen_image_pvs_in_supported_variables(
     )
 
 
-def assert_screen_image_pvs_match_tao_dump_locations(
+def assert_screen_image_pvs_match_tao_lattice(
     model,
-    screen_attrs: tuple[str, ...] = (
-        "Image:ArrayData",
-        "Image:ArraySize1_RBV",
-        "Image:ArraySize0_RBV",
-        "RESOLUTION",
-    ),
+    screen_attrs: tuple[str, ...] = DEFAULT_SCREEN_PV_ATTRS,
 ) -> None:
     """Assert screen image PV coverage using Tao ``dump_locations``.
 
@@ -461,12 +446,7 @@ def assert_screen_image_pvs_match_tao_dump_locations(
 
 def assert_screen_image_pvs_match_cheetah_segment(
     model,
-    screen_attrs: tuple[str, ...] = (
-        "Image:ArrayData",
-        "Image:ArraySize1_RBV",
-        "Image:ArraySize0_RBV",
-        "RESOLUTION",
-    ),
+    screen_attrs: tuple[str, ...] = DEFAULT_SCREEN_PV_ATTRS,
 ) -> None:
     """Assert screen image PV coverage for screen elements in a Cheetah segment.
 
@@ -492,7 +472,7 @@ def assert_screen_image_pvs_match_cheetah_segment(
 
 def assert_bpm_pvs_match_tao_lattice(
     model,
-    bpm_attrs: tuple[str, ...] = ("X", "Y", "TMIT"),
+    bpm_attrs: tuple[str, ...] = DEFAULT_BPM_PV_ATTRS,
 ) -> None:
     """
     Verify that mapped BPM elements expose expected BPM PVs.
@@ -527,7 +507,7 @@ def assert_bpm_pvs_match_tao_lattice(
 
 def assert_bpm_pvs_match_cheetah_segment(
     model,
-    bpm_attrs: tuple[str, ...] = ("X", "Y", "TMIT"),
+    bpm_attrs: tuple[str, ...] = DEFAULT_BPM_PV_ATTRS,
 ) -> None:
     """Assert BPM PV coverage for BPM elements in a Cheetah segment.
 
@@ -555,7 +535,7 @@ def assert_bpm_pvs_match_cheetah_segment(
 def assert_bpm_pvs_match_elements(
     model,
     bpm_elements: Iterable[str],
-    bpm_attrs: tuple[str, ...] = ("X", "Y", "TMIT"),
+    bpm_attrs: tuple[str, ...] = DEFAULT_BPM_PV_ATTRS,
 ) -> None:
     """Assert BPM PV coverage for an explicit BPM element name collection.
 

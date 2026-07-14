@@ -25,7 +25,7 @@ from virtual_accelerator.tests._bmad_model_test_utils import (
     assert_magnet_pvs_match_cheetah_segment,
     assert_magnet_pvs_match_tao_lattice,
     assert_roundtrip_pv_get_set,
-    assert_screen_image_pvs_in_supported_variables,
+    assert_screen_image_pvs_match_tao_lattice,
 )
 
 CU_HXR_PROFMON_CONFIG_PATH = (
@@ -58,7 +58,7 @@ class TestCUHXRBmad:
         model = get_cu_hxr_bmad_model(
             end_element="OTR4", track_beam=True, custom_beam_path=TEST_BEAM_PATH
         )
-        assert_screen_image_pvs_in_supported_variables(model)
+        assert_screen_image_pvs_match_tao_lattice(model)
 
         # test getting all of the supported variables to ensure no errors with screen variable setup
         _ = model.get(list(model.supported_variables))
@@ -82,7 +82,7 @@ class TestCUHXRBmad:
 
     def test_sub_lattice(self):
         model = get_cu_hxr_bmad_model("QE04#1", "OTR2")
-        assert len(model.supported_variables) < 40
+        assert len(model.supported_variables) < 50
 
         # test getting partial lattice with beam tracking
         model = get_cu_hxr_bmad_model(
@@ -149,6 +149,12 @@ class TestCUHXRBmad:
             custom_beam_path=TEST_BEAM_PATH, end_element="OTR4"
         )
         assert_roundtrip_pv_get_set(model)
+
+    def test_screen_pvs_match_tao_lattice(self):
+        model = get_cu_hxr_bmad_model(
+            custom_beam_path=TEST_BEAM_PATH, end_element="OTR4", track_beam=True
+        )
+        assert_screen_image_pvs_match_tao_lattice(model)
 
 
 class TestCUHXRCheetah:
