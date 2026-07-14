@@ -10,6 +10,10 @@ from virtual_accelerator.tests.dependency_profiles import (
     HAS_CHEETAH_DEPS,
     HAS_LCLS_LATTICE,
 )
+from virtual_accelerator.models.cu_hxr import (
+    get_cu_hxr_bmad_model,
+    get_cu_hxr_cheetah_model,
+)
 from virtual_accelerator.tests._bmad_model_test_utils import (
     TEST_BEAM_PATH,
     assert_bpm_pvs_match_tao_lattice,
@@ -26,38 +30,15 @@ CU_HXR_PROFMON_CONFIG_PATH = (
 )
 
 
-def _resolve_runtime_getter(has_optional_deps: bool, getter_name: str):
-    if not (has_optional_deps and HAS_LCLS_LATTICE):
-        return False, None
-
-    try:
-        from virtual_accelerator.models import cu_hxr as cu_hxr_models
-
-        return True, getattr(cu_hxr_models, getter_name)
-    except Exception:
-        return False, None
-
-
 def _load_cu_hxr_screen_config():
     with CU_HXR_PROFMON_CONFIG_PATH.open("r", encoding="utf-8") as config_file:
         return yaml.safe_load(config_file)
 
 
-HAS_BMAD_RUNTIME, get_cu_hxr_bmad_model = _resolve_runtime_getter(
-    HAS_BMAD_DEPS,
-    "get_cu_hxr_bmad_model",
-)
-
-HAS_CHEETAH_RUNTIME, get_cu_hxr_cheetah_model = _resolve_runtime_getter(
-    HAS_CHEETAH_DEPS,
-    "get_cu_hxr_cheetah_model",
-)
-
-
 @pytest.mark.requires_bmad
 @pytest.mark.requires_lcls_lattice
 @pytest.mark.skipif(
-    not HAS_BMAD_RUNTIME,
+    not HAS_BMAD_DEPS or not HAS_LCLS_LATTICE,
     reason="requires bmad optional dependencies and LCLS_LATTICE",
 )
 class TestCUHXRBmad:
@@ -153,11 +134,11 @@ class TestCUHXRBmad:
 
     @pytest.mark.parametrize("element_type", ["Quadrupole", "HKicker", "VKicker"])
     def test_magnet_pvs_match_tao_lattice(self, element_type):
-        model = get_cu_hxr_bmad_model()
+        model = get_cu_hxr_bmad_model(custom_beam_path=TEST_BEAM_PATH)
         assert_magnet_pvs_match_tao_lattice(model, element_type)
 
     def test_bpm_pvs_match_tao_lattice(self):
-        model = get_cu_hxr_bmad_model()
+        model = get_cu_hxr_bmad_model(custom_beam_path=TEST_BEAM_PATH)
         assert_bpm_pvs_match_tao_lattice(model)
 
     def test_roundtrip_pv_get_set(self):
@@ -172,7 +153,7 @@ class TestCUHXRCheetah:
         pytest.mark.requires_cheetah,
         pytest.mark.requires_lcls_lattice,
         pytest.mark.skipif(
-            not HAS_CHEETAH_RUNTIME,
+            not HAS_CHEETAH_DEPS or not HAS_LCLS_LATTICE,
             reason="requires cheetah optional dependencies and LCLS_LATTICE",
         ),
     ]
