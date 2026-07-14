@@ -1,4 +1,5 @@
-from virtual_accelerator.bmad.factory import BmadModelSpec, build_bmad_model
+import os
+
 from lume.staged_model import StagedModel
 
 
@@ -25,6 +26,8 @@ def get_cu_hxr_bmad_model(
     LUMEBmadModel
         Instance of the LUMEBmadModel for the CU_HXR lattice.
     """
+
+    from virtual_accelerator.bmad.factory import BmadModelSpec, build_bmad_model
 
     spec = BmadModelSpec(
         feature="CU HXR Bmad model",
@@ -85,3 +88,74 @@ def get_cu_hxr_staged_model(n_particles: int = 1000, **kwargs) -> StagedModel:
     staged_model = StagedModel([injector_surrogate, cu_hxr_bmad_model])
 
     return staged_model
+
+
+def get_cu_hxr_cheetah_model(n_particles: int = 1000):
+    """
+    Get the LUMECheetahModel for the CU_HXR lattice.
+
+    Returns
+    -------
+    LUMECheetahModel
+        Instance of the LUMECheetahModel for the CU_HXR lattice.
+    """
+    import torch
+    from cheetah.accelerator import Segment
+    from cheetah.particles import ParticleBeam
+    from lume_cheetah import LUMECheetahModel, CheetahSimulator
+    from virtual_accelerator.cheetah.utils import get_mad_control_mapping
+    from virtual_accelerator.cheetah.variables import get_variables_from_segment
+
+    # Get path to beam distributions
+    # beam_dist = os.environ.get(
+    #    'BEAM_DISTRIBUTION',
+    #    '/sdf/group/ad/sw/machine-learning/
+    # Linac-Simulation-Server/simulation_server/beams'
+    # )
+    # Create Cheetah particle Beam from file
+
+    incoming_beam = ParticleBeam.from_twiss(
+        beta_x=torch.tensor(9.34),
+        alpha_x=torch.tensor(-1.6946),
+        emittance_x=torch.tensor(1e-7),
+        beta_y=torch.tensor(9.34),
+        alpha_y=torch.tensor(-1.6946),
+        emittance_y=torch.tensor(1e-7),
+        num_particles=n_particles,
+        energy=torch.tensor(90e6),
+    )
+    incoming_beam.particle_charges = torch.tensor(1.0)
+
+    # Get path to lattice files
+    lcls_lattice = os.environ.get("LCLS_LATTICE")
+    if lcls_lattice is None:
+        raise ValueError("LCLS_LATTICE environment variable must be set")
+
+    # Create lattice from file
+    segment = Segment.from_lattice_json(
+        os.path.join(lcls_lattice, "cheetah/nc_hxr.json")
+    )
+
+    # Define the simulator using lattice and particle beam
+    simulator = CheetahSimulator(
+        segment=segment,
+        initial_beam_distribution=incoming_beam,
+    )
+
+    # get control system device to cheetah mapping
+    database_path = os.path.join(
+        lcls_lattice, "bmad/conversion/from_oracle/lcls_elements.csv"
+    )
+    element_name_to_control_name = get_mad_control_mapping(database_path)
+
+    # Get supported control system variables
+    # for the model
+    variables = get_variables_from_segment(segment, element_name_to_control_name)
+
+    # Create model using action-based variable integration.
+    model = LUMECheetahModel(
+        simulator=simulator,
+        action_variables=list(variables.values()),
+    )
+
+    return model
