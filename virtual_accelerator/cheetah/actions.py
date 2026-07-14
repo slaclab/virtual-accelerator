@@ -179,6 +179,16 @@ class ControlStateVariable(EnumVariable, _ReadOnlyActionMixin):
     def _get(self, simulator):
         return "Ready"
 
+class DummyEnumVariable(EnumVariable, _ReadOnlyActionMixin):
+    """Read-only placeholder enum used for PVs that exist for interface parity."""
+
+    element_name: str
+
+    options: list[str] = ["0", "1"]
+    default_value: str = "0"
+
+    def _get(self, simulator):
+        return "0"
 
 class BPMXVariable(CheetahReadOnlyScalarVariable):
     """Read-only BPM X readout in millimeters."""
