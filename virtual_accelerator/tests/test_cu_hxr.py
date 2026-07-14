@@ -150,7 +150,7 @@ class TestCUHXRBmad:
         )
         assert_roundtrip_pv_get_set(model)
 
-    def test_screen_pvs_match_cheetah_segment(self):
+    def test_screen_pvs_match_tao_lattice(self):
         model = get_cu_hxr_bmad_model(
             custom_beam_path=TEST_BEAM_PATH, end_element="OTR4", track_beam=True
         )
