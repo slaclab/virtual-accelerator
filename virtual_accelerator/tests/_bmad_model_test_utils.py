@@ -2,10 +2,7 @@ import math
 import os
 from collections.abc import Iterable, Sequence
 from numbers import Real
-from lume_bmad.model import LUMEBmadModel
-from lume_cheetah import LUMECheetahModel
 from pathlib import Path
-from lume_cheetah import LUMECheetahModel
 
 from virtual_accelerator.utils.variables import get_pvs_by_element_name
 
@@ -133,7 +130,7 @@ def _assert_elements_have_pv_mapping_and_attrs(
     )
 
 
-def _get_tao_lattice_element_metadata(model: LUMEBmadModel) -> tuple[list[str], list[str]]:
+def _get_tao_lattice_element_metadata(model) -> tuple[list[str], list[str]]:
     """Get element names and keys from a Tao lattice.
 
     Parameters
@@ -149,7 +146,7 @@ def _get_tao_lattice_element_metadata(model: LUMEBmadModel) -> tuple[list[str], 
     return model.tao.lat_list("*", "ele.name"), model.tao.lat_list("*", "ele.key")
 
 
-def _get_cheetah_segment_element_metadata(model: LUMECheetahModel) -> tuple[list[str], list[str]]:
+def _get_cheetah_segment_element_metadata(model) -> tuple[list[str], list[str]]:
     """Get element names and runtime class names from a Cheetah segment.
 
     Parameters
