@@ -27,6 +27,7 @@ DEFAULT_SCREEN_PV_ATTRS = (
 )
 DEFAULT_BPM_PV_ATTRS = ("X", "Y", "TMIT")
 
+
 def _normalize_element_name(element_name: str) -> str:
     """Return an element name without any split-index suffix.
 

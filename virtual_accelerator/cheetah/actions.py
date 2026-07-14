@@ -316,6 +316,7 @@ class ScreenPneumaticVariable(CheetahWritableScalarVariable):
     def _set(self, simulator, value):
         super()._set(simulator, 1.0 if bool(value) else 0.0)
 
+
 class ScreenCentroidVariable(TorchScalarVariable, _ReadOnlyActionMixin):
     """Read-only scalar for beam centroid multiplied by 1e3 (to convert to mm, mrad)."""
 
@@ -331,11 +332,13 @@ class ScreenCentroidVariable(TorchScalarVariable, _ReadOnlyActionMixin):
             )
         return getattr(element.get_read_beam(), self.centroid_axis).mean().item() * 1e3
 
+
 class ScreenXVariable(ScreenCentroidVariable):
     """Read-only scalar for beam x centroid."""
 
     centroid_axis: str = "x"
     unit: str = "mm"
+
 
 class ScreenYVariable(ScreenCentroidVariable):
     """Read-only scalar for beam y centroid."""
