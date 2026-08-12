@@ -1,6 +1,5 @@
 import argparse
 
-from virtual_accelerator.models.facet2 import get_facet_staged_model
 from virtual_accelerator.utils.optional_dependencies import import_optional_symbol
 
 import logging
@@ -8,13 +7,13 @@ import logging
 
 def main():
     parser = argparse.ArgumentParser(
-        description="Run the CU HXR model with BMAD backend"
+        description="Run a virtual accelerator model"
     )
-    choices = ["cu_hxr_bmad", "cu_hxr_staged", "facet_bmad", "facet_staged"]
+    choices = ["cu_hxr_bmad", "cu_hxr_staged", "facet_bmad", "facet_staged", "cu_hxr_zfel"]
     parser.add_argument(
         "model",
         choices=choices,
-        help="Model backend to run (cu_hxr_bmad, cu_hxr_staged, facet_bmad, or facet_staged)",
+        help="Model backend to run (cu_hxr_bmad, cu_hxr_staged, facet_bmad, facet_staged, or cu_hxr_zfel)",
     )
     parser.add_argument(
         "--end-element",
@@ -47,30 +46,32 @@ def main():
         extra="pva",
     )
 
-    from virtual_accelerator.models.cu_hxr import (
-        get_cu_hxr_bmad_model,
-        get_cu_hxr_staged_model,
-    )
-    from virtual_accelerator.models.facet2 import get_facet_bmad_model
-
     # Get the appropriate model based on user input
     if args.model == "cu_hxr_bmad":
+        from virtual_accelerator.models.cu_hxr import (get_cu_hxr_bmad_model)
         model = get_cu_hxr_bmad_model(end_element=args.end_element, track_beam=True)
     elif args.model == "cu_hxr_staged":
+        from virtual_accelerator.models.cu_hxr import (get_cu_hxr_staged_model)
         model = get_cu_hxr_staged_model(
             end_element=args.end_element, n_particles=args.n_particles
         )
     elif args.model == "facet_bmad":
+        from virtual_accelerator.models.facet2 import (get_facet_bmad_model)
         model = get_facet_bmad_model(end_element=args.end_element, track_beam=True)
     elif args.model == "facet_staged":
+        from virtual_accelerator.models.facet2 import (get_facet_staged_model)
         model = get_facet_staged_model(
             end_element=args.end_element, n_particles=args.n_particles
         )
+    elif args.model == "cu_hxr_zfel":
+        from virtual_accelerator.models.cu_hxr_zfel import ( get_cu_hxr_zfel_runner,)
+        runner = get_cu_hxr_zfel_runner(Runner)
     else:
         raise ValueError(f"Invalid model choice. Please choose one of {choices}.")
 
     # Run the model
-    runner = Runner(model)
+    if args.model != "cu_hxr_zfel":
+        runner = Runner(model)
     runner.run()
 
 

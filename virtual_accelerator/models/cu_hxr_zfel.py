@@ -238,3 +238,89 @@ def get_cu_hxr_zfel_model() -> ZFELPVModel:
     Construct the CU HXR ZFEL virtual-accelerator model.
     """
     return ZFELPVModel()
+
+def build_cu_hxr_zfel_runner_config(
+    runner_cls,
+    model,
+    *,
+    prefix: str = "VA:",
+    protocols: tuple[str, ...] = ("ca", "pva"),
+    update_rate: float = 0.5,
+):
+    """
+    Build the lume-pva Runner configuration for the CU HXR ZFEL model.
+    """
+
+    config = runner_cls.generate_config(
+        model=model,
+        prefix="",
+    )
+
+    # PV names below already include the requested prefix.
+    config["prefix"] = ""
+    config["protocol"] = list(protocols)
+    config["update_rate"] = update_rate
+
+    def va_pv(name: str) -> str:
+        return f"{prefix}{name}"
+
+    for cell in HXR_CELLS:
+        config["variables"][f"KAct_{cell}"]["pv"] = va_pv(
+            f"USEG:UNDH:{cell}50:KAct"
+        )
+
+        config["variables"][f"DSKAct_{cell}"]["pv"] = va_pv(
+            f"USEG:UNDH:{cell}50:DSKAct"
+        )
+
+    config["variables"]["power_max"]["pv"] = va_pv(
+        "ZFEL:POWER_MAX"
+    )
+
+    config["variables"]["exit_power"]["pv"] = va_pv(
+        "ZFEL:EXIT_POWER"
+    )
+
+    config["variables"]["pulse_energy"]["pv"] = va_pv(
+        "ZFEL:PULSE_ENERGY"
+    )
+
+    config["variables"]["pulse_intensity_mean"]["pv"] = va_pv(
+        "GDET:FEE1:361:ENRC"
+    )
+
+    config["variables"]["pulse_intensity_p80"]["pv"] = va_pv(
+        "GDET:FEE1:361:ENRCHSTCUHBR"
+    )
+
+    config["variables"]["pulse_intensity_std_relative"]["pv"] = va_pv(
+        "ZFEL:PULSE_INTENSITY_STD_REL"
+    )
+
+    return config
+
+def get_cu_hxr_zfel_runner(
+    runner_cls,
+    *,
+    prefix: str = "VA:",
+    protocols: tuple[str, ...] = ("ca", "pva"),
+    update_rate: float = 0.5,
+):
+    """
+    Construct a lume-pva Runner for the CU HXR ZFEL virtual accelerator.
+    """
+
+    model = get_cu_hxr_zfel_model()
+
+    config = build_cu_hxr_zfel_runner_config(
+        runner_cls,
+        model,
+        prefix=prefix,
+        protocols=protocols,
+        update_rate=update_rate,
+    )
+
+    return runner_cls(
+        model=model,
+        config=config,
+    )
