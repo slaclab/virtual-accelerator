@@ -1,1 +1,0 @@
-from virtual_accelerator.zfel.model import ZFELModel

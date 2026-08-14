@@ -23,13 +23,15 @@ class ZFELPVModel(LUMEModel):
     def __init__(self):
         self._backend = ZFELModel()
 
-        backend_state = self._backend.get([
-            "Kact",
-            "DSKact",
-            "power_max",
-            "exit_power",
-            "pulse_energy",
-        ])
+        backend_state = self._backend.get(
+            [
+                "Kact",
+                "DSKact",
+                "power_max",
+                "exit_power",
+                "pulse_energy",
+            ]
+        )
 
         kact = np.asarray(
             backend_state["Kact"],
@@ -75,44 +77,46 @@ class ZFELPVModel(LUMEModel):
         # Read-only FEL diagnostics
         # ------------------------------------------------------
 
-        self._variables.update({
-            "power_max": ScalarVariable(
-                name="power_max",
-                default_value=0.0,
-                unit="W",
-                read_only=True,
-            ),
-            "exit_power": ScalarVariable(
-                name="exit_power",
-                default_value=0.0,
-                unit="W",
-                read_only=True,
-            ),
-            "pulse_energy": ScalarVariable(
-                name="pulse_energy",
-                default_value=0.0,
-                unit="J",
-                read_only=True,
-            ),
-            "pulse_intensity_mean": ScalarVariable(
-                name="pulse_intensity_mean",
-                default_value=0.0,
-                unit="J",
-                read_only=True,
-            ),
-            "pulse_intensity_p80": ScalarVariable(
-                name="pulse_intensity_p80",
-                default_value=0.0,
-                unit="J",
-                read_only=True,
-            ),
-            "pulse_intensity_std_relative": ScalarVariable(
-                name="pulse_intensity_std_relative",
-                default_value=0.0,
-                unit="dimensionless",
-                read_only=True,
-            ),
-        })
+        self._variables.update(
+            {
+                "power_max": ScalarVariable(
+                    name="power_max",
+                    default_value=0.0,
+                    unit="W",
+                    read_only=True,
+                ),
+                "exit_power": ScalarVariable(
+                    name="exit_power",
+                    default_value=0.0,
+                    unit="W",
+                    read_only=True,
+                ),
+                "pulse_energy": ScalarVariable(
+                    name="pulse_energy",
+                    default_value=0.0,
+                    unit="J",
+                    read_only=True,
+                ),
+                "pulse_intensity_mean": ScalarVariable(
+                    name="pulse_intensity_mean",
+                    default_value=0.0,
+                    unit="J",
+                    read_only=True,
+                ),
+                "pulse_intensity_p80": ScalarVariable(
+                    name="pulse_intensity_p80",
+                    default_value=0.0,
+                    unit="J",
+                    read_only=True,
+                ),
+                "pulse_intensity_std_relative": ScalarVariable(
+                    name="pulse_intensity_std_relative",
+                    default_value=0.0,
+                    unit="dimensionless",
+                    read_only=True,
+                ),
+            }
+        )
 
         self._sync_from_backend(include_controls=True)
 
@@ -121,10 +125,7 @@ class ZFELPVModel(LUMEModel):
         return self._variables
 
     def _get(self, names: list[str]) -> dict[str, Any]:
-        return {
-            name: self._state[name]
-            for name in names
-        }
+        return {name: self._state[name] for name in names}
 
     def _set(self, values: dict[str, Any]) -> None:
         """
@@ -135,51 +136,45 @@ class ZFELPVModel(LUMEModel):
         """
 
         if not values:
-            self._sync_from_backend(
-                include_controls=True
-            )
+            self._sync_from_backend(include_controls=True)
             return
 
         for name, value in values.items():
             self._state[name] = float(value)
 
         kact = np.asarray(
-            [
-                self._state[f"KAct_{cell}"]
-                for cell in HXR_CELLS
-            ],
+            [self._state[f"KAct_{cell}"] for cell in HXR_CELLS],
             dtype=float,
         )
 
         dskact = np.asarray(
-            [
-                self._state[f"DSKAct_{cell}"]
-                for cell in HXR_CELLS
-            ],
+            [self._state[f"DSKAct_{cell}"] for cell in HXR_CELLS],
             dtype=float,
         )
 
-        self._backend.set({
-            "Kact": kact,
-            "DSKact": dskact,
-        })
-
-        self._sync_from_backend(
-            include_controls=True
+        self._backend.set(
+            {
+                "Kact": kact,
+                "DSKact": dskact,
+            }
         )
+
+        self._sync_from_backend(include_controls=True)
 
     def _sync_from_backend(
         self,
         *,
         include_controls: bool,
     ) -> None:
-        backend_state = self._backend.get([
-            "Kact",
-            "DSKact",
-            "power_max",
-            "exit_power",
-            "pulse_energy",
-        ])
+        backend_state = self._backend.get(
+            [
+                "Kact",
+                "DSKact",
+                "power_max",
+                "exit_power",
+                "pulse_energy",
+            ]
+        )
 
         if include_controls:
             kact = np.asarray(
@@ -193,51 +188,35 @@ class ZFELPVModel(LUMEModel):
             )
 
             for index, cell in enumerate(HXR_CELLS):
-                self._state[f"KAct_{cell}"] = float(
-                    kact[index]
-                )
+                self._state[f"KAct_{cell}"] = float(kact[index])
 
-                self._state[f"DSKAct_{cell}"] = float(
-                    dskact[index]
-                )
+                self._state[f"DSKAct_{cell}"] = float(dskact[index])
 
-        pulse_energy = float(
-            backend_state["pulse_energy"]
-        )
+        pulse_energy = float(backend_state["pulse_energy"])
 
-        self._state["power_max"] = float(
-            backend_state["power_max"]
-        )
+        self._state["power_max"] = float(backend_state["power_max"])
 
-        self._state["exit_power"] = float(
-            backend_state["exit_power"]
-        )
+        self._state["exit_power"] = float(backend_state["exit_power"])
 
         self._state["pulse_energy"] = pulse_energy
 
         # Fixed-seed deterministic model for now.
-        self._state["pulse_intensity_mean"] = (
-            pulse_energy
-        )
-        self._state["pulse_intensity_p80"] = (
-            pulse_energy
-        )
-        self._state[
-            "pulse_intensity_std_relative"
-        ] = 0.0
+        self._state["pulse_intensity_mean"] = pulse_energy
+        self._state["pulse_intensity_p80"] = pulse_energy
+        self._state["pulse_intensity_std_relative"] = 0.0
 
     def reset(self) -> None:
         self._backend.reset()
 
-        self._sync_from_backend(
-            include_controls=True
-        )
+        self._sync_from_backend(include_controls=True)
+
 
 def get_cu_hxr_zfel_model() -> ZFELPVModel:
     """
     Construct the CU HXR ZFEL virtual-accelerator model.
     """
     return ZFELPVModel()
+
 
 def build_cu_hxr_zfel_runner_config(
     runner_cls,
@@ -265,29 +244,19 @@ def build_cu_hxr_zfel_runner_config(
         return f"{prefix}{name}"
 
     for cell in HXR_CELLS:
-        config["variables"][f"KAct_{cell}"]["pv"] = va_pv(
-            f"USEG:UNDH:{cell}50:KAct"
-        )
+        config["variables"][f"KAct_{cell}"]["pv"] = va_pv(f"USEG:UNDH:{cell}50:KAct")
 
         config["variables"][f"DSKAct_{cell}"]["pv"] = va_pv(
             f"USEG:UNDH:{cell}50:DSKAct"
         )
 
-    config["variables"]["power_max"]["pv"] = va_pv(
-        "ZFEL:POWER_MAX"
-    )
+    config["variables"]["power_max"]["pv"] = va_pv("ZFEL:POWER_MAX")
 
-    config["variables"]["exit_power"]["pv"] = va_pv(
-        "ZFEL:EXIT_POWER"
-    )
+    config["variables"]["exit_power"]["pv"] = va_pv("ZFEL:EXIT_POWER")
 
-    config["variables"]["pulse_energy"]["pv"] = va_pv(
-        "ZFEL:PULSE_ENERGY"
-    )
+    config["variables"]["pulse_energy"]["pv"] = va_pv("ZFEL:PULSE_ENERGY")
 
-    config["variables"]["pulse_intensity_mean"]["pv"] = va_pv(
-        "GDET:FEE1:361:ENRC"
-    )
+    config["variables"]["pulse_intensity_mean"]["pv"] = va_pv("GDET:FEE1:361:ENRC")
 
     config["variables"]["pulse_intensity_p80"]["pv"] = va_pv(
         "GDET:FEE1:361:ENRCHSTCUHBR"
@@ -298,6 +267,7 @@ def build_cu_hxr_zfel_runner_config(
     )
 
     return config
+
 
 def get_cu_hxr_zfel_runner(
     runner_cls,

@@ -13,9 +13,7 @@ HXR_SLOTS: tuple[int, ...] = tuple(range(14, 48))
 # Active HXR undulator cells.
 # This matches the current real-machine Badger environment.
 HXR_CELLS: tuple[int, ...] = (
-    tuple(range(14, 21))
-    + tuple(range(22, 28))
-    + tuple(range(29, 48))
+    tuple(range(14, 21)) + tuple(range(22, 28)) + tuple(range(29, 48))
 )
 
 # Cells omitted from the active-undulator list.
@@ -47,14 +45,12 @@ def _validate_endpoints(
 
     if kact_array.size != N_ACTIVE_SEGMENTS:
         raise ValueError(
-            f"kact must contain {N_ACTIVE_SEGMENTS} values, "
-            f"got {kact_array.size}."
+            f"kact must contain {N_ACTIVE_SEGMENTS} values, got {kact_array.size}."
         )
 
     if dskact_array.size != N_ACTIVE_SEGMENTS:
         raise ValueError(
-            f"dskact must contain {N_ACTIVE_SEGMENTS} values, "
-            f"got {dskact_array.size}."
+            f"dskact must contain {N_ACTIVE_SEGMENTS} values, got {dskact_array.size}."
         )
 
     if not np.all(np.isfinite(kact_array)):
@@ -120,14 +116,10 @@ def build_hxr_mapping(
     physical_points_per_cell = int(physical_points_per_cell)
 
     if z_steps < N_ACTIVE_SEGMENTS:
-        raise ValueError(
-            "z_steps must be at least the number of active segments."
-        )
+        raise ValueError("z_steps must be at least the number of active segments.")
 
     if physical_points_per_cell < 2:
-        raise ValueError(
-            "physical_points_per_cell must be at least 2."
-        )
+        raise ValueError("physical_points_per_cell must be at least 2.")
 
     # ==============================================================
     # 1. PHYSICAL MACHINE COORDINATE
@@ -141,26 +133,15 @@ def build_hxr_mapping(
     # not falsely imply that the drift/interspace has an undulator K.
     # ==============================================================
 
-    n_physical_points = (
-        len(HXR_SLOTS) * physical_points_per_cell
-    )
+    n_physical_points = len(HXR_SLOTS) * physical_points_per_cell
 
     dz_physical = PHYSICAL_SPAN_M / n_physical_points
 
-    z_physical_m = (
-        np.arange(n_physical_points, dtype=float) + 0.5
-    ) * dz_physical
+    z_physical_m = (np.arange(n_physical_points, dtype=float) + 0.5) * dz_physical
 
-    physical_cell = (
-        FIRST_HXR_CELL
-        + np.floor(
-            z_physical_m / CELL_LENGTH_M
-        ).astype(int)
-    )
+    physical_cell = FIRST_HXR_CELL + np.floor(z_physical_m / CELL_LENGTH_M).astype(int)
 
-    cell_start_m = (
-        physical_cell - FIRST_HXR_CELL
-    ) * CELL_LENGTH_M
+    cell_start_m = (physical_cell - FIRST_HXR_CELL) * CELL_LENGTH_M
 
     local_z_m = z_physical_m - cell_start_m
 
@@ -172,23 +153,12 @@ def build_hxr_mapping(
     )
 
     for segment_index, cell in enumerate(HXR_CELLS):
+        mask = (physical_cell == cell) & (local_z_m < UNDULATOR_LENGTH_M)
 
-        mask = (
-            (physical_cell == cell)
-            & (local_z_m < UNDULATOR_LENGTH_M)
-        )
+        fraction = local_z_m[mask] / UNDULATOR_LENGTH_M
 
-        fraction = (
-            local_z_m[mask] / UNDULATOR_LENGTH_M
-        )
-
-        k_physical[mask] = (
-            kact_array[segment_index]
-            + fraction
-            * (
-                dskact_array[segment_index]
-                - kact_array[segment_index]
-            )
+        k_physical[mask] = kact_array[segment_index] + fraction * (
+            dskact_array[segment_index] - kact_array[segment_index]
         )
 
     # ==============================================================
@@ -212,13 +182,9 @@ def build_hxr_mapping(
         dtype=float,
     )
 
-    z_zfel_m = 0.5 * (
-        z_edges_m[:-1] + z_edges_m[1:]
-    )
+    z_zfel_m = 0.5 * (z_edges_m[:-1] + z_edges_m[1:])
 
-    segment_index = np.floor(
-        z_zfel_m / UNDULATOR_LENGTH_M
-    ).astype(int)
+    segment_index = np.floor(z_zfel_m / UNDULATOR_LENGTH_M).astype(int)
 
     segment_index = np.clip(
         segment_index,
@@ -226,21 +192,12 @@ def build_hxr_mapping(
         N_ACTIVE_SEGMENTS - 1,
     )
 
-    segment_start_m = (
-        segment_index * UNDULATOR_LENGTH_M
-    )
+    segment_start_m = segment_index * UNDULATOR_LENGTH_M
 
-    local_fraction = (
-        z_zfel_m - segment_start_m
-    ) / UNDULATOR_LENGTH_M
+    local_fraction = (z_zfel_m - segment_start_m) / UNDULATOR_LENGTH_M
 
-    k_zfel = (
-        kact_array[segment_index]
-        + local_fraction
-        * (
-            dskact_array[segment_index]
-            - kact_array[segment_index]
-        )
+    k_zfel = kact_array[segment_index] + local_fraction * (
+        dskact_array[segment_index] - kact_array[segment_index]
     )
 
     hxr_cells_array = np.asarray(

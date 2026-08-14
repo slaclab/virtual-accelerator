@@ -6,13 +6,13 @@ from lume.model import LUMEModel
 from lume.variables import NDVariable, ScalarVariable
 from zfel import sase1d
 
-C_LIGHT = 299_792_458.0
-
 from virtual_accelerator.zfel.undulator_mapping import (
     MAGNETIC_LENGTH_M,
     N_ACTIVE_SEGMENTS,
     build_hxr_mapping,
 )
+
+C_LIGHT = 299_792_458.0
 
 
 class ZFELModel(LUMEModel):
@@ -115,7 +115,6 @@ class ZFELModel(LUMEModel):
                 unit="dimensionless",
                 read_only=False,
             ),
-
             # Read-only mapped zfel K profile
             "unduK": NDVariable(
                 name="unduK",
@@ -128,7 +127,6 @@ class ZFELModel(LUMEModel):
                 unit="dimensionless",
                 read_only=True,
             ),
-
             # Read-only FEL diagnostics
             "power_max": ScalarVariable(
                 name="power_max",
@@ -243,13 +241,9 @@ class ZFELModel(LUMEModel):
             dtype=float,
         )
 
-        self._state["power_max"] = float(
-            np.max(power_z)
-        )
+        self._state["power_max"] = float(np.max(power_z))
 
-        self._state["exit_power"] = float(
-            power_z[-1]
-        )
+        self._state["exit_power"] = float(power_z[-1])
         power_s = np.asarray(
             output["power_s"],
             dtype=float,
@@ -261,21 +255,13 @@ class ZFELModel(LUMEModel):
         )
 
         if s_m.size < 2:
-            raise ValueError(
-                "zfel must return at least two longitudinal s points."
-            )
+            raise ValueError("zfel must return at least two longitudinal s points.")
 
-        ds_m = float(
-            np.mean(np.diff(s_m))
-        )
+        ds_m = float(np.mean(np.diff(s_m)))
 
         # Each power_s sample represents one longitudinal slice.
         # Convert ds [m] to dt [s] using dt = ds/c.
-        pulse_energy_j = float(
-            np.sum(power_s[-1, :])
-            * ds_m
-            / C_LIGHT
-        )
+        pulse_energy_j = float(np.sum(power_s[-1, :]) * ds_m / C_LIGHT)
 
         self._state["pulse_energy"] = pulse_energy_j
 

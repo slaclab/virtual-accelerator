@@ -8,9 +8,7 @@ from virtual_accelerator.zfel.undulator_mapping import (
 
 def test_hxr_cells_have_expected_layout():
     expected_cells = tuple(
-        list(range(14, 21))
-        + list(range(22, 28))
-        + list(range(29, 48))
+        list(range(14, 21)) + list(range(22, 28)) + list(range(29, 48))
     )
 
     assert HXR_CELLS == expected_cells
