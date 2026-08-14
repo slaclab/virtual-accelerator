@@ -27,6 +27,7 @@ Lastly, install backend-specific extras depending on which simulation types you 
 pip install .[bmad]
 pip install .[cheetah]
 pip install .[impact]
+pip install .[zfel]
 pip install .[pva]
 pip install .[surrogate]
 pip install .[all]
@@ -40,6 +41,7 @@ Optional Dependency Keys by Model:
 | `get_cu_hxr_injector_surrogate_model` | `surrogate` | Uses torch surrogate + cheetah particles. |
 | `get_facet_staged_model` | `surrogate`, `bmad` | FACET-II staged model (injector surrogate + FACET-II BMAD). |
 | `get_cu_hxr_staged_model` | `surrogate`, `bmad` | Stages `InjectorSurrogate` + CU HXR BMAD model. |
+| `get_cu_hxr_zfel_model` | `zfel` | CU HXR taper model using the 1D ZFEL backend. |
 | `virtual_accelerator.models.runners` CLI | `pva` (+ model backend key) | Runner requires `pva`; selected model backend must also be installed. |
 
 The package now lazily imports backend-specific dependencies. If you call a model
@@ -59,6 +61,13 @@ number of particles, and end element to run with.
 For example:
 ```
 python virtual_accelerator/models/runners.py cu_hxr_bmad --end-element OTR4
+```
+
+CU HXR ZFEL runner serves machine-style PVs with the VA: prefix, for example:
+```
+python -m virtual_accelerator.models.runners cu_hxr_zfel
+VA:USEG:UNDH:1450:KAct
+VA:ZFEL:PULSE_ENERGY
 ```
 
 For more info, run:
