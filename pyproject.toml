@@ -48,7 +48,7 @@ impact = [
     "lume-impact @ git+https://github.com/ChristopherMayes/lume-impact"
 ]
 zfel = [
-    "zfel @ git+https://github.com/hong274SLAC/zfel.git@801d00bb24a867fbaae132a44b791a3dcc0343cf"
+    "zfel @ git+https://github.com/slaclab/zfel.git"
 ]
 pva = [
     "lume-pva @ git+https://github.com/lume-science/lume-pva"
@@ -71,7 +71,7 @@ all = [
     "distgen",
     "facet2-inj-ml-model @ git+https://github.com/slaclab/facet2_inj_ml_model",
     "lcls-cu-inj-model @ git+https://github.com/slaclab/lcls_cu_injector_ml_model.git",
-    "zfel @ git+https://github.com/hong274SLAC/zfel.git@801d00bb24a867fbaae132a44b791a3dcc0343cf",
+    "zfel @ git+https://github.com/slaclab/zfel.git",
 ]
 dev = [
     "pytest",
