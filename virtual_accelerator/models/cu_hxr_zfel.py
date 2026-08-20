@@ -6,7 +6,7 @@ from lume.model import LUMEModel
 from lume.variables import ScalarVariable
 
 from virtual_accelerator.zfel.undulator_mapping import HXR_CELLS
-from virtual_accelerator.zfel.model import ZFELModel
+from virtual_accelerator.zfel.model import ZFELBackend
 
 
 class ZFELPVModel(LUMEModel):
@@ -17,16 +17,16 @@ class ZFELPVModel(LUMEModel):
         KAct_14, DSKAct_14, ..., KAct_47, DSKAct_47
 
     Internal physics model:
-        Kact[32], DSKact[32] -> zfel
+        KAct[32], DSKact[32] -> zfel
     """
 
     def __init__(self):
-        self._backend = ZFELModel()
+        self._backend = ZFELBackend()
 
         backend_state = self._backend.get(
             [
-                "Kact",
-                "DSKact",
+                "KAct",
+                "DSKAct",
                 "power_max",
                 "exit_power",
                 "pulse_energy",
@@ -34,12 +34,12 @@ class ZFELPVModel(LUMEModel):
         )
 
         kact = np.asarray(
-            backend_state["Kact"],
+            backend_state["KAct"],
             dtype=float,
         )
 
         dskact = np.asarray(
-            backend_state["DSKact"],
+            backend_state["DSKAct"],
             dtype=float,
         )
 
@@ -154,8 +154,8 @@ class ZFELPVModel(LUMEModel):
 
         self._backend.set(
             {
-                "Kact": kact,
-                "DSKact": dskact,
+                "KAct": kact,
+                "DSKAct": dskact,
             }
         )
 
@@ -168,8 +168,8 @@ class ZFELPVModel(LUMEModel):
     ) -> None:
         backend_state = self._backend.get(
             [
-                "Kact",
-                "DSKact",
+                "KAct",
+                "DSKAct",
                 "power_max",
                 "exit_power",
                 "pulse_energy",
@@ -178,12 +178,12 @@ class ZFELPVModel(LUMEModel):
 
         if include_controls:
             kact = np.asarray(
-                backend_state["Kact"],
+                backend_state["KAct"],
                 dtype=float,
             )
 
             dskact = np.asarray(
-                backend_state["DSKact"],
+                backend_state["DSKAct"],
                 dtype=float,
             )
 

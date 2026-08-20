@@ -4,16 +4,16 @@ import pytest
 
 pytest.importorskip("zfel")
 
-from virtual_accelerator.zfel.model import ZFELModel
+from virtual_accelerator.zfel.model import ZFELBackend
 
 
 def test_zfel_model_initialization():
-    model = ZFELModel()
+    model = ZFELBackend()
 
     state = model.get(
         [
-            "Kact",
-            "DSKact",
+            "KAct",
+            "DSKAct",
             "unduK",
             "power_max",
             "exit_power",
@@ -21,8 +21,8 @@ def test_zfel_model_initialization():
         ]
     )
 
-    assert np.asarray(state["Kact"]).shape == (32,)
-    assert np.asarray(state["DSKact"]).shape == (32,)
+    assert np.asarray(state["KAct"]).shape == (32,)
+    assert np.asarray(state["DSKAct"]).shape == (32,)
     assert np.asarray(state["unduK"]).shape == (320,)
 
     assert np.isfinite(state["power_max"])
@@ -33,19 +33,19 @@ def test_zfel_model_initialization():
 
 
 def test_setting_k_changes_zfel_result():
-    model = ZFELModel()
+    model = ZFELBackend()
 
     baseline = model.get(
         [
-            "Kact",
-            "DSKact",
+            "KAct",
+            "DSKAct",
             "unduK",
             "pulse_energy",
         ]
     )
 
     changed_kact = np.asarray(
-        baseline["Kact"],
+        baseline["KAct"],
         dtype=float,
     ).copy()
 
@@ -53,21 +53,21 @@ def test_setting_k_changes_zfel_result():
 
     model.set(
         {
-            "Kact": changed_kact,
-            "DSKact": baseline["DSKact"],
+            "KAct": changed_kact,
+            "DSKAct": baseline["DSKAct"],
         }
     )
 
     changed = model.get(
         [
-            "Kact",
+            "KAct",
             "unduK",
             "pulse_energy",
         ]
     )
 
     assert np.isclose(
-        changed["Kact"][-1],
+        changed["KAct"][-1],
         changed_kact[-1],
     )
 
@@ -85,19 +85,19 @@ def test_setting_k_changes_zfel_result():
 
 
 def test_reset_restores_initial_state():
-    model = ZFELModel()
+    model = ZFELBackend()
 
     baseline = model.get(
         [
-            "Kact",
-            "DSKact",
+            "KAct",
+            "DSKAct",
             "unduK",
             "pulse_energy",
         ]
     )
 
     changed_kact = np.asarray(
-        baseline["Kact"],
+        baseline["KAct"],
         dtype=float,
     ).copy()
 
@@ -105,7 +105,7 @@ def test_reset_restores_initial_state():
 
     model.set(
         {
-            "Kact": changed_kact,
+            "KAct": changed_kact,
         }
     )
 
@@ -113,21 +113,21 @@ def test_reset_restores_initial_state():
 
     reset_state = model.get(
         [
-            "Kact",
-            "DSKact",
+            "KAct",
+            "DSKAct",
             "unduK",
             "pulse_energy",
         ]
     )
 
     assert np.allclose(
-        reset_state["Kact"],
-        baseline["Kact"],
+        reset_state["KAct"],
+        baseline["KAct"],
     )
 
     assert np.allclose(
-        reset_state["DSKact"],
-        baseline["DSKact"],
+        reset_state["DSKAct"],
+        baseline["DSKAct"],
     )
 
     assert np.allclose(

@@ -2,8 +2,6 @@ from typing import Any
 
 import numpy as np
 
-from lume.model import LUMEModel
-from lume.variables import NDVariable, ScalarVariable
 from zfel import sase1d
 
 from virtual_accelerator.zfel.undulator_mapping import (
@@ -15,7 +13,7 @@ from virtual_accelerator.zfel.undulator_mapping import (
 C_LIGHT = 299_792_458.0
 
 
-class ZFELModel(LUMEModel):
+class ZFELBackend:
     """
     LUMEModel wrapper around zfel using real-machine-like
     HXR Kact and DSKact controls.
@@ -81,8 +79,8 @@ class ZFELModel(LUMEModel):
         )
 
         self._initial_state = {
-            "Kact": initial_kact,
-            "DSKact": initial_dskact,
+            "KAct": initial_kact,
+            "DSKAct": initial_dskact,
             "unduK": np.full(
                 self.ZFEL_Z_STEPS,
                 self.INITIAL_K,
@@ -95,59 +93,6 @@ class ZFELModel(LUMEModel):
 
         self._state = self._copy_initial_state()
 
-        # ----------------------------------------------------------
-        # LUMEModel variable definitions
-        # ----------------------------------------------------------
-
-        self._variables = {
-            # Writable virtual-machine controls
-            "Kact": NDVariable(
-                name="Kact",
-                shape=(N_ACTIVE_SEGMENTS,),
-                default_value=initial_kact.copy(),
-                unit="dimensionless",
-                read_only=False,
-            ),
-            "DSKact": NDVariable(
-                name="DSKact",
-                shape=(N_ACTIVE_SEGMENTS,),
-                default_value=initial_dskact.copy(),
-                unit="dimensionless",
-                read_only=False,
-            ),
-            # Read-only mapped zfel K profile
-            "unduK": NDVariable(
-                name="unduK",
-                shape=(self.ZFEL_Z_STEPS,),
-                default_value=np.full(
-                    self.ZFEL_Z_STEPS,
-                    self.INITIAL_K,
-                    dtype=float,
-                ),
-                unit="dimensionless",
-                read_only=True,
-            ),
-            # Read-only FEL diagnostics
-            "power_max": ScalarVariable(
-                name="power_max",
-                default_value=0.0,
-                unit="W",
-                read_only=True,
-            ),
-            "exit_power": ScalarVariable(
-                name="exit_power",
-                default_value=0.0,
-                unit="W",
-                read_only=True,
-            ),
-            "pulse_energy": ScalarVariable(
-                name="pulse_energy",
-                default_value=0.0,
-                unit="J",
-                read_only=True,
-            ),
-        }
-
         # Store the latest complete HXR mapping for debugging,
         # plotting, and later Badger integration.
         self._mapping = None
@@ -155,25 +100,21 @@ class ZFELModel(LUMEModel):
         # Run the initial constant-K case.
         self._run_simulation()
 
-    @property
-    def supported_variables(self):
-        return self._variables
-
     def _copy_initial_state(self) -> dict[str, Any]:
         """
         Return an independent copy of the initial machine state.
         """
 
         return {
-            "Kact": self._initial_state["Kact"].copy(),
-            "DSKact": self._initial_state["DSKact"].copy(),
+            "KAct": self._initial_state["KAct"].copy(),
+            "DSKAct": self._initial_state["DSKAct"].copy(),
             "unduK": self._initial_state["unduK"].copy(),
             "power_max": float(self._initial_state["power_max"]),
             "exit_power": float(self._initial_state["exit_power"]),
             "pulse_energy": float(self._initial_state["pulse_energy"]),
         }
 
-    def _get(self, names: list[str]) -> dict[str, Any]:
+    def get(self, names: list[str]) -> dict[str, Any]:
         """
         Return cached state only.
 
@@ -192,20 +133,20 @@ class ZFELModel(LUMEModel):
 
         return out
 
-    def _set(self, values: dict[str, Any]) -> None:
+    def set(self, values: dict[str, Any]) -> None:
         """
-        Update Kact and/or DSKact, then run zfel once.
+        Update KAct and/or DSKAct, then run zfel once.
         """
 
-        if "Kact" in values:
-            self._state["Kact"] = np.asarray(
-                values["Kact"],
+        if "KAct" in values:
+            self._state["KAct"] = np.asarray(
+                values["KAct"],
                 dtype=float,
             ).copy()
 
-        if "DSKact" in values:
-            self._state["DSKact"] = np.asarray(
-                values["DSKact"],
+        if "DSKAct" in values:
+            self._state["DSKAct"] = np.asarray(
+                values["DSKAct"],
                 dtype=float,
             ).copy()
 
@@ -217,8 +158,8 @@ class ZFELModel(LUMEModel):
         """
 
         mapping = build_hxr_mapping(
-            self._state["Kact"],
-            self._state["DSKact"],
+            self._state["KAct"],
+            self._state["DSKAct"],
             z_steps=self.ZFEL_Z_STEPS,
         )
 
