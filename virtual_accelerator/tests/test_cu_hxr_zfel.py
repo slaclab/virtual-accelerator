@@ -132,7 +132,6 @@ def test_runner_config_uses_machine_style_pvs():
     config = build_cu_hxr_zfel_runner_config(
         DummyRunner,
         model,
-        prefix="VA:",
         protocols=("ca",),
         update_rate=0.5,
     )
@@ -141,17 +140,16 @@ def test_runner_config_uses_machine_style_pvs():
     assert config["protocol"] == ["ca"]
     assert config["update_rate"] == 0.5
 
-    assert config["variables"]["KAct_14"]["pv"] == "VA:USEG:UNDH:1450:KAct"
+    assert config["variables"]["KAct_14"]["pv"] == "USEG:UNDH:1450:KAct"
 
-    assert config["variables"]["DSKAct_14"]["pv"] == "VA:USEG:UNDH:1450:DSKAct"
+    assert config["variables"]["DSKAct_14"]["pv"] == "USEG:UNDH:1450:DSKAct"
 
-    assert config["variables"]["pulse_energy"]["pv"] == "VA:ZFEL:PULSE_ENERGY"
+    assert config["variables"]["pulse_energy"]["pv"] == "ZFEL:PULSE_ENERGY"
 
-    assert config["variables"]["pulse_intensity_mean"]["pv"] == "VA:GDET:FEE1:361:ENRC"
+    assert config["variables"]["pulse_intensity_mean"]["pv"] == "GDET:FEE1:361:ENRC"
 
     assert (
-        config["variables"]["pulse_intensity_p80"]["pv"]
-        == "VA:GDET:FEE1:361:ENRCHSTCUHBR"
+        config["variables"]["pulse_intensity_p80"]["pv"] == "GDET:FEE1:361:ENRCHSTCUHBR"
     )
 
 
@@ -163,6 +161,6 @@ def test_zfel_runner_factory_returns_configured_runner():
 
     assert isinstance(runner, DummyRunner)
 
-    assert runner.config["variables"]["KAct_14"]["pv"] == "VA:USEG:UNDH:1450:KAct"
+    assert runner.config["variables"]["KAct_14"]["pv"] == "USEG:UNDH:1450:KAct"
 
-    assert runner.config["variables"]["pulse_energy"]["pv"] == "VA:ZFEL:PULSE_ENERGY"
+    assert runner.config["variables"]["pulse_energy"]["pv"] == "ZFEL:PULSE_ENERGY"
