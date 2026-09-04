@@ -5,7 +5,11 @@ import yaml
 import warnings
 
 
-from virtual_accelerator.bmad.variables import get_all_element_types, get_normalized_element_names, get_variables
+from virtual_accelerator.bmad.variables import (
+    get_all_element_types,
+    get_normalized_element_names,
+    get_variables,
+)
 from virtual_accelerator.utils.optional_dependencies import import_optional
 from virtual_accelerator.utils.variables import get_element_attr_mapping
 
@@ -43,7 +47,7 @@ def build_bmad_model(
     end_mode: str = "end",
 ):
     """
-    
+
     Build a lattice-specific LUMEBmadModel from a shared implementation
 
     Parameters
@@ -64,8 +68,8 @@ def build_bmad_model(
         Dictionary of custom element aliases, by default None.
     end_mode : str, optional
         Mode for determining the end of the lattice slice, by default "end".
-    
-    
+
+
     """
 
     _check_optional_modules(
@@ -93,9 +97,12 @@ def build_bmad_model(
     if end_mode == "beginning":
         # stop tao at second to last element
         normalized_element_list = get_normalized_element_names(tao)
-        new_end_element = normalized_element_list[normalized_element_list.index(end_element)-1]
-        tao = Tao(f"-init {init_file} -noplot -slice_lattice {start_element}:{new_end_element}")
-
+        new_end_element = normalized_element_list[
+            normalized_element_list.index(end_element) - 1
+        ]
+        tao = Tao(
+            f"-init {init_file} -noplot -slice_lattice {start_element}:{new_end_element}"
+        )
 
     # set tracking to start_element
     tao.cmd(f"set beam track_start = {start_element}")
