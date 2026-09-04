@@ -191,6 +191,42 @@ def get_facet_bmad_model(
     return model
 
 
+def get_facet_injector_surrogate_model(
+    n_particles: int = 10000, surrogate_inputs: str = "machine"
+):
+    """
+    Get the surrogate model for the FACET-II injector to PR10241.
+
+    Parameters
+    ----------
+    n_particles: int, optional
+        Number of particles to generate in the output beam. Default is 10000.
+    surrogate_inputs: str, optional
+        Input for the surrogate model, either "machine" or "sim". Default is "machine".
+
+    Returns
+    -------
+    BeamOutputModel
+        Injector surrogate whose output beam is defined at PR10241.
+
+    Notes
+    -----
+    ``t0``, ``p0c`` and ``z0`` describe the PR10241 handoff plane -- ``z0`` is that
+    element's s position. They would need to move per-plane if a second FACET
+    handoff location is ever used.
+    """
+    from facet2_inj_ml_model import load_model
+    from virtual_accelerator.surrogates.beam_output import BeamOutputModel
+
+    return BeamOutputModel(
+        load_model(surrogate_inputs),
+        n_particles=n_particles,
+        t0=3.15391398e-09,
+        p0c=6.3e06,
+        z0=0.9420843,
+    )
+
+
 def get_facet_staged_model(n_particles=10000, surrogate_inputs="machine", **kwargs):
     """
     Get the StagedModel for the FACET-II lattice from PR10241 to END, with an injector surrogate model.
@@ -209,16 +245,10 @@ def get_facet_staged_model(n_particles=10000, surrogate_inputs="machine", **kwar
     StagedModel
         Instance of the StagedModel for the FACET-II lattice.
     """
-    from facet2_inj_ml_model import load_model
-    from virtual_accelerator.surrogates.beam_output import BeamOutputModel
     from lume.staged_model import StagedModel
 
-    injector_surrogate = BeamOutputModel(
-        load_model(surrogate_inputs),
-        n_particles=n_particles,
-        t0=3.15391398e-09,
-        p0c=6.3e06,
-        z0=0.9420843,
+    injector_surrogate = get_facet_injector_surrogate_model(
+        n_particles=n_particles, surrogate_inputs=surrogate_inputs
     )
 
     tmp = tempfile.NamedTemporaryFile(suffix=".h5")
