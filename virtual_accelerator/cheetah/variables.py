@@ -75,22 +75,6 @@ def _resolve_element_variable_mapping(
     return element_attr_mapping.get(mapping_key)
 
 
-def _resolve_control_name(
-    element_name: str, device_mapping: dict[str, str]
-) -> str | None:
-    """Resolve control-system base PV from an element name.
-
-    Supports direct element-name matches and split-element fallback by removing
-    ``#<index>`` suffixes.
-    """
-    normalized_name = element_name.upper()
-    if normalized_name in device_mapping:
-        return device_mapping[normalized_name]
-
-    split_name = normalized_name.split("#", 1)[0]
-    return device_mapping.get(split_name)
-
-
 def _instantiate_element_variables(
     element_name: str,
     control_name: str,
@@ -149,7 +133,6 @@ def _instantiate_element_variables(
 
 def get_variables_from_segment(
     segment,
-    device_mapping: dict[str, str],
     element_attr_mapping: dict[str, dict[str, dict[str, Any]]] = None,
 ) -> dict[str, Variable]:
     """
@@ -164,12 +147,9 @@ def get_variables_from_segment(
     segment : Segment
         Cheetah accelerator segment containing the lattice elements.
 
-    device_mapping : dict[str, str], optional
-        Mapping of lattice element name -> control-system PV prefix.
-
     element_attr_mapping : dict[str, dict[str, dict[str, Any]]], optional
         Device-type -> PV attribute -> variable specification mapping
-        loaded from the SLAC variable YAML configuration.
+        loaded from the SLAC variable YAML configuration.   
 
     Returns
     -------
@@ -195,7 +175,11 @@ def get_variables_from_segment(
         if element_type in SKIPPED_ELEMENT_TYPES:
             continue
 
-        control_name = _resolve_control_name(element.name, device_mapping)
+        if "alias" not in element.metadata:
+            warnings.warn(f"Element {element.name} does not have an alias in metadata, cannot create variables for it")
+            continue
+        control_name = element.metadata["alias"]
+
         if control_name is None:
             warnings.warn(f"Element {element.name} not found in device mapping")
             continue
