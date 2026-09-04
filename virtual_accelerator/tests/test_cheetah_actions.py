@@ -77,6 +77,7 @@ class TestCheetahActions:
                     name="Q1",
                     length=torch.tensor(0.5),
                     k1=torch.tensor(1.0),
+                    metadata={"alias": "QUAD:IN20:511"}
                 ),
                 Drift(name="D1", length=torch.tensor(1.0)),
             ]
@@ -84,7 +85,6 @@ class TestCheetahActions:
 
         variables = get_variables_from_segment(
             segment,
-            device_mapping={"Q1": "QUAD:IN20:511"},
             element_attr_mapping={
                 "Quadrupole": {
                     "BCTRL": "QuadrupoleBCTRLVariable",
