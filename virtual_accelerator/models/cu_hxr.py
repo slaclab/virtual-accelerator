@@ -22,7 +22,11 @@ IMPACT_GROUP_PV_MAPPING = {
 
 
 def get_cu_hxr_bmad_model(
-    start_element="OTR2", end_element="END", track_beam=False, custom_beam_path=None
+    start_element="OTR2",
+    end_element="END",
+    track_beam=False,
+    custom_beam_path=None,
+    end_mode="end",
 ):
     """
     Get the LUMEBmadModel for the CU_HXR lattice from OTR2 to END.
@@ -37,6 +41,8 @@ def get_cu_hxr_bmad_model(
         Whether to enable beam tracking in the model. Default is False.
     custom_beam_path: str, optional
         Path to custom beam file for tracking. If None, will use default design beam. Default is None.
+    end_mode: str, optional
+        The mode for determining the end of the lattice element. Must be either "beginning" or "end". Default is "end".
 
 
     Returns
@@ -61,6 +67,7 @@ def get_cu_hxr_bmad_model(
         end_element=end_element,
         track_beam=track_beam,
         custom_beam_path=custom_beam_path,
+        end_mode=end_mode,
         custom_tao_commands=[
             "set bmad_com lr_wakes_on=false",
             "set bmad_com sr_wakes_on=false",
