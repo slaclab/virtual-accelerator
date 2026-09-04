@@ -125,7 +125,6 @@ def get_cu_hxr_cheetah_model(n_particles: int = 1000):
     from cheetah.accelerator import Segment
     from cheetah.particles import ParticleBeam
     from lume_cheetah import LUMECheetahModel, CheetahSimulator
-    from virtual_accelerator.cheetah.utils import get_mad_control_mapping
     from virtual_accelerator.cheetah.variables import get_variables_from_segment
 
     # Get path to beam distributions

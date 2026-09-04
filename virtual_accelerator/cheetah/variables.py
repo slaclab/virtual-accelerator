@@ -149,7 +149,7 @@ def get_variables_from_segment(
 
     element_attr_mapping : dict[str, dict[str, dict[str, Any]]], optional
         Device-type -> PV attribute -> variable specification mapping
-        loaded from the SLAC variable YAML configuration.   
+        loaded from the SLAC variable YAML configuration.
 
     Returns
     -------
@@ -176,7 +176,9 @@ def get_variables_from_segment(
             continue
 
         if "alias" not in element.metadata:
-            warnings.warn(f"Element {element.name} does not have an alias in metadata, cannot create variables for it")
+            warnings.warn(
+                f"Element {element.name} does not have an alias in metadata, cannot create variables for it"
+            )
             continue
         control_name = element.metadata["alias"]
 
