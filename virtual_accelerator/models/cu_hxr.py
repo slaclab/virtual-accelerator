@@ -125,7 +125,6 @@ def get_cu_hxr_cheetah_model(n_particles: int = 1000):
     from cheetah.accelerator import Segment
     from cheetah.particles import ParticleBeam
     from lume_cheetah import LUMECheetahModel, CheetahSimulator
-    from virtual_accelerator.cheetah.utils import get_mad_control_mapping
     from virtual_accelerator.cheetah.variables import get_variables_from_segment
 
     # Get path to beam distributions
@@ -164,15 +163,9 @@ def get_cu_hxr_cheetah_model(n_particles: int = 1000):
         initial_beam_distribution=incoming_beam,
     )
 
-    # get control system device to cheetah mapping
-    database_path = os.path.join(
-        lcls_lattice, "bmad/conversion/from_oracle/lcls_elements.csv"
-    )
-    element_name_to_control_name = get_mad_control_mapping(database_path)
-
     # Get supported control system variables
     # for the model
-    variables = get_variables_from_segment(segment, element_name_to_control_name)
+    variables = get_variables_from_segment(segment)
 
     # Create model using action-based variable integration.
     model = LUMECheetahModel(
