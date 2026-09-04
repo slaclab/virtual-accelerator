@@ -60,12 +60,13 @@ def add_facet_custom_bmad_variables(model) -> None:
             )
         )
 
+
 def add_facet_custom_impact_variables(model) -> None:
     """
     Add custom Impact variables to the FACET-II model.
 
     This includes:
-    - SolenoidBCTRLVariable which connects BCTRL variables to the solenoid field 
+    - SolenoidBCTRLVariable which connects BCTRL variables to the solenoid field
         scale in the Impact simulator via: solenoid_field_scale = BCTRL / 1.6
     - SolenoidBACTVariable which provides a readback of the solenoid field scale in the Impact simulator.
 
@@ -74,32 +75,39 @@ def add_facet_custom_impact_variables(model) -> None:
     model : ImpactModel
         The FACET-II model to which custom Impact variables will be added.
     """
-    from virtual_accelerator.impact.actions import ImpactScalarVariable, WritableActionMixin
-    from virtual_accelerator.impact.actions import BminVariable, BmaxVariable, StatusVariable, _ReadbackFromControlMixin, ControlStateVariable
+    from virtual_accelerator.impact.actions import (
+        ImpactScalarVariable,
+        WritableActionMixin,
+    )
+    from virtual_accelerator.impact.actions import _ReadbackFromControlMixin
     from impact import Impact
 
     class SolenoidBCTRLVariable(ImpactScalarVariable, WritableActionMixin):
         """Action that operates on the BCTRL/BDES property of Solenoids"""
+
         read_only: bool = False
         unit: str = "kG-m"
 
         def _get(self, simulator: Impact) -> Any:
             ele_attr = self._get_ele_attr(simulator)
-            return ele_attr["solenoid_field_scale"] * 1.6  # emperically known for FACET-II
+            return (
+                ele_attr["solenoid_field_scale"] * 1.6
+            )  # emperically known for FACET-II
 
         def _set(self, simulator: Impact, value: Any) -> None:
             self._set_ele_attr(
-                simulator, "solenoid_field_scale", value / 1.6  # emperically known for FACET-II
+                simulator,
+                "solenoid_field_scale",
+                value / 1.6,  # emperically known for FACET-II
             )
 
     class SolenoidBACTVariable(_ReadbackFromControlMixin, SolenoidBCTRLVariable):
         """Action that operates on the BACT property of Solenoids"""
 
-
     base_pv = "SOLN:IN10:121"
     element_name = "SOL10111"
     mapping = get_element_attr_mapping()["Solenoid"]
-    
+
     # register variables based on mapping -- convert string to class type defined above
     for suffix, var_class in mapping.items():
         model.register_impact_action_variable(

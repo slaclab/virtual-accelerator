@@ -28,7 +28,10 @@ from virtual_accelerator.tests._bmad_model_test_utils import (
     assert_magnet_pvs_match_tao_lattice,
     assert_screen_image_pvs_in_supported_variables,
 )
-from virtual_accelerator.utils.variables import get_element_attr_mapping, get_pvs_by_element_name
+from virtual_accelerator.utils.variables import (
+    get_element_attr_mapping,
+    get_pvs_by_element_name,
+)
 from virtual_accelerator.tests.test_cu_hxr import (
     HAS_IMPACT_EXECUTABLE,
     IMPACT_SKIP_REASON,
@@ -359,5 +362,3 @@ class TestFACETImpact:
         for suffix in suffixes:
             pv = f"SOLN:IN10:121:{suffix}"
             assert pv in model.supported_variables
-
-
