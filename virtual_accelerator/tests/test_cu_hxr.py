@@ -210,7 +210,10 @@ class TestCUHXRBmad:
         assert model.get("name")[-1] == "DB00A"
 
         model = get_cu_hxr_bmad_model(
-            start_element="YAG03", end_element="TCAV0", track_beam=False, end_mode="beginning"
+            start_element="YAG03",
+            end_element="TCAV0",
+            track_beam=False,
+            end_mode="beginning",
         )
         assert model.get("name")[-1] == "DH06"
 

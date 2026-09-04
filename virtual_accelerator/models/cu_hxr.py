@@ -22,7 +22,11 @@ IMPACT_GROUP_PV_MAPPING = {
 
 
 def get_cu_hxr_bmad_model(
-    start_element="OTR2", end_element="END", track_beam=False, custom_beam_path=None, end_mode="end",
+    start_element="OTR2",
+    end_element="END",
+    track_beam=False,
+    custom_beam_path=None,
+    end_mode="end",
 ):
     """
     Get the LUMEBmadModel for the CU_HXR lattice from OTR2 to END.
