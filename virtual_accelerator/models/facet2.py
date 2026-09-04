@@ -5,7 +5,6 @@ from copy import copy
 import logging
 from typing import Any
 
-from virtual_accelerator.impact.actions import _ReadbackFromControlMixin
 from virtual_accelerator.utils.variables import get_element_attr_mapping
 
 logger = logging.getLogger(__name__)
@@ -66,7 +65,8 @@ def add_facet_custom_impact_variables(model) -> None:
     Add custom Impact variables to the FACET-II model.
 
     This includes:
-    - SolenoidBCTRLVariable which connects BCTRL variables to the solenoid field scale in the Impact simulator via: solenoid_field_scale = BCTRL / 1.6
+    - SolenoidBCTRLVariable which connects BCTRL variables to the solenoid field 
+        scale in the Impact simulator via: solenoid_field_scale = BCTRL / 1.6
     - SolenoidBACTVariable which provides a readback of the solenoid field scale in the Impact simulator.
 
     Parameters
@@ -88,7 +88,6 @@ def add_facet_custom_impact_variables(model) -> None:
             return ele_attr["solenoid_field_scale"] * 1.6  # emperically known for FACET-II
 
         def _set(self, simulator: Impact, value: Any) -> None:
-            ele_attr = self._get_ele_attr(simulator)
             self._set_ele_attr(
                 simulator, "solenoid_field_scale", value / 1.6  # emperically known for FACET-II
             )
