@@ -203,6 +203,17 @@ class TestCUHXRBmad:
         )
         assert_screen_image_pvs_match_tao_lattice(model, screen_attrs=SCREEN_PV_ATTRS)
 
+    def test_end_mode(self):
+        model = get_cu_hxr_bmad_model(
+            end_element="OTR4", track_beam=False, end_mode="beginning"
+        )
+        assert model.get("name")[-1] == "DB00A"
+
+        model = get_cu_hxr_bmad_model(
+            start_element="YAG03", end_element="TCAV0", track_beam=False, end_mode="beginning"
+        )
+        assert model.get("name")[-1] == "DH06"
+
 
 class TestCUHXRCheetah:
     pytestmark = [
