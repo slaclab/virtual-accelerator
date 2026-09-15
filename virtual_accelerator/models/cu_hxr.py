@@ -1,6 +1,24 @@
+from copy import copy
 import os
 
 from lume.staged_model import StagedModel
+
+IMPACT_GROUP_PV_MAPPING = {
+    "group:L0A_phase": {"pv": "ACCL:IN20:300:L0A_PDES", "element": "L0A_entrance"},
+    "group:L0B_phase": {"pv": "ACCL:IN20:400:L0B_PDES", "element": "L0B_entrance"},
+    "group:L0A_scale": {
+        "pv": "ACCL:IN20:300:L0A_ADES",
+        "scale": 1e6,
+        "element": "L0A_entrance",
+    },
+    "group:L0B_scale": {
+        "pv": "ACCL:IN20:400:L0B_ADES",
+        "scale": 1e6,
+        "element": "L0B_entrance",
+    },
+    "group:GUN_phase": {"pv": "GUN:IN20:1:GN1_PDES", "element": "GUN"},
+    "group:GUN_scale": {"pv": "GUN:IN20:1:GN1_ADES", "scale": 1e6, "element": "GUN"},
+}
 
 
 def get_cu_hxr_bmad_model(
@@ -34,7 +52,7 @@ def get_cu_hxr_bmad_model(
         lattice_env_var="LCLS_LATTICE",
         tao_init_relpath="bmad/models/cu_hxr/tao.init",
         profmon_config_filename="cu_hxr_profmon_info.yaml",
-        default_beam_relpath="bmad/bmad_set_beam2000_pg",
+        default_beam_relpath="bmad_set_beam2000_pg",
         default_track_start="OTR2",
     )
     return build_bmad_model(
@@ -43,6 +61,10 @@ def get_cu_hxr_bmad_model(
         end_element=end_element,
         track_beam=track_beam,
         custom_beam_path=custom_beam_path,
+        custom_tao_commands=[
+            "set bmad_com lr_wakes_on=false",
+            "set bmad_com sr_wakes_on=false",
+        ],
     )
 
 
@@ -103,7 +125,6 @@ def get_cu_hxr_cheetah_model(n_particles: int = 1000):
     from cheetah.accelerator import Segment
     from cheetah.particles import ParticleBeam
     from lume_cheetah import LUMECheetahModel, CheetahSimulator
-    from virtual_accelerator.cheetah.utils import get_mad_control_mapping
     from virtual_accelerator.cheetah.variables import get_variables_from_segment
 
     # Get path to beam distributions
@@ -142,20 +163,50 @@ def get_cu_hxr_cheetah_model(n_particles: int = 1000):
         initial_beam_distribution=incoming_beam,
     )
 
-    # get control system device to cheetah mapping
-    database_path = os.path.join(
-        lcls_lattice, "bmad/conversion/from_oracle/lcls_elements.csv"
-    )
-    element_name_to_control_name = get_mad_control_mapping(database_path)
-
     # Get supported control system variables
     # for the model
-    variables = get_variables_from_segment(segment, element_name_to_control_name)
+    variables = get_variables_from_segment(segment)
 
     # Create model using action-based variable integration.
     model = LUMECheetahModel(
         simulator=simulator,
         action_variables=list(variables.values()),
     )
+
+    return model
+
+
+def get_cu_inj_impact_model(n_particles: int = 100, end_element="OTR2"):
+    from virtual_accelerator.impact.factory import (
+        ImpactModelSpec,
+        build_impact_model,
+        get_actions_from_groups,
+    )
+
+    spec = ImpactModelSpec(
+        lattice_env_var="LCLS_LATTICE",
+        distgen_file="distgen/models/cu_inj/v0/distgen.yaml",
+        impact_yaml_file="impact/models/cu_inj/v0/ImpactT.yaml",
+        profmon_config_filename="cu_hxr_profmon_info.yaml",
+        n_particles=n_particles,
+        numprocs=1,
+        space_charge=False,
+        stop_location=end_element,
+    )
+    model = build_impact_model(spec)
+
+    # register custom actions for linac L0A and L0B sections
+    group_actions = get_actions_from_groups(model.impact_model.simulator, spec)
+
+    for action in group_actions:
+        old_name = copy(action.name)
+        action.name = IMPACT_GROUP_PV_MAPPING[old_name]["pv"]
+        action.scale = IMPACT_GROUP_PV_MAPPING[old_name].get("scale", 1.0)
+
+        if (
+            IMPACT_GROUP_PV_MAPPING[old_name]["element"]
+            in model.impact_model.simulator.ele
+        ):
+            model.register_impact_action_variable(action)
 
     return model

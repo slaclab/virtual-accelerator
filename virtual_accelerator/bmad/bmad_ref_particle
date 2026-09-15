@@ -1,0 +1,11 @@
+!ASCII::3
+0 ! ix_ele, not used
+1 ! n_bunch
+1 ! n_particle
+BEGIN_BUNCH
+electron
+5.000000000002845e-12  ! bunch_charge
+0 ! z_center
+0 ! t_center
+ 0.0  0.0  0.0  0.0  0.0  0.0  2.500000000001e-15  1
+END_BUNCH

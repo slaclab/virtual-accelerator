@@ -7,7 +7,6 @@ classes.
 
 from cheetah.accelerator import Screen
 from lume_cheetah.actions import (
-    CheetahReadOnlyEnumVariable,
     CheetahReadOnlyNDVariable,
     CheetahReadOnlyScalarVariable,
     CheetahWritableScalarVariable,
@@ -228,45 +227,39 @@ class CavityAREQVariable(CheetahWritableScalarVariable):
     """Writable cavity amplitude request variable in MV."""
 
     unit: str = "MV"
+    element_attribute: str = "voltage"
 
     def _get(self, simulator):
-        return self._get_direct_attribute(simulator, "voltage")
+        # Cheetah stores the physical voltage in V; this PV is in MV.
+        return self._get_direct_attribute(simulator, self.element_attribute) / 1e6
 
     def _set(self, simulator, value):
-        self._set_direct_attribute(simulator, "voltage", value)
+        self._set_direct_attribute(simulator, self.element_attribute, value * 1e6)
 
 
-class CavityAREQReadbackVariable(CheetahReadOnlyScalarVariable):
+class CavityAREQReadbackVariable(_ReadbackFromControlMixin, CavityAREQVariable):
     """Read-only cavity amplitude readback variable in MV."""
-
-    unit: str = "MV"
-
-    def _get(self, simulator):
-        return self._get_direct_attribute(simulator, "voltage")
 
 
 class CavityPREQVariable(CheetahWritableScalarVariable):
     """Writable cavity phase request variable in degrees."""
 
     unit: str = "degrees"
+    element_attribute: str = "phase"
 
     def _get(self, simulator):
-        return self._get_direct_attribute(simulator, "phase")
+        # Cheetah stores phase in rad/2pi (turns); this PV is in degrees.
+        return self._get_direct_attribute(simulator, self.element_attribute) * 360.0
 
     def _set(self, simulator, value):
-        self._set_direct_attribute(simulator, "phase", value)
+        self._set_direct_attribute(simulator, self.element_attribute, value / 360.0)
 
 
-class CavityPREQReadbackVariable(CheetahReadOnlyScalarVariable):
+class CavityPREQReadbackVariable(_ReadbackFromControlMixin, CavityPREQVariable):
     """Read-only cavity phase readback variable in degrees."""
 
-    unit: str = "degrees"
 
-    def _get(self, simulator):
-        return self._get_direct_attribute(simulator, "phase")
-
-
-class CavityMODECFGVariable(CheetahReadOnlyEnumVariable):
+class CavityMODECFGVariable(EnumVariable, _ReadOnlyActionMixin):
     """Read-only cavity mode configuration enum."""
 
     options: list[str] = ["Disable", "ACCEL", "STDBY", "ACCEL_STDBY"]
@@ -282,7 +275,9 @@ class ScreenImageVariable(CheetahReadOnlyNDVariable):
     element_attribute: str = "reading"
 
     def _get(self, simulator):
-        return super()._get(simulator).T * 65535
+        # `.mT` transposes only the last two axes. `reading` is (..., y, x) and this
+        # transposes to (..., x, y) to match the expected PV image orientation
+        return super()._get(simulator).mT * 65535
 
 
 class ScreenImageArraySizeVariable(CheetahReadOnlyScalarVariable):

@@ -1,0 +1,33 @@
+name: Checkout lattice repos
+description: Check out the lcls-lattice and facet2-lattice repos into the workspace.
+
+# To change a repo or branch in the future, edit only the "default:" values in this action file.
+inputs:
+  lcls-lattice-repository:
+    description: lcls-lattice repository (owner/name)
+    default: slaclab/lcls-lattice
+  lcls-lattice-ref:
+    description: lcls-lattice ref (branch, tag, or SHA)
+    default: master
+  facet2-lattice-repository:
+    description: facet2-lattice repository (owner/name)
+    default: slaclab/facet2-lattice
+  facet2-lattice-ref:
+    description: facet2-lattice ref (branch, tag, or SHA)
+    default: master
+
+runs:
+  using: composite
+  steps:
+    - name: Checkout lcls-lattice
+      uses: actions/checkout@4f1f4aec02e41874fa0262ea8ff5172d7978ad1e
+      with:
+        repository: ${{ inputs.lcls-lattice-repository }}
+        ref: ${{ inputs.lcls-lattice-ref }}
+        path: lcls-lattice
+    - name: Checkout facet2-lattice
+      uses: actions/checkout@4f1f4aec02e41874fa0262ea8ff5172d7978ad1e
+      with:
+        repository: ${{ inputs.facet2-lattice-repository }}
+        ref: ${{ inputs.facet2-lattice-ref }}
+        path: facet2-lattice

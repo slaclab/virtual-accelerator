@@ -5,6 +5,20 @@ PR10241:
    - 1040
    pixel_size: 17.94
 
+PR10465:
+   name: PROF:IN10:465
+   shape:
+   - 1392
+   - 1040
+   pixel_size: 11.1732
+
+PR10471:
+   name: PROF:IN10:471
+   shape:
+   - 1392
+   - 1040
+   pixel_size: 11.1732
+
 PR10571:
    name: PROF:IN10:571
    shape:

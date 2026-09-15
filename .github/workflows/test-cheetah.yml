@@ -19,18 +19,8 @@ jobs:
           submodules: recursive
           fetch-depth: 1
 
-      - name: Checkout lcls-lattice
-        uses: actions/checkout@4f1f4aec02e41874fa0262ea8ff5172d7978ad1e
-        with:
-          repository: slaclab/lcls-lattice
-          ref: temp_remove_fixers
-          path: lcls-lattice
-      - name: Checkout facet2-lattice
-        uses: actions/checkout@4f1f4aec02e41874fa0262ea8ff5172d7978ad1e
-        with:
-          repository: slaclab/facet2-lattice
-          path: facet2-lattice
-          ref: b1d170ebf51582c1dc675595d810f5191866a443
+      - name: Checkout lattice repos
+        uses: ./.github/actions/checkout-lattices
       - name: Set up Python ${{ matrix.python-version }}
         uses: actions/setup-python@ece7cb06caefa5fff74198d8649806c4678c61a1
         with:

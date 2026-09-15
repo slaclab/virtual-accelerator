@@ -2,6 +2,8 @@ import os
 from dataclasses import dataclass
 from pathlib import Path
 import yaml
+import warnings
+
 
 from virtual_accelerator.bmad.variables import get_all_element_types, get_variables
 from virtual_accelerator.utils.optional_dependencies import import_optional
@@ -107,12 +109,14 @@ def build_bmad_model(
             and spec.default_beam_relpath is not None
             and start_element == spec.default_track_start
         ):
-            beam_path = Path(__file__).parent / ".." / spec.default_beam_relpath
+            beam_path = Path(__file__).parent / spec.default_beam_relpath
+
         else:
-            raise ValueError(
-                "Cannot have track_beam=True for start_element "
+            warnings.warn(
+                "track_beam=True for start_element "
                 f"!= {spec.default_track_start} without providing custom_beam_path"
             )
+            beam_path = Path(__file__).parent / "bmad_ref_particle"
 
         model.tao.cmd(f"set beam_init position_file = {beam_path}")
         model.set({"track_type": "beam"})

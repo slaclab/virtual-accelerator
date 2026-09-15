@@ -89,7 +89,7 @@ class InjectorSurrogate(BeamOutputModel):
         new_values = {}
         for name, value in values.items():
             if name.endswith(":BDES"):
-                new_values["".join(name.split(":")[:-1]) + ":BCTRL"] = value
+                new_values[":".join(name.split(":")[:-1]) + ":BCTRL"] = value
             else:
                 new_values[name] = value
 

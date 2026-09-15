@@ -10,6 +10,10 @@ def pytest_configure(config):
     )
     config.addinivalue_line(
         "markers",
+        "requires_impact: test requires impact optional dependencies",
+    )
+    config.addinivalue_line(
+        "markers",
         "requires_surrogate: test requires surrogate optional dependencies",
     )
     config.addinivalue_line(

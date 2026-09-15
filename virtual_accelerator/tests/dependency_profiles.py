@@ -9,6 +9,7 @@ def has_module(name: str) -> bool:
 
 HAS_BMAD_DEPS = has_module("pytao") and has_module("lume_bmad")
 HAS_CHEETAH_DEPS = has_module("cheetah") and has_module("lume_cheetah")
+HAS_IMPACT_DEPS = has_module("impact") and has_module("distgen")
 HAS_SURROGATE_RUNTIME_DEPS = (
     has_module("lume_torch")
     and has_module("torch")
