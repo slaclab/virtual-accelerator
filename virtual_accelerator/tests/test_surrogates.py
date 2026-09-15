@@ -38,10 +38,10 @@ def test_injector_surrogate():
     surrogate.set({"QUAD:IN20:525:BCTRL": -5.0})
     updated_beam = surrogate.final_particles
     assert not (initial_beam.x == updated_beam.x).all()
-    assert surrogate.get("QUAD:IN20:525:BCTRL") == -5.0
+    assert surrogate.get_value("QUAD:IN20:525:BCTRL") == -5.0
 
     # try getting all of the other PVs
-    all_pvs = surrogate.get(surrogate.supported_variables.keys())
+    all_pvs = surrogate.get(list(surrogate.supported_variables.keys()))
     for suffix in [
         "BCTRL",
         "BACT",

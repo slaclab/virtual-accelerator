@@ -33,13 +33,13 @@ def test_get_and_set_round_trip_values():
         }
     )
 
-    assert model.get("x") == 1.0
+    assert model.get_value("x") == 1.0
     assert model.get(["x", "name"]) == {"x": 1.0, "name": "a"}
 
     model.set({"x": 2.5, "name": "b"})
 
-    assert model.get("x") == 2.5
-    assert model.get("name") == "b"
+    assert model.get_value("x") == 2.5
+    assert model.get_value("name") == "b"
 
 
 def test_partial_set_preserves_other_values():
@@ -47,8 +47,8 @@ def test_partial_set_preserves_other_values():
 
     model.set({"x": 10.0})
 
-    assert model.get("x") == 10.0
-    assert model.get("y") == 2.0
+    assert model.get_value("x") == 10.0
+    assert model.get_value("y") == 2.0
 
 
 def test_reset_restores_initial_values():
@@ -57,8 +57,8 @@ def test_reset_restores_initial_values():
     model.set({"x": 3.0, "name": "updated"})
     model.reset()
 
-    assert model.get("x") == 1.0
-    assert model.get("name") == "start"
+    assert model.get_value("x") == 1.0
+    assert model.get_value("name") == "start"
 
 
 def test_unsupported_initial_value_type_raises_value_error():

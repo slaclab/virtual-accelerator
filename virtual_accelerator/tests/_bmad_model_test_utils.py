@@ -628,7 +628,7 @@ def assert_roundtrip_pv_get_set(
         if pv_name == "track_type":
             continue
 
-        current_value = model.get(pv_name)
+        current_value = model.get_value(pv_name)
 
         if isinstance(current_value, bool):
             target_value = not current_value
@@ -642,5 +642,5 @@ def assert_roundtrip_pv_get_set(
             continue
 
         model.set({pv_name: target_value})
-        roundtrip_value = model.get(pv_name)
+        roundtrip_value = model.get_value(pv_name)
         assert_value_equal(pv_name, target_value, roundtrip_value)

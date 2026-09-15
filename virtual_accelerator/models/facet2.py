@@ -40,7 +40,7 @@ def add_facet_custom_bmad_variables(model) -> None:
     from lume_bmad.actions import EleScalarVariable
 
     # Add the L0B RF phase feedback variable to the model if L0BF#1 is included in the model
-    if "L0BF#1" in model.get("name"):
+    if "L0BF#1" in model.get_value("name"):
         logger.debug("Adding L0B RF phase feedback variable to the model.")
         model.register_action_variable(
             EleScalarVariable(
@@ -51,7 +51,7 @@ def add_facet_custom_bmad_variables(model) -> None:
             )
         )
 
-    if "TCY10490#1" in model.get("name"):
+    if "TCY10490#1" in model.get_value("name"):
         logger.debug("Adding TCY10490 phase readback variable to the model.")
         model.register_action_variable(
             CavityPREQReadbackVariable(

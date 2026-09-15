@@ -142,18 +142,18 @@ class TestCUHXRBmad:
         )
 
         # get OTR2 image
-        image = model.get("OTRS:IN20:571:Image:ArrayData")
+        image = model.get_value("OTRS:IN20:571:Image:ArrayData")
         assert image.shape == (1040, 1392)
 
         # get initial OTR4 image
-        image = model.get("OTRS:IN20:711:Image:ArrayData")
+        image = model.get_value("OTRS:IN20:711:Image:ArrayData")
         assert image.shape == (1040, 1392)
 
         # set some control variables
         model.set({"QUAD:IN20:631:BCTRL": 0.0})
 
         # get updated OTR4 image
-        updated_image = model.get("OTRS:IN20:711:Image:ArrayData")
+        updated_image = model.get_value("OTRS:IN20:711:Image:ArrayData")
         assert updated_image.shape == (1040, 1392)
 
         # make sure it changed
@@ -169,7 +169,7 @@ class TestCUHXRBmad:
         model = get_cu_hxr_bmad_model(
             end_element="OTR4", track_beam=True, custom_beam_path=TEST_BEAM_PATH
         )
-        resolution = float(model.get(resolution_pv))
+        resolution = float(model.get_value(resolution_pv))
 
         assert np.isclose(resolution, expected_resolution)
         assert 10.0 < resolution < 20.0
@@ -177,9 +177,9 @@ class TestCUHXRBmad:
     def test_cu_hxr_lcavity(self):
         model = get_cu_hxr_bmad_model(custom_beam_path=TEST_BEAM_PATH)
 
-        enld = model.get("KLYS:LI21:31:ENLD")
+        enld = model.get_value("KLYS:LI21:31:ENLD")
         model.set({"KLYS:LI21:31:ENLD": enld + 5.0})
-        ampl = model.get("KLYS:LI21:31:ENLD")
+        ampl = model.get_value("KLYS:LI21:31:ENLD")
         assert np.isclose(ampl, enld + 5.0)
 
     @pytest.mark.parametrize("element_type", ["Quadrupole", "HKicker", "VKicker"])
@@ -246,7 +246,7 @@ class TestCUHXRCheetah:
             for name in model.supported_variables
             if name.endswith(":Image:ArrayData")
         )
-        image = np.asarray(model.get(image_pv))
+        image = np.asarray(model.get_value(image_pv))
         assert image.ndim == 2
         assert image.size > 0
 
@@ -255,12 +255,12 @@ class TestCUHXRCheetah:
             for name, variable in model.supported_variables.items()
             if name.endswith(":BCTRL") and not getattr(variable, "read_only", True)
         )
-        current_value = float(model.get(control_pv))
+        current_value = float(model.get_value(control_pv))
         target_value = current_value + 0.001
         model.set({control_pv: target_value})
-        assert np.isclose(float(model.get(control_pv)), target_value)
+        assert np.isclose(float(model.get_value(control_pv)), target_value)
 
-        updated_image = np.asarray(model.get(image_pv))
+        updated_image = np.asarray(model.get_value(image_pv))
         assert updated_image.shape == image.shape
         assert np.isfinite(updated_image).all()
 
@@ -277,7 +277,7 @@ class TestCUHXRCheetah:
         )
         expected_resolution = float(otr1_element.pixel_size[0]) * 1e6
 
-        resolution = float(model.get(resolution_pv))
+        resolution = float(model.get_value(resolution_pv))
         assert np.isclose(resolution, expected_resolution)
         assert 5.0 < resolution < 30.0
 
@@ -360,10 +360,10 @@ class TestCUInjImpact:
         # Use one representative mapped PV for roundtrip set/get behavior.
         _, test_group_config = next(iter(IMPACT_GROUP_PV_MAPPING.items()))
         test_group_pv = test_group_config["pv"]
-        original_value = float(model.get(test_group_pv))
+        original_value = float(model.get_value(test_group_pv))
         updated_value = original_value + 1e-4
         model.set({test_group_pv: updated_value})
-        assert np.isclose(float(model.get(test_group_pv)), updated_value)
+        assert np.isclose(float(model.get_value(test_group_pv)), updated_value)
 
         # Reset to original value to avoid side effects across tests.
         model.set({test_group_pv: original_value})
@@ -384,16 +384,16 @@ class TestCUInjImpact:
         )
         base_pv = image_pv.rsplit(":", 2)[0]
 
-        image = np.asarray(model.get(image_pv))
+        image = np.asarray(model.get_value(image_pv))
         assert image.ndim == 2
         assert image.size > 0
         assert np.isfinite(image).all()
         assert image.min() >= 0.0
         assert image.max() <= 1.0
 
-        resolution = float(model.get(f"{base_pv}:RESOLUTION"))
-        size0 = int(model.get(f"{base_pv}:Image:ArraySize0_RBV"))
-        size1 = int(model.get(f"{base_pv}:Image:ArraySize1_RBV"))
+        resolution = float(model.get_value(f"{base_pv}:RESOLUTION"))
+        size0 = int(model.get_value(f"{base_pv}:Image:ArraySize0_RBV"))
+        size1 = int(model.get_value(f"{base_pv}:Image:ArraySize1_RBV"))
 
         assert image.shape == (size1, size0)
         assert resolution > 0.0
@@ -430,10 +430,10 @@ class TestCUInjImpact:
             if name.endswith(":BCTRL") and not getattr(variable, "read_only", True)
         )
 
-        current_value = float(model.get(bctrl_pv))
+        current_value = float(model.get_value(bctrl_pv))
         target_value = current_value + 0.001
         model.set({bctrl_pv: target_value})
-        assert np.isclose(float(model.get(bctrl_pv)), target_value)
+        assert np.isclose(float(model.get_value(bctrl_pv)), target_value)
 
         # Reset to original value to avoid side effects across tests.
         model.set({bctrl_pv: current_value})

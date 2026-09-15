@@ -110,7 +110,7 @@ class TestStagedModelVariables:
     def test_staged_model_edge_case(self):
         model = get_cu_hxr_staged_model(end_element="TD11")
         model.set({"QUAD:IN20:525:BCTRL": 10})
-        b = model.get("x.beta")
+        b = model.get_value("x.beta")
         assert b is not None
 
 
@@ -123,7 +123,7 @@ class TestStagedModelStaging:
 
         SCAN_QUAD_PV = "QUAD:IN20:525:BCTRL"
         model.set({SCAN_QUAD_PV: float(-10)})
-        b = model.get("OTR4_beam")
+        b = model.get_value("OTR4_beam")
 
         assert b["norm_emit_y"] is not None
 
@@ -142,7 +142,7 @@ class TestStagedModelStaging:
         model.set({"QUAD:IN20:631:BCTRL": -5.0})
 
         # Get tracked screen beam at OTR4
-        result = model.get("OTR4_beam")
+        result = model.get_value("OTR4_beam")
         assert result is not None
         # result is a ParticleGroup object from openPMD
         assert "ParticleGroup" in str(type(result))

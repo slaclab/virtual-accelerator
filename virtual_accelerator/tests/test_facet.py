@@ -77,13 +77,13 @@ class TestFACET2Bmad:
         screen_pv = next(pv for pv in screen_pvs if "Image:ArrayData" in pv)
 
         # test specific output from one of the screens to ensure it's properly set up
-        output = model.get(screen_pv)
+        output = model.get_value(screen_pv)
         assert output.shape == (1392, 1040)
 
         # test to make sure that changing an upstream variable that should affect the screen output
-        current_value = model.get("QUAD:IN10:371:BCTRL")
+        current_value = model.get_value("QUAD:IN10:371:BCTRL")
         model.set({"QUAD:IN10:371:BCTRL": current_value + 0.1})
-        new_output = model.get(screen_pv)
+        new_output = model.get_value(screen_pv)
         assert not (new_output == output).all()  # Check that the screen output changed
 
     def test_sbend(self):
@@ -94,7 +94,7 @@ class TestFACET2Bmad:
             custom_beam_path=TEST_BEAM_PATH,
         )
 
-        nominal_value = model.get("BEND:IN10:661:BCTRL")
+        nominal_value = model.get_value("BEND:IN10:661:BCTRL")
         assert np.isclose(
             nominal_value, 0.125, rtol=1e-2
         )  # Check that the nominal value is correct
@@ -103,7 +103,7 @@ class TestFACET2Bmad:
         scale_factor = 0.01
         new_value = nominal_value * (1 + scale_factor)
         model.set({"BEND:IN10:661:BCTRL": new_value})
-        updated_value = model.get("BEND:IN10:661:BCTRL")
+        updated_value = model.get_value("BEND:IN10:661:BCTRL")
         assert np.isclose(
             updated_value, new_value, rtol=1e-2
         )  # Check that the updated value is correct
@@ -113,7 +113,7 @@ class TestFACET2Bmad:
         assert np.isclose(ele_attrs["DG"] / ele_attrs["G"], scale_factor, rtol=1e-4)
 
         # This change should also affect the downstream BPM reading
-        bpm_reading = model.get("BPMS:IN10:781:X")
+        bpm_reading = model.get_value("BPMS:IN10:781:X")
         assert (
             bpm_reading < -1.0
         )  # check that there is a significant deflection in the negative X direction
@@ -148,10 +148,10 @@ class TestFACET2Bmad:
 
         # measure the deflection at the downstream bpm
         assert np.isclose(
-            model.get("BPMS:IN10:651:X"), 0.0, atol=1e-4
+            model.get_value("BPMS:IN10:651:X"), 0.0, atol=1e-4
         )  # Check that the beam is not deflected in X
         assert np.isclose(
-            model.get("BPMS:IN10:651:Y"), 1.939, rtol=1e-2
+            model.get_value("BPMS:IN10:651:Y"), 1.939, rtol=1e-2
         )  # Check that the beam is deflected in Y by 2 mm
         # NOTE: this value requires the bmad fixer elements to be disabled
 
@@ -160,7 +160,7 @@ class TestFACET2Bmad:
 
         # measure the deflection at the downstream bpm again
         assert np.isclose(
-            model.get("BPMS:IN10:651:Y"), 0.0, atol=1e-4
+            model.get_value("BPMS:IN10:651:Y"), 0.0, atol=1e-4
         )  # Check that the beam is no longer deflected
 
         # re-enable the TCAV
@@ -168,7 +168,7 @@ class TestFACET2Bmad:
             {"KLYS:LI10:51:MODECFG": "ACCEL_STDBY"}
         )  # Set TCAV back to ACCEL_STDBY mode
         assert np.isclose(
-            model.get("BPMS:IN10:651:Y"), 1.939, rtol=1e-2
+            model.get_value("BPMS:IN10:651:Y"), 1.939, rtol=1e-2
         )  # Check that the TCAV deflected the beam again
 
     @pytest.mark.requires_surrogate
@@ -204,10 +204,10 @@ class TestFACET2Bmad:
         # test that the L0B phase feedback variable is included since L0B is in the lattice
         for var in ["KLYS:LI10:41:SFB_PDES"]:
             assert var in model.supported_variables.keys()
-            value = model.get(var)
+            value = model.get_value(var)
             # test that the variable is writable
             model.set({var: value * 1.1})
-            assert np.isclose(model.get(var), value * 1.1)
+            assert np.isclose(model.get_value(var), value * 1.1)
 
 
 class TestFACETImpact:
@@ -257,10 +257,10 @@ class TestFACETImpact:
         # Use one representative mapped PV for roundtrip set/get behavior.
         _, test_group_config = next(iter(IMPACT_GROUP_PV_MAPPING.items()))
         test_group_pv = test_group_config["pv"]
-        original_value = float(model.get(test_group_pv))
+        original_value = float(model.get_value(test_group_pv))
         updated_value = original_value + 1e-4
         model.set({test_group_pv: updated_value})
-        assert np.isclose(float(model.get(test_group_pv)), updated_value)
+        assert np.isclose(float(model.get_value(test_group_pv)), updated_value)
 
         # Reset to original value to avoid side effects across tests.
         model.set({test_group_pv: original_value})
@@ -281,16 +281,16 @@ class TestFACETImpact:
         )
         base_pv = image_pv.rsplit(":", 2)[0]
 
-        image = np.asarray(model.get(image_pv))
+        image = np.asarray(model.get_value(image_pv))
         assert image.ndim == 2
         assert image.size > 0
         assert np.isfinite(image).all()
         assert image.min() >= 0.0
         assert image.max() <= 1.0
 
-        resolution = float(model.get(f"{base_pv}:RESOLUTION"))
-        size0 = int(model.get(f"{base_pv}:Image:ArraySize0_RBV"))
-        size1 = int(model.get(f"{base_pv}:Image:ArraySize1_RBV"))
+        resolution = float(model.get_value(f"{base_pv}:RESOLUTION"))
+        size0 = int(model.get_value(f"{base_pv}:Image:ArraySize0_RBV"))
+        size1 = int(model.get_value(f"{base_pv}:Image:ArraySize1_RBV"))
 
         assert image.shape == (size1, size0)
         assert resolution > 0.0
@@ -330,10 +330,10 @@ class TestFACETImpact:
             if name.endswith(":BCTRL") and not getattr(variable, "read_only", True)
         )
 
-        current_value = float(model.get(bctrl_pv))
+        current_value = float(model.get_value(bctrl_pv))
         target_value = current_value + 0.001
         model.set({bctrl_pv: target_value})
-        assert np.isclose(float(model.get(bctrl_pv)), target_value)
+        assert np.isclose(float(model.get_value(bctrl_pv)), target_value)
 
         # Reset to original value to avoid side effects across tests.
         model.set({bctrl_pv: current_value})
