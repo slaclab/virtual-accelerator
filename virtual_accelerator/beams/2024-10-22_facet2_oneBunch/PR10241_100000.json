@@ -1,0 +1,13 @@
+{
+  "plane": "PR10241",
+  "s_m": 0.942,
+  "ref_energy_eV": 6.099e6,
+  "generator": "impact",
+  "n_particles": 100000,
+  "charge_C": 1.6e-9,
+  "species": "electron",
+  "date_generated": "2024-10-22",
+  "mode": "nominal_one_bunch",
+  "source": "IMPACT-T output from the FACET2-S2E 2024-10-22 one-bunch scenario",
+  "notes": "Mean z and energy computed with pmd_beamphysics.ParticleGroup: z=0.942 m, energy=6.099 MeV. Consistent with PR10241 (s=0.942 m, ~6 MeV) upstream of L0AF in the gun/solenoid region."
+}

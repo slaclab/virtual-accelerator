@@ -51,6 +51,58 @@ Creating model instances also requires the `$LCLS_LATTICE` environment variable 
 contents of the lcls-lattice repo https://github.com/slaclab/lcls-lattice or the facet2-lattice
 repo https://github.com/slaclab/facet2-lattice.
 
+## Cached beam distributions
+
+Reference beam distributions at handoff planes (e.g. FACET PR10241, L0AFEND) are stored
+under `virtual_accelerator/beams/` via **Git LFS**. Before cloning or pulling this repo,
+install Git LFS once per machine:
+
+```
+brew install git-lfs      # or: conda install -c conda-forge git-lfs
+git lfs install
+```
+
+If you have already cloned without LFS, run `git lfs pull` to fetch the beam blobs.
+
+### Layout
+
+Beams are grouped by scenario (one subdirectory per date-tagged run) and named by
+handoff plane and particle count:
+
+```
+virtual_accelerator/beams/
+    2024-10-22_facet2_oneBunch/
+        L0AFEND_100000.h5     # + L0AFEND_100000.json
+        PR10241_100000.h5     # + PR10241_100000.json
+        PR10241_10000.h5      # + PR10241_10000.json    (small version for smoke tests)
+```
+
+### Adding a new beam
+
+1. Place the `.h5` in an appropriate subdirectory of `virtual_accelerator/beams/` (create
+   a new date-tagged subdirectory if the scenario is new). The `*.h5` LFS filter in
+   `.gitattributes` handles the tracking automatically.
+2. Write a JSON sidecar next to it with the same basename. Required fields:
+
+   ```json
+   {
+     "plane": "PR10241",
+     "s_m": 0.942,
+     "ref_energy_eV": 6.099e6,
+     "generator": "impact",
+     "n_particles": 100000,
+     "charge_C": 1.6e-9,
+     "species": "electron",
+     "date_generated": "YYYY-MM-DD",
+     "mode": "nominal_one_bunch",
+     "source": "where this beam came from (upstream repo path, notebook, run command, ...)",
+     "notes": ""
+   }
+   ```
+
+   The `plane`, `s_m`, `ref_energy_eV`, and `n_particles` fields can be filled from
+   `pmd_beamphysics.ParticleGroup(path).avg("z")`, `.avg("energy")`, `.n_particle`.
+
 ## Running the models
 
 You can use the runner script to start the model. The script allows you to specify the model backend,
