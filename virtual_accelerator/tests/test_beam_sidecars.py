@@ -32,7 +32,9 @@ def _h5_files() -> list[Path]:
     return sorted(BEAMS_DIR.rglob("*.h5"))
 
 
-@pytest.mark.parametrize("h5_path", _h5_files(), ids=lambda p: str(p.relative_to(BEAMS_DIR)))
+@pytest.mark.parametrize(
+    "h5_path", _h5_files(), ids=lambda p: str(p.relative_to(BEAMS_DIR))
+)
 def test_h5_beam_has_json_sidecar(h5_path: Path) -> None:
     sidecar = h5_path.with_suffix(".json")
     assert sidecar.exists(), (
@@ -41,7 +43,9 @@ def test_h5_beam_has_json_sidecar(h5_path: Path) -> None:
     )
 
 
-@pytest.mark.parametrize("h5_path", _h5_files(), ids=lambda p: str(p.relative_to(BEAMS_DIR)))
+@pytest.mark.parametrize(
+    "h5_path", _h5_files(), ids=lambda p: str(p.relative_to(BEAMS_DIR))
+)
 def test_sidecar_has_required_fields(h5_path: Path) -> None:
     sidecar = h5_path.with_suffix(".json")
     if not sidecar.exists():
