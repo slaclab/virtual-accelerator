@@ -24,3 +24,12 @@ repos:
         types_or: [python, pyi, jupyter]
       - id: ruff-format
         types_or: [python, pyi, jupyter]
+
+  - repo: local
+    hooks:
+      - id: beam-h5-has-sidecar
+        name: Every beams/*.h5 has a matching .json sidecar
+        entry: python scripts/check_beam_sidecars.py
+        language: system
+        files: ^virtual_accelerator/beams/.*\.h5$
+        pass_filenames: true
