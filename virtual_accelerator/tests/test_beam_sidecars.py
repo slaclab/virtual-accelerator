@@ -56,3 +56,31 @@ def test_sidecar_has_required_fields(h5_path: Path) -> None:
         f"{sidecar.relative_to(BEAMS_DIR)} is missing required fields: "
         f"{sorted(missing)}"
     )
+
+
+@pytest.mark.parametrize(
+    "h5_path", _h5_files(), ids=lambda p: str(p.relative_to(BEAMS_DIR))
+)
+def test_h5_loads_as_openpmd_particle_group(h5_path: Path) -> None:
+    """Each cached ``.h5`` must be readable as an openPMD ``ParticleGroup``."""
+    pmd_beamphysics = pytest.importorskip("pmd_beamphysics")
+
+    # Skip LFS pointer stubs so this test is a no-op when blobs weren't pulled.
+    if h5_path.stat().st_size < 1024:
+        head = h5_path.read_bytes()[:64]
+        if head.startswith(b"version https://git-lfs"):
+            pytest.skip(f"{h5_path.name} is an unresolved Git LFS pointer")
+
+    pg = pmd_beamphysics.ParticleGroup(str(h5_path))
+    assert pg.n_particle > 0, (
+        f"{h5_path.relative_to(BEAMS_DIR)} loaded but reports zero particles"
+    )
+
+    sidecar = h5_path.with_suffix(".json")
+    if sidecar.exists():
+        expected = json.loads(sidecar.read_text()).get("n_particles")
+        if expected is not None:
+            assert pg.n_particle == expected, (
+                f"{h5_path.relative_to(BEAMS_DIR)} has {pg.n_particle} particles "
+                f"but sidecar declares n_particles={expected}"
+            )
