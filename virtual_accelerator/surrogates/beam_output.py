@@ -103,7 +103,7 @@ class BeamOutputModel(LUMEModel, FinalParticlesMixIn):
         """Generate the output beam ParticleGroup from cached surrogate outputs and class attributes."""
 
         # get the covariance matrix from the cache
-        # units and variable order: [x, px, y, py, z, pz]
+        # units and variable order: [x, px, y, py, t, pz]
         # units: [m, eV/c, m, eV/c, s, eV/c]
         covariance_matrix = torch.as_tensor(self._cache["covariance_matrix"]).squeeze()
         if covariance_matrix.shape != (6, 6):
