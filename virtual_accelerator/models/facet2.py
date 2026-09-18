@@ -75,6 +75,7 @@ def add_facet_custom_impact_variables(model) -> None:
     model : ImpactModel
         The FACET-II model to which custom Impact variables will be added.
     """
+    from virtual_accelerator.impact import actions as impact_actions
     from virtual_accelerator.impact.actions import (
         ImpactScalarVariable,
         WritableActionMixin,
@@ -107,11 +108,21 @@ def add_facet_custom_impact_variables(model) -> None:
     base_pv = "SOLN:IN10:121"
     element_name = "SOL10111"
     mapping = get_element_attr_mapping()["Solenoid"]
+    local_overrides = {
+        "SolenoidBCTRLVariable": SolenoidBCTRLVariable,
+        "SolenoidBACTVariable": SolenoidBACTVariable,
+    }
 
-    # register variables based on mapping -- convert string to class type defined above
-    for suffix, var_class in mapping.items():
+    # register variables based on mapping, preferring the custom classes defined above
+    # and falling back to the standard variable classes for the rest
+    for suffix, var_class_name in mapping.items():
+        var_class = local_overrides.get(var_class_name) or getattr(
+            impact_actions, var_class_name, None
+        )
+        if var_class is None:
+            raise ValueError(f"Unknown Impact variable class {var_class_name!r}")
         model.register_impact_action_variable(
-            locals().get(var_class)(
+            var_class(
                 name=f"{base_pv}:{suffix}",
                 element_name=element_name,
             )
