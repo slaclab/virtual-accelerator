@@ -1,4 +1,4 @@
-"""Pre-commit hook: every ``beams/*.h5`` file must have a matching ``.json`` sidecar.
+"""Pre-commit hook: every ``beams/*.h5`` file must have a matching ``.h5.meta.json`` sidecar.
 
 Invoked with a list of paths (staged ``.h5`` files under ``virtual_accelerator/beams/``)
 and exits non-zero if any of them lack a sidecar.
@@ -12,7 +12,7 @@ def main(argv: list[str]) -> int:
     missing = []
     for arg in argv:
         h5 = Path(arg)
-        sidecar = h5.with_suffix(".json")
+        sidecar = h5.with_name(h5.name + ".meta.json")
         if not sidecar.exists():
             missing.append(f"{h5}: missing sidecar {sidecar.name}")
     if missing:

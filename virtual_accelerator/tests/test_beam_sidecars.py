@@ -1,9 +1,9 @@
 """Structural checks on cached beam files under ``virtual_accelerator/beams/``.
 
-Every ``.h5`` beam distribution must ship with a matching ``.json`` sidecar of
-the same basename, and every sidecar must contain a minimal set of fields so a
-reader can tell what the beam represents without opening the (possibly LFS-only)
-HDF5 blob.
+Every ``.h5`` beam distribution must ship with a matching ``.h5.meta.json``
+sidecar of the same basename, and every sidecar must contain a minimal set of
+fields so a reader can tell what the beam represents without opening the
+(possibly LFS-only) HDF5 blob.
 """
 
 import json
@@ -36,7 +36,7 @@ def _h5_files() -> list[Path]:
     "h5_path", _h5_files(), ids=lambda p: str(p.relative_to(BEAMS_DIR))
 )
 def test_h5_beam_has_json_sidecar(h5_path: Path) -> None:
-    sidecar = h5_path.with_suffix(".json")
+    sidecar = h5_path.with_name(h5_path.name + ".meta.json")
     assert sidecar.exists(), (
         f"{h5_path.relative_to(BEAMS_DIR)} has no sidecar. "
         f"Expected {sidecar.name} alongside it."
@@ -47,7 +47,7 @@ def test_h5_beam_has_json_sidecar(h5_path: Path) -> None:
     "h5_path", _h5_files(), ids=lambda p: str(p.relative_to(BEAMS_DIR))
 )
 def test_sidecar_has_required_fields(h5_path: Path) -> None:
-    sidecar = h5_path.with_suffix(".json")
+    sidecar = h5_path.with_name(h5_path.name + ".meta.json")
     if not sidecar.exists():
         pytest.skip("sidecar missing; covered by test_h5_beam_has_json_sidecar")
     data = json.loads(sidecar.read_text())
@@ -76,7 +76,7 @@ def test_h5_loads_as_openpmd_particle_group(h5_path: Path) -> None:
         f"{h5_path.relative_to(BEAMS_DIR)} loaded but reports zero particles"
     )
 
-    sidecar = h5_path.with_suffix(".json")
+    sidecar = h5_path.with_name(h5_path.name + ".meta.json")
     if sidecar.exists():
         expected = json.loads(sidecar.read_text()).get("n_particles")
         if expected is not None:

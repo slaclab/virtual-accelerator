@@ -67,14 +67,16 @@ If you have already cloned without LFS, run `git lfs pull` to fetch the beam blo
 ### Layout
 
 Beams are grouped by scenario (one subdirectory per date-tagged run) and named by
-handoff plane and particle count:
+handoff plane and particle count. Each `.h5` ships with a `.h5.meta.json` sidecar
+of the same basename — the doubled extension makes it obvious the JSON is metadata
+*about* the neighboring HDF5 file (and pairs trivially: `path + ".meta.json"`):
 
 ```
 virtual_accelerator/beams/
     2024-10-22_facet2_oneBunch/
-        L0AFEND_100000.h5     # + L0AFEND_100000.json
-        PR10241_100000.h5     # + PR10241_100000.json
-        PR10241_10000.h5      # + PR10241_10000.json    (small version for smoke tests)
+        L0AFEND_100000.h5     # + L0AFEND_100000.h5.meta.json
+        PR10241_100000.h5     # + PR10241_100000.h5.meta.json
+        PR10241_10000.h5      # + PR10241_10000.h5.meta.json    (small version for smoke tests)
 ```
 
 ### Adding a new beam
@@ -82,7 +84,7 @@ virtual_accelerator/beams/
 1. Place the `.h5` in an appropriate subdirectory of `virtual_accelerator/beams/` (create
    a new date-tagged subdirectory if the scenario is new). The `*.h5` LFS filter in
    `.gitattributes` handles the tracking automatically.
-2. Write a JSON sidecar next to it with the same basename. Required fields:
+2. Write a `<name>.h5.meta.json` sidecar next to it. Required fields:
 
    ```json
    {

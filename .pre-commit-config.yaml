@@ -28,7 +28,7 @@ repos:
   - repo: local
     hooks:
       - id: beam-h5-has-sidecar
-        name: Every beams/*.h5 has a matching .json sidecar
+        name: Every beams/*.h5 has a matching .h5.meta.json sidecar
         entry: python scripts/check_beam_sidecars.py
         language: system
         files: ^virtual_accelerator/beams/.*\.h5$
