@@ -2,7 +2,7 @@
   "plane": "L0AFEND",
   "s_m": 4.128,
   "ref_energy_eV": 6.862e7,
-  "generator": "unknown",
+  "generator": "impact",
   "n_particles": 100000,
   "charge_C": 1.6e-9,
   "species": "electron",
