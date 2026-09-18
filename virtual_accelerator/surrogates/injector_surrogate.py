@@ -33,7 +33,9 @@ def compute_covariance_matrix(state: Mapping[str, Any], energy: float) -> np.nda
     """
     sigma_x = state["OTRS:IN20:571:XRMS"] * 1e-6  # microns -> meters
     sigma_y = state["OTRS:IN20:571:YRMS"] * 1e-6
-    sigma_t = state["sigma_z"] / constants.speed_of_light  # convert from meters to seconds
+    sigma_t = (
+        state["sigma_z"] / constants.speed_of_light
+    )  # convert from meters to seconds
 
     relativistic_gamma = energy / (
         constants.value("electron mass energy equivalent in MeV") * 1e6
