@@ -27,22 +27,34 @@ Lastly, install backend-specific extras depending on which simulation types you 
 pip install .[bmad]
 pip install .[cheetah]
 pip install .[impact]
-pip install .[zfel]
 pip install .[pva]
 pip install .[surrogate]
 pip install .[all]
 ```
 
-Optional Dependency Keys by Model:
-| Model / Factory Function | Optional dependency key(s) | Notes |
-| --- | --- | --- |
-| `get_cu_hxr_bmad_model` | `bmad` | Requires BMAD/PyTAO backend. |
-| `get_facet_bmad_model` | `bmad` | FACET-II BMAD model; requires `FACET2_LATTICE`. |
-| `get_cu_hxr_injector_surrogate_model` | `surrogate` | Uses torch surrogate + cheetah particles. |
-| `get_facet_staged_model` | `surrogate`, `bmad` | FACET-II staged model (injector surrogate + FACET-II BMAD). |
-| `get_cu_hxr_staged_model` | `surrogate`, `bmad` | Stages `InjectorSurrogate` + CU HXR BMAD model. |
-| `get_cu_hxr_zfel_model` | `zfel` | CU HXR taper model using the 1D ZFEL backend. |
-| `virtual_accelerator.models.runners` CLI | `pva` (+ model backend key) | Runner requires `pva`; selected model backend must also be installed. |
+Supported models (see `docs/model_registry_usage.md` for the full API):
+
+| Model | Facility | Simulator | Start | End | Extras |
+| --- | --- | --- | --- | --- | --- |
+| `impact_cu_inj` | LCLS | IMPACT | CATHODE | YAG03 | `impact` |
+| `bmad_cu_hxr` | LCLS | Bmad | OTR2 | END | `bmad` |
+| `surrogate_cu_inj` | LCLS | Surrogate | CATHODE | OTR2 | `surrogate` |
+| `cheetah_cu_hxr` | LCLS | Cheetah | CATHODE | END | `cheetah` |
+| `zfel_cu_hxr` | LCLS | ZFEL | — | — | `zfel` |
+| `impact_f2e_inj` | Facet2 | IMPACT | CATHODEF | PR10241 | `impact` |
+| `surrogate_f2e_inj` | Facet2 | Surrogate | CATHODEF | PR10241 | `surrogate` |
+| `bmad_f2_elec` | Facet2 | Bmad | CATHODEF | END | `bmad` |
+
+Standard staged chains (build with `get_model([upstream, downstream], ...)`):
+
+| Alias | Upstream | Downstream | Handoff |
+| --- | --- | --- | --- |
+| `high_fidelity_cu_hxr_s2e` | `impact_cu_inj` | `bmad_cu_hxr` | YAG03 |
+| `fast_cu_hxr_s2e` | `surrogate_cu_inj` | `bmad_cu_hxr` | OTR2 |
+| `high_fidelity_facet2_s2e` | `impact_f2e_inj` | `bmad_f2_elec` | PR10241 |
+| `fast_facet2_s2e` | `surrogate_f2e_inj` | `bmad_f2_elec` | PR10241 |
+
+The `Runner` CLI additionally needs the `pva` extra.
 
 The package now lazily imports backend-specific dependencies. If you call a model
 whose optional dependency is not installed, you will get an actionable error with
@@ -61,13 +73,6 @@ number of particles, and end element to run with.
 For example:
 ```
 python virtual_accelerator/models/runners.py cu_hxr_bmad --end-element OTR4
-```
-
-CU HXR ZFEL runner serves machine-style PVs with the VA: prefix, for example:
-```
-python -m virtual_accelerator.models.runners cu_hxr_zfel
-VA:USEG:UNDH:1450:KAct
-VA:ZFEL:PULSE_ENERGY
 ```
 
 For more info, run:

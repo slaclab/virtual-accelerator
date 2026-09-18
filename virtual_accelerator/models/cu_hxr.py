@@ -176,7 +176,9 @@ def get_cu_hxr_cheetah_model(n_particles: int = 1000):
     return model
 
 
-def get_cu_inj_impact_model(n_particles: int = 100, end_element="OTR2"):
+def get_cu_inj_impact_model(
+    n_particles: int = 100, end_element="OTR2", include_end_element: bool = True
+):
     from virtual_accelerator.impact.factory import (
         ImpactModelSpec,
         build_impact_model,
@@ -192,6 +194,7 @@ def get_cu_inj_impact_model(n_particles: int = 100, end_element="OTR2"):
         numprocs=1,
         space_charge=False,
         stop_location=end_element,
+        include_stop_element=include_end_element,
     )
     model = build_impact_model(spec)
 
