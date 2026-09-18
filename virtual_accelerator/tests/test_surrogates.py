@@ -12,7 +12,10 @@ if HAS_INJECTOR_SURROGATE_DEPS:
     from lume_torch.models.torch_model import TorchModel
     import torch
 
-    from virtual_accelerator.surrogates.injector_surrogate import InjectorSurrogate, compute_covariance_matrix
+    from virtual_accelerator.surrogates.injector_surrogate import (
+        InjectorSurrogate,
+        compute_covariance_matrix,
+    )
     from virtual_accelerator.surrogates.beam_output import BeamOutputModel
 
     TEST_COVARIANCE_MATRIX = torch.diag(
@@ -69,8 +72,14 @@ def test_compute_covariance_matrix():
     assert cov.shape == (6, 6)
     assert cov[0, 0] == (state["OTRS:IN20:571:XRMS"] * 1e-6) ** 2
     assert cov[2, 2] == (state["OTRS:IN20:571:YRMS"] * 1e-6) ** 2
-    assert cov[1, 1] == (state["norm_emit_x"] / (energy / mc2)) ** 2 * energy**2 / cov[0, 0]
-    assert cov[3, 3] == (state["norm_emit_y"] / (energy / mc2)) ** 2 * energy**2 / cov[2, 2]
+    assert (
+        cov[1, 1]
+        == (state["norm_emit_x"] / (energy / mc2)) ** 2 * energy**2 / cov[0, 0]
+    )
+    assert (
+        cov[3, 3]
+        == (state["norm_emit_y"] / (energy / mc2)) ** 2 * energy**2 / cov[2, 2]
+    )
     assert cov[4, 4] == (state["sigma_z"] / constants.speed_of_light) ** 2
     assert cov[5, 5] == 0
 

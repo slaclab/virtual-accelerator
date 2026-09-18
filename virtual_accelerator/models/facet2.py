@@ -167,7 +167,7 @@ def get_facet_bmad_model(
         tao_init_relpath="bmad/models/f2_elec/tao.init",
         mapping_beampath=None,
         profmon_config_filename="facet2_profmon_info.yaml",
-        default_beam_relpath="../beams/2024-10-22_oneBunch.h5",
+        default_beam_relpath="../beams/2024-10-22_facet2_oneBunch/L0AFEND_100000.h5",
         default_track_start="L0AFEND",
     )
     model = build_bmad_model(

@@ -1,0 +1,13 @@
+{
+  "plane": "YAG03",
+  "s_m": 4.614,
+  "ref_energy_eV": 6.386e7,
+  "generator": "impact",
+  "n_particles": 50000,
+  "charge_C": 2.5e-10,
+  "species": "electron",
+  "date_generated": "2026-09-17",
+  "mode": "nominal",
+  "source": "IMPACT-T output from the LCLS Cu injector run terminating at YAG03 (originally impact_inj_50k_YAG03.h5)",
+  "notes": "Mean z and energy computed with pmd_beamphysics.ParticleGroup: z=4.614 m, energy=63.86 MeV. Total charge 2.5e-10 C (50k macroparticles). Intended as an injector-handoff beam for the Cu HXR impact model at end_element=YAG03."
+}
