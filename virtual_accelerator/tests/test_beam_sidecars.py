@@ -21,9 +21,12 @@ REQUIRED_SIDECAR_FIELDS = frozenset(
         "ref_energy_eV",
         "generator",
         "n_particles",
+        "charge_C",
+        "species",
         "date_generated",
         "mode",
         "source",
+        "notes",
     }
 )
 
