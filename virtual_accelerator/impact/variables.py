@@ -21,6 +21,9 @@ SUPPORTED_ELEMENT_TYPES = {"quadrupole", "write_beam", "solrf"}
 def get_normalized_element_type(impact: Impact, element_name):
     element = impact.ele[element_name]
     element_type = element["type"]
+    if element_type == "solrf":
+        if element['rf_field_scale'] == 0 and element['solenoid_field_scale']!=0:
+            element_type = "Solenoid"
     if element_type == "quadrupole":
         element_type = "Quadrupole"
     if element_type == "write_beam":
@@ -45,6 +48,14 @@ def get_variables(
 ):
     all_variables = []
 
+    # Elements driven by Impact control groups (e.g. the GUN/L0A/L0B RF cavities)
+    # are controlled via group PVs, so a missing per-element mapping is expected.
+    grouped_element_names = {
+        ele_name
+        for group in (getattr(impact, "group", None) or {}).values()
+        for ele_name in (getattr(group, "ele_names", None) or [])
+    }
+
     all_element_types = get_all_element_types(impact)
     for element_name, element_type in all_element_types.items():
         # if the element is a screen, add screen variables based on the screen configuration
@@ -63,10 +74,11 @@ def get_variables(
 
         # check if element type is in the variable configuration mapping, if not skip it with a warning
         if element_type not in element_attr_mapping:
-            # raise warning and skip if element type is not in the variable configuration mapping
-            logger.warning(
-                f"Element type {element_type} for element {element_name} not found in variable configuration mapping. Skipping."
-            )
+            # Skip, but stay quiet for elements handled elsewhere via control groups.
+            if element_name not in grouped_element_names:
+                logger.warning(
+                    f"Element type {element_type} for element {element_name} not found in variable configuration mapping. Skipping."
+                )
             continue
 
         # get the element pv suffix mapping for this element type from the variable configuration

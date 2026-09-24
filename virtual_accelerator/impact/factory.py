@@ -129,15 +129,21 @@ def build_impact_model(spec: ImpactModelSpec):
     """Build and return the impact model based on the provided specification."""
     impact, distgen = get_impact_and_distgen(spec)
 
-    # set the parameters of the impact model
+    # Set the stop location of the simulation
+    if spec.stop_location is not None:
+            impact = set_stop_location(impact, spec.stop_location)
+
+    # Set the parameters for the smallest possible run
+    impact.header["Np"] = 1 #spec.n_particles
+    impact.numprocs = 1 #spec.numprocs
+    impact.header["Bcurr"] = 0 #1 if spec.space_charge else 0
+
+    impact.run() #run with absolute minimum required to initialize output fields in impact object
+
+    # set the REAL run parameters of the impact model
     impact.header["Np"] = spec.n_particles
     impact.numprocs = spec.numprocs
     impact.header["Bcurr"] = 1 if spec.space_charge else 0
-
-    if spec.stop_location is not None:
-        impact = set_stop_location(impact, spec.stop_location)
-
-    impact.run()
 
     # set the parameters of the distgen model
     distgen["n_particle"] = spec.n_particles

@@ -408,6 +408,16 @@ class TestCUInjImpact:
             element_keys=element_types,
         )
 
+    def test_solenoid_pvs_match_impact_lattice(self, model):
+            element_names, element_types = _get_impact_lattice_element_metadata(model)
+    
+            assert_magnet_pvs_match_lattice_elements(
+                model=model,
+                element_key="Solenoid",
+                element_names=element_names,
+                element_keys=element_types,
+            )
+
     def test_screen_pvs_match_impact_lattice(self, model):
         element_names, element_types = _get_impact_lattice_element_metadata(model)
         screen_elements = [
@@ -454,3 +464,18 @@ class TestCUInjImpact:
         assert "OTRS:Image:571:ArraySize1_RBV" not in model.supported_variables
         assert "OTRS:Image:571:RESOLUTION" not in model.supported_variables
         assert "ACCL:IN20:400:L0B_ADES" not in model.supported_variables
+
+
+RFDATA102_PATH = Path(__file__).resolve().parent / "data" / "rfdata102"
+
+
+@pytest.mark.requires_impact
+@pytest.mark.skipif(not HAS_IMPACT_DEPS, reason="requires impact optional dependencies")
+def test_solenoid_effective_length_from_rfdata102():
+    # SOL1 (SOLN:IN20:121) gun-solenoid Bz fieldmap captured from the cu_inj lattice.
+    from impact.fieldmaps import solrf_field_from_data
+    from virtual_accelerator.impact.actions import calc_effective_length
+
+    bz = solrf_field_from_data(np.loadtxt(RFDATA102_PATH))["Bz"]
+
+    assert calc_effective_length(bz) == pytest.approx(0.16303, abs=1e-4)

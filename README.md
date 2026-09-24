@@ -32,6 +32,22 @@ pip install .[pva]
 pip install .[surrogate]
 pip install .[all]
 ```
+Note that to run impact, you will also need to mamba install the following:
+```
+mamba install impact-t
+mamba install distgen
+```
+To run multi-core tracking with Impact-T, you will need to choose openmpi or mpich and do one (ONLY ONE) of the following:
+```
+# For OpenMPI
+conda install -c conda-forge impact-t=*=mpi_openmpi*
+
+# For MPICH
+conda install -c conda-forge impact-t=*=mpi_mpich*
+```
+
+And the examples require installing ipykernel and register as a Jupyter kernel.
+
 
 Optional Dependency Keys by Model:
 | Model / Factory Function | Optional dependency key(s) | Notes |
@@ -43,6 +59,7 @@ Optional Dependency Keys by Model:
 | `get_cu_hxr_staged_model` | `surrogate`, `bmad` | Stages `InjectorSurrogate` + CU HXR BMAD model. |
 | `get_cu_hxr_zfel_model` | `zfel` | CU HXR taper model using the 1D ZFEL backend. |
 | `virtual_accelerator.models.runners` CLI | `pva` (+ model backend key) | Runner requires `pva`; selected model backend must also be installed. |
+| `get_cu_inj_impact_model` | `Impact` | Requires impact pip install AND conda install, both detailed above |
 
 The package now lazily imports backend-specific dependencies. If you call a model
 whose optional dependency is not installed, you will get an actionable error with
