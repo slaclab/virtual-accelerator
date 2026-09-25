@@ -21,20 +21,20 @@ IMPACT_GROUP_PV_MAPPING = {
 }
 
 IMPACT_ELEMENT_PV_MAPPING = {
-    "SOL1":  "SOLN:IN20:121",
-    "SQ01":  "QUAD:IN20:122",
-    "CQ01":  "QUAD:IN20:121",
-    "YAG01": "YAGS:IN20:211",   # commented out in Impact-T file (inactive)
+    "SOL1": "SOLN:IN20:121",
+    "SQ01": "QUAD:IN20:122",
+    "CQ01": "QUAD:IN20:121",
+    "YAG01": "YAGS:IN20:211",  # commented out in Impact-T file (inactive)
     "YAG02": "YAGS:IN20:241",
     "YAG03": "YAGS:IN20:351",
-    "QA01":  "QUAD:IN20:361",
-    "QA02":  "QUAD:IN20:371",
-    "QE01":  "QUAD:IN20:425",
-    "QE02":  "QUAD:IN20:441",
-    "QE03":  "QUAD:IN20:511",
-    "QE04":  "QUAD:IN20:525",
-    "OTR1":  "OTRS:IN20:541",
-    "OTR2":  "OTRS:IN20:571",
+    "QA01": "QUAD:IN20:361",
+    "QA02": "QUAD:IN20:371",
+    "QE01": "QUAD:IN20:425",
+    "QE02": "QUAD:IN20:441",
+    "QE03": "QUAD:IN20:511",
+    "QE04": "QUAD:IN20:525",
+    "OTR1": "OTRS:IN20:541",
+    "OTR2": "OTRS:IN20:571",
 }
 
 
