@@ -10,31 +10,6 @@ from lume.variables import (
 )
 
 
-def get_element_name_to_base_pv_mapping(lcls_lattice_path: str) -> dict[str, str]:
-    """
-    Get a mapping from element names to their base PVs from the LCLS lattice file.
-
-    Parameters
-    ----------
-    lcls_lattice_path : str
-        Path to the LCLS lattice repo.
-
-    Returns
-    -------
-    dict[str, str]
-        Mapping of element names to base PVs.
-    """
-    file = os.path.join(
-        lcls_lattice_path, "bmad/conversion/from_oracle/lcls_elements.csv"
-    )
-    info = pd.read_csv(file, dtype=str)
-    if "Element" not in info.columns:
-        info = pd.read_csv(file, dtype=str, header=1)
-    mapping = dict(zip(info["Element"], info["Control System Name"]))
-
-    return mapping
-
-
 def get_pvs_by_element_name(model) -> dict[str, set[str]]:
     """Group supported PV names by normalized variable element name."""
     pvs_by_element: dict[str, set[str]] = {}

@@ -20,6 +20,23 @@ IMPACT_GROUP_PV_MAPPING = {
     "group:GUN_scale": {"pv": "GUN:IN20:1:GN1_ADES", "scale": 1e6, "element": "GUN"},
 }
 
+IMPACT_ELEMENT_PV_MAPPING = {
+    "SOL1":  "SOLN:IN20:121",
+    "SQ01":  "QUAD:IN20:122",
+    "CQ01":  "QUAD:IN20:121",
+    "YAG01": "YAGS:IN20:211",   # commented out in Impact-T file (inactive)
+    "YAG02": "YAGS:IN20:241",
+    "YAG03": "YAGS:IN20:351",
+    "QA01":  "QUAD:IN20:361",
+    "QA02":  "QUAD:IN20:371",
+    "QE01":  "QUAD:IN20:425",
+    "QE02":  "QUAD:IN20:441",
+    "QE03":  "QUAD:IN20:511",
+    "QE04":  "QUAD:IN20:525",
+    "OTR1":  "OTRS:IN20:541",
+    "OTR2":  "OTRS:IN20:571",
+}
+
 
 def get_cu_hxr_bmad_model(
     start_element="OTR2",
@@ -237,6 +254,7 @@ def get_cu_inj_impact_model(
         distgen_file="distgen/models/cu_inj/v0/distgen.yaml",
         impact_yaml_file="impact/models/cu_inj/v0/ImpactT.yaml",
         profmon_config_filename="cu_hxr_profmon_info.yaml",
+        element_name_to_base_pv_mapping=IMPACT_ELEMENT_PV_MAPPING,
         n_particles=n_particles,
         numprocs=1,
         space_charge=False,

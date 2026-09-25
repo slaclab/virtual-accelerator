@@ -38,6 +38,22 @@ IMPACT_GROUP_PV_MAPPING = {
     "group:GUNF_scale": {"pv": "KLYS:IN10:31:ADES", "scale": 1e6, "element": "GUNF"},
 }
 
+IMPACT_ELEMENT_PV_MAPPING = {
+    "SOL10111":    "SOLN:IN10:111",
+    "SQ10122":     "QUAD:IN10:122",
+    "CQ10121":     "QUAD:IN10:121",
+    "PR10241":     "PROF:IN10:241",
+    "QA10361":     "QUAD:IN10:361",
+    "QA10371":     "QUAD:IN10:371",
+    "QE10425":     "QUAD:IN10:425",
+    "QE10441":     "QUAD:IN10:441",
+    "PR10465":     "PROF:IN10:465",
+    "PR10471":     "PROF:IN10:471",
+    "QE10511":     "QUAD:IN10:511",
+    "QE10525":     "QUAD:IN10:525",
+    "PR10571":     "PROF:IN10:571",
+}
+
 
 def add_facet_custom_bmad_variables(model) -> None:
     """
@@ -295,6 +311,7 @@ def get_facet_impact_model(
         distgen_file="distgen/models/f2e_inj/v0/distgen.yaml",
         impact_yaml_file="impact/models/f2e_inj/v0/ImpactT.yaml",
         profmon_config_filename="facet2_profmon_info.yaml",
+        element_name_to_base_pv_mapping=IMPACT_ELEMENT_PV_MAPPING,
         n_particles=n_particles,
         numprocs=1,
         space_charge=False,
