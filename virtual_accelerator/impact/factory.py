@@ -170,7 +170,7 @@ def build_impact_model(spec: ImpactModelSpec):
         impact,
         get_element_attr_mapping(),
         screen_config_dict,
-        spec.element_name_to_base_pv_mapping,
+        {**spec.element_name_to_base_pv_mapping, **(spec.custom_aliases or {})},
     )
     for var in action_variables:
         model.register_impact_action_variable(var)
