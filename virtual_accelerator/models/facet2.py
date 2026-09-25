@@ -153,6 +153,7 @@ def get_facet_bmad_model(
         - is_on=false for fixer elements
     """
     from virtual_accelerator.bmad.factory import BmadModelSpec, build_bmad_model
+    from virtual_accelerator.beams import list_beams
 
     custom_aliases = {
         "PR10241": "PROF:IN10:241",
@@ -161,13 +162,25 @@ def get_facet_bmad_model(
         "TCY10490": "KLYS:LI10:51",
     }
 
+    if track_beam and custom_beam_path is None and start_element == "L0AFEND":
+        matches = list_beams(
+            beamline="facet2", element="L0AFEND", mode="nominal_one_bunch"
+        )
+        if not matches:
+            raise RuntimeError(
+                "No cached L0AFEND beam found for FACET-II. "
+                "Expected a facet2/L0AFEND/nominal_one_bunch entry under "
+                "virtual_accelerator/beams/."
+            )
+        # Pick the largest-particle-count match as the default.
+        custom_beam_path = str(max(matches, key=lambda e: e.n_particles).path)
+
     spec = BmadModelSpec(
         feature="FACET-II Bmad model",
         lattice_env_var="FACET2_LATTICE",
         tao_init_relpath="bmad/models/f2_elec/tao.init",
         mapping_beampath=None,
         profmon_config_filename="facet2_profmon_info.yaml",
-        default_beam_relpath="../beams/2024-10-22_facet2_oneBunch/L0AFEND_100000.h5",
         default_track_start="L0AFEND",
     )
     model = build_bmad_model(

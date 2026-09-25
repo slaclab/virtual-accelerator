@@ -1,5 +1,6 @@
 {
-  "plane": "PR10241",
+  "beamline": "facet2",
+  "element": "PR10241",
   "s_m": 0.942,
   "ref_energy_eV": 6.099e6,
   "generator": "impact",

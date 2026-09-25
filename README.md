@@ -69,28 +69,82 @@ If you have already cloned without LFS, run `git lfs pull` to fetch the beam blo
 ### Layout
 
 Beams are grouped by scenario (one subdirectory per date-tagged run) and named by
-handoff plane and particle count. Each `.h5` ships with a `.h5.meta.json` sidecar
-of the same basename — the doubled extension makes it obvious the JSON is metadata
-*about* the neighboring HDF5 file (and pairs trivially: `path + ".meta.json"`):
+handoff element and particle count. Each `.h5` ships with a `.meta.json` sidecar
+of the same base name (e.g. `PR10241_100000.h5` ↔ `PR10241_100000.meta.json`):
 
 ```
 virtual_accelerator/beams/
     2024-10-22_facet2_oneBunch/
-        L0AFEND_100000.h5     # + L0AFEND_100000.h5.meta.json
-        PR10241_100000.h5     # + PR10241_100000.h5.meta.json
-        PR10241_10000.h5      # + PR10241_10000.h5.meta.json    (small version for smoke tests)
+        L0AFEND_100000.h5     # + L0AFEND_100000.meta.json
+        PR10241_100000.h5     # + PR10241_100000.meta.json
 ```
+
+### Loading beams from Python
+
+Use the top-level `virtual_accelerator.beams` API instead of hard-coding paths.
+The registry scans `virtual_accelerator/beams/` once on first use and reads
+every `.meta.json` sidecar to build an in-memory index.
+
+#### `get_beam(beamline, element, mode) -> list[ParticleGroup]`
+
+Load every cached beam matching a `(beamline, element, mode)` triple.
+
+| Parameter  | Type  | Example                                    |
+| ---------- | ----- | ------------------------------------------ |
+| `beamline` | `str` | `"facet2"`, `"cu_inj"`, `"cu_hxr"`         |
+| `element`  | `str` | `"PR10241"`, `"L0AFEND"`, `"YAG03"`        |
+| `mode`     | `str` | `"nominal"`, `"nominal_one_bunch"`, `"two_bunch"` |
+
+Returns `list[pmd_beamphysics.ParticleGroup]` (always a list — index `[0]` when
+you know there's a single match). Raises `KeyError` with the list of available
+`(element, mode)` pairs when nothing matches for the beamline, or the list of
+known beamlines when the beamline itself is unknown.
+
+```python
+from virtual_accelerator.beams import get_beam
+
+[pg] = get_beam(beamline="facet2", element="L0AFEND", mode="nominal_one_bunch")
+pg_small = pg.resample(1000)  # for a smaller particle count, resample on the fly
+```
+
+#### `list_beams(beamline=None, element=None, mode=None) -> list[BeamEntry]`
+
+Enumerate metadata entries without opening the HDF5 blobs. Every parameter is
+optional; passing `None` skips that filter, and filters are AND-combined.
+
+```python
+from virtual_accelerator.beams import list_beams
+
+# List every beam the registry knows about.
+for entry in list_beams():
+    print(entry.beamline, entry.element, entry.mode, entry.n_particles)
+
+# Filter by mode (e.g. all two-bunch beams across every beamline).
+for entry in list_beams(mode="two_bunch"):
+    print(entry.path)
+
+# Each entry exposes .path (the .h5 file) plus every sidecar field, and
+# .load() returns the ParticleGroup lazily.
+entry = list_beams(beamline="facet2", element="PR10241")[0]
+pg = entry.load()
+```
+
+`BeamEntry` fields mirror the sidecar schema: `path`, `beamline`, `element`,
+`mode`, `s_m`, `ref_energy_eV`, `generator`, `n_particles`, `charge_C`,
+`species`, `date_generated`, `source`, `notes`, plus a catch-all `extra` dict
+for future sidecar fields.
 
 ### Adding a new beam
 
-1. Place the `.h5` in an appropriate subdirectory of `virtual_accelerator/beams/` (create
-   a new date-tagged subdirectory if the scenario is new). The `*.h5` LFS filter in
-   `.gitattributes` handles the tracking automatically.
-2. Write a `<name>.h5.meta.json` sidecar next to it. Required fields:
+1. Place the `.h5` in an appropriate subdirectory of `virtual_accelerator/beams/`
+   (create a new date-tagged subdirectory if the scenario is new). The `*.h5`
+   LFS filter in `.gitattributes` handles the tracking automatically.
+2. Write a `<name>.meta.json` sidecar next to it. Required fields:
 
    ```json
    {
-     "plane": "PR10241",
+     "beamline": "facet2",
+     "element": "PR10241",
      "s_m": 0.942,
      "ref_energy_eV": 6.099e6,
      "generator": "impact",
@@ -104,8 +158,37 @@ virtual_accelerator/beams/
    }
    ```
 
-   The `plane`, `s_m`, `ref_energy_eV`, and `n_particles` fields can be filled from
-   `pmd_beamphysics.ParticleGroup(path).avg("z")`, `.avg("energy")`, `.n_particle`.
+   - `beamline` names the machine (`facet2`, `cu_inj`, `cu_hxr`) — this is the
+     key `get_beam` searches on.
+   - `element` names the handoff plane (`PR10241`, `L0AFEND`, `YAG03`, ...).
+   - `mode` names the operating scenario (`nominal`, `nominal_one_bunch`,
+     `two_bunch`, ...). Multiple beams may share `(beamline, element, mode)` —
+     e.g. different particle counts of the same physical distribution — and
+     `get_beam` returns all of them.
+   - `s_m`, `ref_energy_eV`, and `n_particles` can be filled from
+     `pmd_beamphysics.ParticleGroup(path).avg("z")`, `.avg("energy")`,
+     `.n_particle`.
+
+3. The pre-commit hook (`scripts/check_beam_sidecars.py`) refuses commits that
+   add an `.h5` without a matching sidecar, and `tests/test_beam_sidecars.py`
+   enforces the schema in CI.
+4. The new beam is now discoverable — no Python changes needed:
+
+   ```python
+   from virtual_accelerator.beams import get_beam
+   [pg] = get_beam(beamline="facet2", element="PR10241", mode="nominal_one_bunch")
+   ```
+
+### Downsampling
+
+We commit one canonical distribution per `(beamline, element, mode)` (with
+occasional smaller-count copies of the same distribution for fast tests). To
+run a model with fewer particles at runtime, use `ParticleGroup.resample`:
+
+```python
+[pg] = get_beam(beamline="facet2", element="L0AFEND", mode="nominal_one_bunch")
+small = pg.resample(5000)
+```
 
 ## Running the models
 
