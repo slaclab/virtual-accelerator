@@ -5,7 +5,10 @@ import yaml
 import warnings
 
 
-from virtual_accelerator.bmad.variables import get_all_element_types, get_variables
+from virtual_accelerator.bmad.variables import (
+    get_all_element_types,
+    get_variables,
+)
 from virtual_accelerator.utils.optional_dependencies import import_optional
 from virtual_accelerator.utils.variables import get_element_attr_mapping
 
@@ -40,8 +43,36 @@ def build_bmad_model(
     custom_beam_path: str | None,
     custom_tao_commands: list[str] | None = None,
     custom_aliases: dict[str, str] | None = None,
+    end_mode: str = "end",
+    start_mode: str = "beginning",
 ):
-    """Build a lattice-specific LUMEBmadModel from a shared implementation."""
+    """
+
+    Build a lattice-specific LUMEBmadModel from a shared implementation
+
+    Parameters
+    ----------
+    spec : BmadModelSpec
+        Specification for the Bmad model to be built.
+    start_element : str
+        Name of the starting element in the lattice.
+    end_element : str
+        Name of the ending element in the lattice.
+    track_beam : bool
+        Whether to enable beam tracking.
+    custom_beam_path : str | None
+        Path to a custom beam file, if any.
+    custom_tao_commands : list[str] | None, optional
+        List of custom Tao commands to apply, by default None.
+    custom_aliases : dict[str, str] | None, optional
+        Dictionary of custom element aliases, by default None.
+    end_mode : str, optional
+        Mode for determining the end of the lattice slice, by default "end".
+    start_mode : str, optional
+        Mode for determining the start of the lattice slice, by default "beginning".
+
+
+    """
 
     _check_optional_modules(
         [
@@ -61,7 +92,32 @@ def build_bmad_model(
     init_file = os.path.join(lattice_root, spec.tao_init_relpath)
     tao = Tao(f"-init {init_file} -noplot -slice_lattice {start_element}:{end_element}")
 
-    # set tracking to start_element
+    # modify the end element if end_mode is "beginning"
+    if end_mode not in ["beginning", "end"]:
+        raise ValueError(f"Invalid end_mode: {end_mode}. Must be 'beginning' or 'end'.")
+
+    if end_mode == "beginning":
+        # stop tao at second to last element
+        element_list = tao.lat_list("*", "ele.name")
+        end_element = element_list[element_list.index(end_element) - 1]
+        tao = Tao(
+            f"-init {init_file} -noplot -slice_lattice {start_element}:{end_element}"
+        )
+
+    # modify the start element if start_mode is "end"
+    if start_mode not in ["beginning", "end"]:
+        raise ValueError(
+            f"Invalid start_mode: {start_mode}. Must be 'beginning' or 'end'."
+        )
+
+    if start_mode == "end":
+        element_list = tao.lat_list("*", "ele.name")
+        start_element = element_list[element_list.index(start_element) + 1]
+        tao = Tao(
+            f"-init {init_file} -noplot -slice_lattice {start_element}:{end_element}"
+        )
+
+    # set tracking start
     tao.cmd(f"set beam track_start = {start_element}")
 
     # apply any custom tao commands (e.g. for setting up custom aliases or other tao configuration needed for the model)

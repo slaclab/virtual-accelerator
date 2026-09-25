@@ -22,7 +22,12 @@ IMPACT_GROUP_PV_MAPPING = {
 
 
 def get_cu_hxr_bmad_model(
-    start_element="OTR2", end_element="END", track_beam=False, custom_beam_path=None
+    start_element="OTR2",
+    end_element="END",
+    track_beam=False,
+    custom_beam_path=None,
+    end_mode="end",
+    start_mode="beginning",
 ):
     """
     Get the LUMEBmadModel for the CU_HXR lattice from OTR2 to END.
@@ -37,6 +42,10 @@ def get_cu_hxr_bmad_model(
         Whether to enable beam tracking in the model. Default is False.
     custom_beam_path: str, optional
         Path to custom beam file for tracking. If None, will use default design beam. Default is None.
+    end_mode: str, optional
+        The mode for determining the end of the lattice element. Must be either "beginning" or "end". Default is "end".
+    start_mode: str, optional
+        The mode for determining the start of the lattice element. Must be either "beginning" or "end". Default is "beginning".
 
 
     Returns
@@ -61,6 +70,8 @@ def get_cu_hxr_bmad_model(
         end_element=end_element,
         track_beam=track_beam,
         custom_beam_path=custom_beam_path,
+        end_mode=end_mode,
+        start_mode=start_mode,
         custom_tao_commands=[
             "set bmad_com lr_wakes_on=false",
             "set bmad_com sr_wakes_on=false",
@@ -112,9 +123,29 @@ def get_cu_hxr_staged_model(n_particles: int = 1000, **kwargs) -> StagedModel:
     return staged_model
 
 
-def get_cu_hxr_cheetah_model(n_particles: int = 1000):
+def get_cu_hxr_cheetah_model(
+    n_particles: int = 1000,
+    start_element="otr2",
+    end_element="enddmph_2",
+    start_mode="beginning",
+    end_mode="end",
+):
     """
     Get the LUMECheetahModel for the CU_HXR lattice.
+
+    Parameters
+    ----------
+    n_particles: int, optional
+        Number of particles to simulate, by default 1000.
+    start_element: str, optional
+        Name of the starting element in the lattice, by default "otr2".
+    end_element: str, optional
+        Name of the ending element in the lattice, by default "enddmph_2".
+    start_mode: str, optional
+        Mode for determining the start of the lattice slice, by default "beginning".
+    end_mode: str, optional
+        Mode for determining the end of the lattice slice, by default "end".
+
 
     Returns
     -------
@@ -155,6 +186,22 @@ def get_cu_hxr_cheetah_model(n_particles: int = 1000):
     # Create lattice from file
     segment = Segment.from_lattice_json(
         os.path.join(lcls_lattice, "cheetah/nc_hxr.json")
+    )
+
+    # check start mode and end mode arguments
+    if start_mode not in ["beginning", "end"]:
+        raise ValueError(
+            f"Invalid start_mode: {start_mode}. Must be 'beginning' or 'end'."
+        )
+    if end_mode not in ["beginning", "end"]:
+        raise ValueError(f"Invalid end_mode: {end_mode}. Must be 'beginning' or 'end'.")
+
+    # get subsegment
+    segment = segment.subcell(
+        start=start_element.lower(),
+        end=end_element.lower(),
+        include_start=start_mode == "beginning",
+        include_end=end_mode == "end",
     )
 
     # Define the simulator using lattice and particle beam

@@ -203,6 +203,20 @@ class TestCUHXRBmad:
         )
         assert_screen_image_pvs_match_tao_lattice(model, screen_attrs=SCREEN_PV_ATTRS)
 
+    def test_end_mode(self):
+        model = get_cu_hxr_bmad_model(
+            end_element="OTR4", track_beam=False, end_mode="beginning"
+        )
+        assert model.get_value("name")[-1] == "DB00A"
+
+        model = get_cu_hxr_bmad_model(
+            start_element="YAG03",
+            end_element="TCAV0#1",
+            track_beam=False,
+            end_mode="beginning",
+        )
+        assert model.get_value("name")[-1] == "DH06"
+
 
 class TestCUHXRCheetah:
     pytestmark = [
@@ -265,7 +279,7 @@ class TestCUHXRCheetah:
         assert np.isfinite(updated_image).all()
 
     def test_cu_hxr_screen_resolution_matches_yaml_and_expected_range(self):
-        model = get_cu_hxr_cheetah_model()
+        model = get_cu_hxr_cheetah_model(start_element="OTR1")
 
         resolution_pv = "OTRS:IN20:541:RESOLUTION"
         assert resolution_pv in model.supported_variables

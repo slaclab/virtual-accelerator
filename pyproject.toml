@@ -37,7 +37,7 @@ Documentation = "https://github.com/slaclab/virtual-accelerator"
 
 [project.optional-dependencies]
 bmad = [
-    "lume-bmad",
+    "lume-bmad>=0.1.1",
 ]
 cheetah = [
     "torch",
@@ -45,13 +45,13 @@ cheetah = [
     "lume-torch",
 ]
 impact = [
-    "lume-impact @ git+https://github.com/ChristopherMayes/lume-impact"
+    "lume-impact"
 ]
 zfel = [
     "zfel @ git+https://github.com/slaclab/zfel.git"
 ]
 pva = [
-    "lume-pva @ git+https://github.com/lume-science/lume-pva"
+    "lume-pva"
 ]
 surrogate = [
     "torch",
@@ -63,11 +63,11 @@ surrogate = [
 ]
 all = [
     "torch",
-    "lume-bmad",
+    "lume-bmad>=0.1.1",
     "lume-cheetah",
-    "lume-impact @ git+https://github.com/ChristopherMayes/lume-impact",
+    "lume-impact",
     "lume-torch",
-    "lume-pva @ git+https://github.com/lume-science/lume-pva",
+    "lume-pva",
     "distgen",
     "facet2-inj-ml-model @ git+https://github.com/slaclab/facet2_inj_ml_model",
     "lcls-cu-inj-model @ git+https://github.com/slaclab/lcls_cu_injector_ml_model.git",

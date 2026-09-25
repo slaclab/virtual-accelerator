@@ -23,6 +23,7 @@ if HAS_STAGED_MODEL_DEPS and HAS_LCLS_LATTICE:
     )
     from virtual_accelerator.models.facet2 import get_facet_staged_model
     from virtual_accelerator.surrogates.injector_surrogate import InjectorSurrogate
+    from pytao import TaoCommandError
 else:
     pytest.skip(
         "requires staged-model optional dependencies and LCLS_LATTICE",
@@ -110,7 +111,7 @@ class TestStagedModelVariables:
     def test_staged_model_edge_case(self):
         model = get_cu_hxr_staged_model(end_element="TD11")
         model.set({"QUAD:IN20:525:BCTRL": 10})
-        b = model.get_value("x.beta")
+        b = model.get_value("comb:x.beta")
         assert b is not None
 
 
@@ -159,3 +160,15 @@ class TestStagedModelStaging:
     def test_facet_model(self):
         staged_model = get_facet_staged_model(end_element="PR10711")
         staged_model.get(list(staged_model.supported_variables.keys()))
+
+    def test_staged_model_bad_value_edge_case(self):
+        model = get_cu_hxr_staged_model(n_particles=10, end_element="TD11")
+        bmad_model = model.lume_model_instances[1]
+        good = model.get(["BEND:LI21:215:BCTRL"])["BEND:LI21:215:BCTRL"]
+
+        # this code should raise an error
+        with pytest.raises(TaoCommandError):
+            bmad_model.set({"BEND:LI21:215:BCTRL": good * 0.98})
+
+        # however, we should be able to set it back to the good value without error
+        model.set({"BEND:LI21:215:BCTRL": good})

@@ -1,9 +1,10 @@
 from typing import Any
-
+import numpy as np
 
 from lume.actions import ReadOnlyActionMixin, WritableActionMixin
-from lume.variables import ScalarVariable, EnumVariable
+from lume.variables import ScalarVariable, EnumVariable, NDVariable
 from lume_bmad.actions import ScaledEleScalarVariable
+from lume_bmad.utils import rmat_get
 from pytao import Tao
 
 import logging
@@ -370,3 +371,15 @@ class CavityMODECFGVariable(BmadEnumVariable, WritableActionMixin):
             simulator.cmd(f"set ele {self.element_name} is_on = False")
         else:
             raise ValueError(f"Invalid value for CavityMODECFGVariable: {value}")
+
+
+class RMatrixAction(NDVariable, ReadOnlyActionMixin):
+    start_element: str
+    end_element: str
+
+    shape: tuple[int, int] = (6, 6)
+    read_only: bool = True
+    dtype: np.dtype = np.dtype(np.float64)
+
+    def _get(self, tao: Tao) -> float:
+        return np.array(rmat_get(tao, self.start_element, self.end_element))
