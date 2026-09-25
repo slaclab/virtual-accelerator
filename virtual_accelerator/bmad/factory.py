@@ -24,7 +24,6 @@ class BmadModelSpec:
     tao_init_relpath: str
     profmon_config_filename: str
     mapping_beampath: str | None = None
-    database_relpath: str = "bmad/conversion/from_oracle/lcls_elements.csv"
     default_track_start: str | None = None
     default_beam_relpath: str | None = None
 

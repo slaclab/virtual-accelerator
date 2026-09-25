@@ -9,7 +9,6 @@ from impact.model.distgen.distgen_impact_model import LUMEDistgenImpactModel
 from virtual_accelerator.impact.actions import ImpactGroupVariable
 from virtual_accelerator.utils.variables import (
     get_element_attr_mapping,
-    get_element_name_to_base_pv_mapping,
 )
 from virtual_accelerator.impact.variables import get_variables
 
@@ -20,6 +19,7 @@ class ImpactModelSpec:
     distgen_file: str
     n_particles: int
     profmon_config_filename: str
+    element_name_to_base_pv_mapping: dict[str, str]
     stop_location: str | float = None
     impact_file: str = None
     impact_yaml_file: str = None
@@ -160,15 +160,6 @@ def build_impact_model(spec: ImpactModelSpec):
     # create the LUMEDistgenImpactModel from the distgen and impact objects
     model = LUMEDistgenImpactModel.from_objects(distgen, impact)
 
-    # register additional actions to lume model
-    # The elements CSV is not reliable for PV names, so a model may override the
-    # ones it cares about. Mirrors custom_aliases on the Bmad side.
-    element_name_to_base_pv_mapping = get_element_name_to_base_pv_mapping(
-        os.environ[spec.lattice_env_var]
-    )
-    if spec.custom_aliases:
-        element_name_to_base_pv_mapping.update(spec.custom_aliases)
-
     # get the screen configuration dictionary from the profmon config file
     config_path = Path(__file__).parent / ".." / "utils" / spec.profmon_config_filename
     with config_path.open("r", encoding="utf-8") as f:
@@ -179,7 +170,7 @@ def build_impact_model(spec: ImpactModelSpec):
         impact,
         get_element_attr_mapping(),
         screen_config_dict,
-        element_name_to_base_pv_mapping,
+        {**spec.element_name_to_base_pv_mapping, **(spec.custom_aliases or {})},
     )
     for var in action_variables:
         model.register_impact_action_variable(var)
