@@ -9,6 +9,18 @@ from virtual_accelerator.utils.variables import get_element_attr_mapping
 
 logger = logging.getLogger(__name__)
 
+# The elements CSV and the lattice aliases both disagree with the PVs FACET VAs
+# actually use, so these overrides are authoritative for both engines. The lattice
+# says YAGS:/OTRS:IN10:* for the screens and TCAV:IN10:490 for the TCAV.
+FACET_PV_OVERRIDES = {
+    "PR10241": "PROF:IN10:241",
+    "PR10465": "PROF:IN10:465",
+    "PR10471": "PROF:IN10:471",
+    "PR10571": "PROF:IN10:571",
+    "PR10711": "PROF:IN10:711",
+    "TCY10490": "KLYS:LI10:51",
+}
+
 IMPACT_GROUP_PV_MAPPING = {
     "group:L0AF_phase": {"pv": "KLYS:IN10:81:PDES", "element": "L0AF_entrance"},
     "group:L0BF_phase": {"pv": "KLYS:IN10:41:PDES", "element": "L0BF_entrance"},
@@ -25,6 +37,64 @@ IMPACT_GROUP_PV_MAPPING = {
     "group:GUNF_phase": {"pv": "KLYS:IN10:31:PDES", "element": "GUNF"},
     "group:GUNF_scale": {"pv": "KLYS:IN10:31:ADES", "scale": 1e6, "element": "GUNF"},
 }
+
+IMPACT_ELEMENT_PV_MAPPING = {
+    "SOL10111": "SOLN:IN10:111",
+    "SQ10122": "QUAD:IN10:122",
+    "CQ10121": "QUAD:IN10:121",
+    "PR10241": "PROF:IN10:241",
+    "QA10361": "QUAD:IN10:361",
+    "QA10371": "QUAD:IN10:371",
+    "QE10425": "QUAD:IN10:425",
+    "QE10441": "QUAD:IN10:441",
+    "PR10465": "PROF:IN10:465",
+    "PR10471": "PROF:IN10:471",
+    "QE10511": "QUAD:IN10:511",
+    "QE10525": "QUAD:IN10:525",
+    "PR10571": "PROF:IN10:571",
+}
+
+
+# FACET_PV_MAP = {
+#     # Solenoids
+#     "SOLN:IN10:121": "SOL10121",
+#     "SOLN:IN10:111": "SOL10111",
+#     # Quadrupoles
+#     "QUAD:IN10:121": "CQ10121",
+#     "QUAD:IN10:122": "SQ10122",
+#     "QUAD:IN10:361": "QA10361",
+#     "QUAD:IN10:371": "QA10371",
+#     "QUAD:IN10:425": "QE10425",
+#     "QUAD:IN10:441": "QE10441",
+#     "QUAD:IN10:511": "QE10511",
+#     "QUAD:IN10:525": "QE10525",
+#     # RF Klystrons
+#     "KLYS:LI10:21": "GUNF",
+#     "KLYS:LI10:31": "L0AF",
+#     "KLYS:LI10:41": "L0BF",
+#     # Transverse cavity
+#     "TCAV:IN20:490": "TCY10490",
+#     # Beam Position Monitors
+#     "BPMS:IN10:221": "BPM10221",
+#     "BPMS:IN10:371": "BPM10371",
+#     "BPMS:IN10:425": "BPM10425",
+#     "BPMS:IN10:511": "BPM10511",
+#     "BPMS:IN10:525": "BPM10525",
+#     "BPMS:IN10:581": "BPM10581",
+#     "BPMS:IN10:631": "BPM10631",
+#     "BPMS:IN10:651": "BPM10651",
+#     "BPMS:IN10:731": "BPM10731",
+#     "BPMS:IN10:771": "BPM10771",
+#     "BPMS:IN10:781": "BPM10781",
+#     # Toroids (charge monitors)
+#     "TORO:IN10:591": "IM10591",
+#     "TORO:IN10:791": "IM10791",
+#     # Cameras
+#     "CAMR:LT10:900": "VCCF",  # Virtual Cathode Camera
+#     "PROF:IN10:571": "PR10571",  # 571
+#     "PROF:IN10:241": "PR10241",
+#     "PROF:IN10:711": "PR10711",
+# }
 
 
 def add_facet_custom_bmad_variables(model) -> None:
@@ -166,13 +236,6 @@ def get_facet_bmad_model(
     from virtual_accelerator.bmad.factory import BmadModelSpec, build_bmad_model
     from virtual_accelerator.beams import list_beams
 
-    custom_aliases = {
-        "PR10241": "PROF:IN10:241",
-        "PR10571": "PROF:IN10:571",
-        "PR10711": "PROF:IN10:711",
-        "TCY10490": "KLYS:LI10:51",
-    }
-
     if track_beam and custom_beam_path is None and start_element == "L0AFEND":
         matches = list_beams(
             beamline="facet2", element="L0AFEND", mode="nominal_one_bunch"
@@ -200,7 +263,7 @@ def get_facet_bmad_model(
         end_element=end_element,
         track_beam=track_beam,
         custom_beam_path=custom_beam_path,
-        custom_aliases=custom_aliases,
+        custom_aliases=FACET_PV_OVERRIDES,
         custom_tao_commands=[
             "set bmad_com absolute_time_tracking=true",
             "set bmad_com lr_wakes_on=false",
@@ -213,6 +276,42 @@ def get_facet_bmad_model(
     add_facet_custom_bmad_variables(model)
 
     return model
+
+
+def get_facet_injector_surrogate_model(
+    n_particles: int = 10000, surrogate_inputs: str = "machine"
+):
+    """
+    Get the surrogate model for the FACET-II injector to PR10241.
+
+    Parameters
+    ----------
+    n_particles: int, optional
+        Number of particles to generate in the output beam. Default is 10000.
+    surrogate_inputs: str, optional
+        Input for the surrogate model, either "machine" or "sim". Default is "machine".
+
+    Returns
+    -------
+    BeamOutputModel
+        Injector surrogate whose output beam is defined at PR10241.
+
+    Notes
+    -----
+    ``t0``, ``p0c`` and ``z0`` describe the PR10241 handoff plane -- ``z0`` is that
+    element's s position. They would need to move per-plane if a second FACET
+    handoff location is ever used.
+    """
+    from facet2_inj_ml_model import load_model
+    from virtual_accelerator.surrogates.beam_output import BeamOutputModel
+
+    return BeamOutputModel(
+        load_model(surrogate_inputs),
+        n_particles=n_particles,
+        t0=3.15391398e-09,
+        p0c=6.3e06,
+        z0=0.9420843,
+    )
 
 
 def get_facet_staged_model(n_particles=10000, surrogate_inputs="machine", **kwargs):
@@ -233,16 +332,10 @@ def get_facet_staged_model(n_particles=10000, surrogate_inputs="machine", **kwar
     StagedModel
         Instance of the StagedModel for the FACET-II lattice.
     """
-    from facet2_inj_ml_model import load_model
-    from virtual_accelerator.surrogates.beam_output import BeamOutputModel
     from lume.staged_model import StagedModel
 
-    injector_surrogate = BeamOutputModel(
-        load_model(surrogate_inputs),
-        n_particles=n_particles,
-        t0=3.15391398e-09,
-        p0c=6.3e06,
-        z0=0.9420843,
+    injector_surrogate = get_facet_injector_surrogate_model(
+        n_particles=n_particles, surrogate_inputs=surrogate_inputs
     )
 
     tmp = tempfile.NamedTemporaryFile(suffix=".h5")
@@ -259,7 +352,9 @@ def get_facet_staged_model(n_particles=10000, surrogate_inputs="machine", **kwar
     return staged_model
 
 
-def get_facet_impact_model(n_particles: int = 100, end_element="PR10571"):
+def get_facet_impact_model(
+    n_particles: int = 100, end_element="PR10571", include_end_element: bool = True
+):
     from virtual_accelerator.impact.factory import (
         ImpactModelSpec,
         build_impact_model,
@@ -271,15 +366,18 @@ def get_facet_impact_model(n_particles: int = 100, end_element="PR10571"):
         distgen_file="distgen/models/f2e_inj/v0/distgen.yaml",
         impact_yaml_file="impact/models/f2e_inj/v0/ImpactT.yaml",
         profmon_config_filename="facet2_profmon_info.yaml",
+        element_name_to_base_pv_mapping=IMPACT_ELEMENT_PV_MAPPING,
         n_particles=n_particles,
         numprocs=1,
         space_charge=False,
         stop_location=end_element,
+        include_stop_element=include_end_element,
+        custom_aliases=FACET_PV_OVERRIDES,
     )
     model = build_impact_model(spec)
 
-    # register custom action variables for solenoids based on the element attribute mapping
-    add_facet_custom_impact_variables(model)
+    # # register custom action variables for solenoids based on the element attribute mapping
+    # add_facet_custom_impact_variables(model)
 
     # register custom actions for linac L0A and L0B sections
     group_actions = get_actions_from_groups(model.impact_model.simulator, spec)

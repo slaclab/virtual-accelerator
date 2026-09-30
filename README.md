@@ -27,11 +27,26 @@ Lastly, install backend-specific extras depending on which simulation types you 
 pip install .[bmad]
 pip install .[cheetah]
 pip install .[impact]
-pip install .[zfel]
 pip install .[pva]
 pip install .[surrogate]
 pip install .[all]
 ```
+Note that to run impact, you will also need to mamba install the following:
+```
+conda install -c conda-forge impact-t
+conda install -c conda-forge distgen
+```
+To run multi-core tracking with Impact-T, you will need to choose openmpi or mpich and do one (ONLY ONE) of the following:
+```
+# For OpenMPI
+conda install -c conda-forge impact-t=*=mpi_openmpi*
+
+# For MPICH
+conda install -c conda-forge impact-t=*=mpi_mpich*
+```
+
+And the examples require installing ipykernel and register as a Jupyter kernel.
+
 
 Optional Dependency Keys by Model:
 | Model / Factory Function | Optional dependency key(s) | Notes |
@@ -43,6 +58,58 @@ Optional Dependency Keys by Model:
 | `get_cu_hxr_staged_model` | `surrogate`, `bmad` | Stages `InjectorSurrogate` + CU HXR BMAD model. |
 | `get_cu_hxr_zfel_model` | `zfel` | CU HXR taper model using the 1D ZFEL backend. |
 | `virtual_accelerator.models.runners` CLI | `pva` (+ model backend key) | Runner requires `pva`; selected model backend must also be installed. |
+| `get_cu_inj_impact_model` | `Impact` | Requires impact pip install AND conda install, both detailed above |
+## Loading a model
+
+Use `get_model()` to build a single model or a staged chain. See
+`docs/model_registry_usage.md` for the full API.
+
+```python
+from virtual_accelerator.registry import get_model
+
+# Single model, optionally stopping at a specific element:
+model = get_model("bmad_cu_hxr", end_ele="TD11")
+
+# Staged chain (upstream -> downstream), handoff inferred when unambiguous:
+model = get_model(["surrogate_cu_inj", "bmad_cu_hxr"], end_ele="OTR4", n_particles=500)
+
+# Or use a chain alias:
+model = get_model("high_fidelity_cu_hxr_s2e", handoff_loc="YAG03", n_particles=1000)
+```
+
+Discovery helpers:
+
+```python
+from virtual_accelerator.registry import list_models, list_handoff_points, common_handoff_points
+
+print(list_models())                                    # table of all models + chains
+list_handoff_points("bmad_cu_hxr")                      # suggested handoff planes
+common_handoff_points("impact_cu_inj", "bmad_cu_hxr")   # shared handoffs between two models
+```
+
+Supported models:
+
+| Model | Facility | Simulator | Start | End | Extras |
+| --- | --- | --- | --- | --- | --- |
+| `impact_cu_inj` | LCLS | IMPACT | CATHODE | YAG03 | `impact` |
+| `bmad_cu_hxr` | LCLS | Bmad | OTR2 | END | `bmad` |
+| `surrogate_cu_inj` | LCLS | Surrogate | CATHODE | OTR2 | `surrogate` |
+| `cheetah_cu_hxr` | LCLS | Cheetah | CATHODE | END | `cheetah` |
+| `zfel_cu_hxr` | LCLS | ZFEL | — | — | `zfel` |
+| `impact_f2e_inj` | Facet2 | IMPACT | CATHODEF | PR10241 | `impact` |
+| `surrogate_f2e_inj` | Facet2 | Surrogate | CATHODEF | PR10241 | `surrogate` |
+| `bmad_f2_elec` | Facet2 | Bmad | CATHODEF | END | `bmad` |
+
+Standard staged chains (build with `get_model([upstream, downstream], ...)`):
+
+| Alias | Upstream | Downstream | Handoff |
+| --- | --- | --- | --- |
+| `high_fidelity_cu_hxr_s2e` | `impact_cu_inj` | `bmad_cu_hxr` | YAG03 |
+| `fast_cu_hxr_s2e` | `surrogate_cu_inj` | `bmad_cu_hxr` | OTR2 |
+| `high_fidelity_facet2_s2e` | `impact_f2e_inj` | `bmad_f2_elec` | PR10241 |
+| `fast_facet2_s2e` | `surrogate_f2e_inj` | `bmad_f2_elec` | PR10241 |
+
+The `Runner` CLI additionally needs the `pva` extra.
 
 The package now lazily imports backend-specific dependencies. If you call a model
 whose optional dependency is not installed, you will get an actionable error with
@@ -198,13 +265,6 @@ number of particles, and end element to run with.
 For example:
 ```
 python virtual_accelerator/models/runners.py cu_hxr_bmad --end-element OTR4
-```
-
-CU HXR ZFEL runner serves machine-style PVs with the VA: prefix, for example:
-```
-python -m virtual_accelerator.models.runners cu_hxr_zfel
-VA:USEG:UNDH:1450:KAct
-VA:ZFEL:PULSE_ENERGY
 ```
 
 For more info, run:

@@ -213,6 +213,18 @@ class ZFELPVModel(LUMEModel):
     def supported_variables(self):
         return self._variables
 
+    def get(self, names):
+        """
+        Compatibility wrapper for Lume-PVA.
+
+        lume-pva may pass supported_variables directly to Model.get(),
+        while lume expects a list of variable-name strings.
+        """
+        if isinstance(names, dict):
+            names = list(names)
+
+        return super().get(names)
+
     def _get(self, names):
         return {name: self._state[self._pv_aliases.get(name, name)] for name in names}
 

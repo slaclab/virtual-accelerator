@@ -88,6 +88,13 @@ docs = [
     "pytkdocs[numpy-style]",
 ]
 
+[tool.pytest.ini_options]
+# Execute the >>> examples in the registry usage doc so it stays in sync with
+# the API. Only that one markdown file is collected -- others are prose.
+addopts = "--doctest-glob=model_registry_usage.md"
+testpaths = ["virtual_accelerator/tests", "docs/model_registry_usage.md"]
+doctest_optionflags = ["ELLIPSIS", "NORMALIZE_WHITESPACE"]
+
 [tool.setuptools.packages.find]
 include = [ "virtual_accelerator*", ]
 namespaces = false

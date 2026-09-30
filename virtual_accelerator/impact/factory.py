@@ -1,17 +1,19 @@
 from impact import Impact
 from distgen import Generator
 import os
+import logging
 from pathlib import Path
 import yaml
-from dataclasses import dataclass
+from dataclasses import dataclass, field
 
 from impact.model.distgen.distgen_impact_model import LUMEDistgenImpactModel
 from virtual_accelerator.impact.actions import ImpactGroupVariable
 from virtual_accelerator.utils.variables import (
     get_element_attr_mapping,
-    get_element_name_to_base_pv_mapping,
 )
 from virtual_accelerator.impact.variables import get_variables
+
+logger = logging.getLogger(__name__)
 
 
 @dataclass(frozen=True)
@@ -20,11 +22,18 @@ class ImpactModelSpec:
     distgen_file: str
     n_particles: int
     profmon_config_filename: str
+    element_name_to_base_pv_mapping: dict[str, str]
     stop_location: str | float = None
     impact_file: str = None
     impact_yaml_file: str = None
     numprocs: int = 1
     space_charge: bool = False
+    header: dict = field(default_factory=dict)
+    command: str = None
+    command_mpi: str = None
+    mpi_run: str = None
+    include_stop_element: bool = True
+    custom_aliases: dict[str, str] | None = None
 
 
 def get_impact_and_distgen(spec: ImpactModelSpec):
@@ -88,7 +97,9 @@ def get_actions_from_groups(impact: Impact, spec: ImpactModelSpec):
     return actions
 
 
-def set_stop_location(impact: Impact, stop_location: str | float):
+def set_stop_location(
+    impact: Impact, stop_location: str | float, include_stop_element: bool = True
+):
     """
     Set z stop location based on the beginning of the named element or a float value
 
@@ -98,6 +109,12 @@ def set_stop_location(impact: Impact, stop_location: str | float):
         The impact model object.
     stop_location : str | float
         The stop location, either as the name of an element (str) or a float value representing the z position.
+    include_stop_element : bool, optional
+        Whether to keep the element sitting exactly on the stop plane. Default is
+        True. Pass False when handing the beam to a downstream model, so that the
+        element belongs to that model alone and the two do not both publish its
+        PVs. Tracking stops at the same z either way, since the stop plane is the
+        element's entrance.
 
     Returns:
     --------
@@ -118,37 +135,78 @@ def set_stop_location(impact: Impact, stop_location: str | float):
     impact.stop = stop_location_z
 
     # remove elements that are downstream of the stop location
-    impact.ele = {k: v for k, v in impact.ele.items() if v["s"] <= impact.stop}
+    def _keep(s: float) -> bool:
+        return s <= impact.stop if include_stop_element else s < impact.stop
+
+    impact.ele = {k: v for k, v in impact.ele.items() if _keep(v["s"])}
     impact.input["lattice"] = [
-        elem for elem in impact.lattice if elem.get("s", float("inf")) <= impact.stop
+        elem for elem in impact.lattice if _keep(elem.get("s", float("inf")))
     ]
     return impact
+
+
+def build_impact_header(spec: ImpactModelSpec) -> dict:
+    """
+    Build the Impact header for a run, preserving any keys already set in
+    ``spec.header``.
+
+    ``Np`` and ``Bcurr`` are derived from the spec but only applied when the key
+    is not already present in ``spec.header``; a warning is logged for any
+    derived value skipped because the key already existed.
+    """
+    header = dict(spec.header)  # copy so the frozen spec is never mutated
+    derived = {
+        "Np": spec.n_particles,
+        "Bcurr": 1 if spec.space_charge else 0,
+    }
+    for key, value in derived.items():
+        if key in header:
+            logger.warning(
+                "Header key '%s' already set to %r in spec.header; "
+                "derived value %r not used.",
+                key,
+                header[key],
+                value,
+            )
+        else:
+            header[key] = value
+    return header
 
 
 def build_impact_model(spec: ImpactModelSpec):
     """Build and return the impact model based on the provided specification."""
     impact, distgen = get_impact_and_distgen(spec)
 
-    # set the parameters of the impact model
-    impact.header["Np"] = spec.n_particles
-    impact.numprocs = spec.numprocs
-    impact.header["Bcurr"] = 1 if spec.space_charge else 0
-
+    # Set the stop location of the simulation
     if spec.stop_location is not None:
-        impact = set_stop_location(impact, spec.stop_location)
+        impact = set_stop_location(
+            impact, spec.stop_location, spec.include_stop_element
+        )
 
-    impact.run()
+    # Set the parameters for the smallest possible run
+    impact.header["Np"] = 1  # spec.n_particles
+    impact.numprocs = 1  # spec.numprocs
+    impact.header["Bcurr"] = 0  # 1 if spec.space_charge else 0
+
+    impact.run()  # run with absolute minimum required to initialize output fields in impact object
+
+    # set the REAL run parameters of the impact model
+    impact.header.update(build_impact_header(spec))
+    impact.numprocs = spec.numprocs
+
+    # set optional run/executable commands directly on the impact object when provided
+    if spec.command is not None:
+        impact.command = spec.command
+    if spec.command_mpi is not None:
+        impact.command_mpi = spec.command_mpi
+    if spec.mpi_run is not None:
+        impact.mpi_run = spec.mpi_run
 
     # set the parameters of the distgen model
     distgen["n_particle"] = spec.n_particles
 
     # create the LUMEDistgenImpactModel from the distgen and impact objects
     model = LUMEDistgenImpactModel.from_objects(distgen, impact)
-
-    # register additional actions to lume model
-    element_name_to_base_pv_mapping = get_element_name_to_base_pv_mapping(
-        os.environ[spec.lattice_env_var]
-    )
 
     # get the screen configuration dictionary from the profmon config file
     config_path = Path(__file__).parent / ".." / "utils" / spec.profmon_config_filename
@@ -160,7 +218,7 @@ def build_impact_model(spec: ImpactModelSpec):
         impact,
         get_element_attr_mapping(),
         screen_config_dict,
-        element_name_to_base_pv_mapping,
+        {**spec.element_name_to_base_pv_mapping, **(spec.custom_aliases or {})},
     )
     for var in action_variables:
         model.register_impact_action_variable(var)
