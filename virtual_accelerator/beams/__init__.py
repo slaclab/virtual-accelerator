@@ -51,12 +51,34 @@ class BeamEntry:
     extra: dict[str, Any] = field(default_factory=dict)
 
     def load(self):
-        """Return the beam as a ``pmd_beamphysics.ParticleGroup``.
+        """Materialize the on-disk beam as a ``pmd_beamphysics.ParticleGroup``.
 
-        Handles two on-disk layouts:
+        Opens ``self.path`` with h5py and hands the relevant group to
+        ``ParticleGroup``. Two on-disk layouts are supported transparently:
 
-        * root layout — particle datasets at ``/position/x`` etc.
-        * openPMD tree — datasets under ``/particles/<species>/``.
+        * **root layout** — particle datasets live at the file root
+          (``/position/x``, ``/momentum/px``, ...). The entire file handle is
+          passed straight through.
+        * **openPMD tree** — datasets live under ``/particles/<species>/``.
+          The species named in this entry's sidecar is preferred; if it is
+          not present in the file, the first (and typically only) species
+          group is used instead.
+
+        Returns
+        -------
+        pmd_beamphysics.ParticleGroup
+            The loaded beam distribution.
+
+        Raises
+        ------
+        ImportError
+            If ``pmd_beamphysics`` is not installed. Install the ``bmad``
+            extra to pull it in.
+        ValueError
+            If the file contains an openPMD ``/particles`` group with no
+            species inside.
+        OSError
+            If ``self.path`` cannot be opened by h5py.
         """
         ParticleGroup = import_optional_symbol(
             "pmd_beamphysics",
@@ -123,7 +145,18 @@ def _entries() -> list[BeamEntry]:
 
 
 def clear_cache() -> None:
-    """Force the next :func:`list_beams`/:func:`get_beam` call to re-scan."""
+    """Discard the in-memory registry so the next lookup re-scans the disk.
+
+    The registry walks ``BEAMS_DIR`` once and memoizes the result for the
+    lifetime of the process, which is fine for normal use but stale in tests
+    that add, remove, or rewrite beam files at runtime. Call this after any
+    such mutation so the next :func:`list_beams` or :func:`get_beam` call
+    sees the new state.
+
+    Returns
+    -------
+    None
+    """
     global _cache
     _cache = None
 
@@ -134,10 +167,33 @@ def list_beams(
     element: str | None = None,
     mode: str | None = None,
 ) -> list[BeamEntry]:
-    """Return metadata entries matching the given filters.
+    """Return cached :class:`BeamEntry` records matching the given filters.
 
-    Filters are ANDed together. Passing ``None`` (the default) skips that
-    filter. Does not open the ``.h5`` blobs.
+    All filters are keyword-only and ANDed together; passing ``None`` (the
+    default) skips that filter and matches every value. Only the sidecar
+    metadata is consulted — the ``.h5`` blobs are never opened, so this call
+    is cheap and safe to use for discovery, listing, or completion.
+
+    Parameters
+    ----------
+    beamline : str, optional
+        Match only entries whose ``beamline`` field equals this value.
+    element : str, optional
+        Match only entries whose ``element`` field equals this value.
+    mode : str, optional
+        Match only entries whose ``mode`` field equals this value.
+
+    Returns
+    -------
+    list[BeamEntry]
+        Matching entries in the order they were discovered on disk. Empty
+        list when nothing matches — this function never raises for a miss;
+        use :func:`get_beam` if you want an error instead.
+
+    Examples
+    --------
+    >>> list_beams(beamline="FACET2")                  # doctest: +SKIP
+    >>> list_beams(beamline="FACET2", element="L0AFEND")  # doctest: +SKIP
     """
     results = _entries()
     if beamline is not None:
@@ -154,10 +210,40 @@ def get_beam(
     element: str,
     mode: str,
 ):
-    """Return every cached beam matching ``(beamline, element, mode)``.
+    """Load every cached beam matching ``(beamline, element, mode)``.
 
-    Raises ``KeyError`` with the list of available ``(element, mode)`` pairs
-    for that beamline when nothing matches.
+    Looks up sidecars via :func:`list_beams` and materializes each match by
+    calling :meth:`BeamEntry.load`. All three keys are required — this is
+    the strict, "give me the beam or fail loudly" entry point; use
+    :func:`list_beams` for filtered discovery that never raises.
+
+    Parameters
+    ----------
+    beamline : str
+        Beamline identifier from the sidecar (e.g. ``"FACET2"``).
+    element : str
+        Element identifier at which the beam was captured
+        (e.g. ``"L0AFEND"``).
+    mode : str
+        Operating mode label from the sidecar (e.g. ``"oneBunch"``).
+
+    Returns
+    -------
+    list[pmd_beamphysics.ParticleGroup]
+        One entry per matching sidecar, in discovery order. Multiple hits
+        are possible when several cached beams share the same
+        ``(beamline, element, mode)`` triple (for example, different
+        particle counts or generation dates).
+
+    Raises
+    ------
+    KeyError
+        If no cached beam matches. The message enumerates the available
+        ``(element, mode)`` pairs for that beamline, or the known beamlines
+        when the beamline itself is unknown.
+    ImportError
+        Propagated from :meth:`BeamEntry.load` when ``pmd_beamphysics`` is
+        not installed.
     """
     matches = list_beams(beamline=beamline, element=element, mode=mode)
     if not matches:
