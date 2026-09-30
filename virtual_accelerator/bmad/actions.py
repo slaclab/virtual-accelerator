@@ -109,6 +109,7 @@ class QuadrupoleBCTRLVariable(_QuadrupoleGradientVariable, WritableActionMixin):
 
     read_only: bool = False
     unit: str = "kG"
+    description: str = "Quadrupole magnet field integral setpoint (BDES)"
 
     def _get(self, simulator: Tao) -> Any:
         return self._get_bctrl_value(simulator)
@@ -120,12 +121,15 @@ class QuadrupoleBCTRLVariable(_QuadrupoleGradientVariable, WritableActionMixin):
 class QuadrupoleBACTVariable(_ReadbackFromControlMixin, QuadrupoleBCTRLVariable):
     """Action that operates on the BACT property of Quadrupoles"""
 
+    description: str = "Quadrupole magnet field integral readback (BACT)"
+
 
 class SolenoidBCTRLVariable(_ScaledElementAttributeVariable, WritableActionMixin):
     """Action that operates on the BCTRL/BDES property of Solenoids"""
 
     attribute_name: str = "BS_FIELD"
     bmad_to_external_scale: float = 10.0
+    description: str = "Solenoid field integral setpoint (BDES)"
 
     def _get(self, simulator: Tao) -> Any:
         return self._get_scaled_value(simulator)
@@ -137,12 +141,15 @@ class SolenoidBCTRLVariable(_ScaledElementAttributeVariable, WritableActionMixin
 class SolenoidBACTVariable(_ReadbackFromControlMixin, SolenoidBCTRLVariable):
     """Action that operates on the BACT property of Solenoids"""
 
+    description: str = "Solenoid field integral readback (BACT)"
+
 
 class SBendBCTRLVariable(_SBendFieldVariable, WritableActionMixin):
     """Action that operates on the BCTRL/BDES property of SBends"""
 
     read_only: bool = False
     unit: str = "GeV/c"
+    description: str = "SBend momentum setpoint (BDES)"
 
     def _get(self, simulator: Tao) -> Any:
         return self._get_bctrl_value(simulator)
@@ -154,12 +161,15 @@ class SBendBCTRLVariable(_SBendFieldVariable, WritableActionMixin):
 class SBendBACTVariable(_ReadbackFromControlMixin, SBendBCTRLVariable):
     """Action that operates on the BACT property of SBends"""
 
+    description: str = "SBend momentum readback (BACT)"
+
 
 class KickerBCTRLVariable(_ScaledElementAttributeVariable, WritableActionMixin):
     """Action that operates on the BCTRL/BDES property of Kicker magnets"""
 
     attribute_name: str = "BL_KICK"
     bmad_to_external_scale: float = -10.0
+    description: str = "Corrector kicker field integral setpoint (BDES)"
 
     def _get(self, simulator: Tao) -> Any:
         return self._get_scaled_value(simulator)
@@ -171,11 +181,14 @@ class KickerBCTRLVariable(_ScaledElementAttributeVariable, WritableActionMixin):
 class KickerBACTVariable(_ReadbackFromControlMixin, KickerBCTRLVariable):
     """Action that operates on the BACT property of Kicker magnets"""
 
+    description: str = "Corrector kicker field integral readback (BACT)"
+
 
 class StatusVariable(BmadScalarVariable, ReadOnlyActionMixin):
     """Action that operates on the status of a device (e.g. STATCTRLSUB.T)"""
 
     read_only: bool = True
+    description: str = "Device status word"
 
     def _get(self, simulator: Tao) -> Any:
         return 0  # TODO: add logic for status of device
@@ -185,6 +198,7 @@ class BminVariable(BmadScalarVariable, ReadOnlyActionMixin):
     """Action that operates on the BMIN/DRVL property of a device"""
 
     read_only: bool = True
+    description: str = "Device soft low limit (DRVL)"
 
     def _get(self, simulator: Tao) -> Any:
         return -100  # TODO: add logic for these limits
@@ -194,6 +208,7 @@ class BmaxVariable(BmadScalarVariable, ReadOnlyActionMixin):
     """Action that operates on the BMAX/DRVH property of a device"""
 
     read_only: bool = True
+    description: str = "Device soft high limit (DRVH)"
 
     def _get(self, simulator: Tao) -> Any:
         return 100  # TODO: add logic for these limits
@@ -205,6 +220,7 @@ class ControlStateVariable(BmadEnumVariable, ReadOnlyActionMixin):
     read_only: bool = True
     options: list[str] = ["Ready", "TRIM", "PERTURB", "BCON_TO_BDES", "BACT_TO_BDES"]
     default_value: str = "Ready"
+    description: str = "Device control state"
 
     def _get(self, simulator: Tao) -> Any:
         return "Ready"
@@ -215,6 +231,7 @@ class BPMXVariable(BmadScalarVariable, ReadOnlyActionMixin):
 
     unit: str = "mm"
     read_only: bool = True
+    description: str = "BPM horizontal orbit position"
 
     def _get(self, simulator: Tao) -> Any:
         return simulator.ele(self.element_name).orbit.x * 1e3  # convert from m to mm
@@ -225,6 +242,7 @@ class BPMYVariable(BmadScalarVariable, ReadOnlyActionMixin):
 
     unit: str = "mm"
     read_only: bool = True
+    description: str = "BPM vertical orbit position"
 
     def _get(self, simulator: Tao) -> Any:
         return simulator.ele(self.element_name).orbit.y * 1e3  # convert from m to mm
@@ -235,6 +253,7 @@ class BPMTMITDummyVariable(BmadScalarVariable, ReadOnlyActionMixin):
 
     unit: str = "arbitrary units"
     read_only: bool = True
+    description: str = "BPM beam intensity (dummy)"
 
     def _get(self, simulator: Tao) -> Any:
         # Return a dummy value for TMIT
@@ -247,6 +266,7 @@ class KlystronENLDVariable(BmadScalarVariable, WritableActionMixin):
     """
 
     unit: str = "MeV"
+    description: str = "Klystron amplitude (ENLD)"
 
     def _get(self, simulator: Tao) -> Any:
         return simulator.ele(self.element_name).control_vars["ENLD_MEV"]
@@ -263,6 +283,7 @@ class KlystronPDESVariable(BmadScalarVariable, WritableActionMixin):
     """
 
     unit: str = "degrees"
+    description: str = "Klystron phase setpoint"
 
     def _get(self, simulator: Tao) -> Any:
         return simulator.ele(self.element_name).control_vars["PHASE_DEG"]
@@ -278,6 +299,8 @@ class KlystronPACTVariable(_ReadbackFromControlMixin, KlystronPDESVariable):
 
     """
 
+    description: str = "Klystron phase readback"
+
 
 class KlystronStatVariable(BmadEnumVariable, WritableActionMixin):
     """
@@ -289,6 +312,7 @@ class KlystronStatVariable(BmadEnumVariable, WritableActionMixin):
     read_only: bool = True
     options: list[str] = ["0", "1"]
     default_value: str = "0"
+    description: str = "Klystron on/off status"
 
     _logic_mapping = {"0": True, "1": False}
 
@@ -313,10 +337,13 @@ class CavityAREQVariable(ScaledEleScalarVariable):
     unit: str = "MV"
     scale_factor: float = 1e6
     property_name: str = "VOLTAGE"
+    description: str = "Cavity amplitude request"
 
 
 class CavityAREQReadbackVariable(_ReadbackFromControlMixin, CavityAREQVariable):
     """Read-only variant of cavity amplitude request variable."""
+
+    description: str = "Cavity amplitude readback"
 
 
 class CavityPREQVariable(ScaledEleScalarVariable):
@@ -328,10 +355,13 @@ class CavityPREQVariable(ScaledEleScalarVariable):
     unit: str = "degrees"
     property_name: str = "PHI0"
     scale_factor: float = 1 / 360.0  # scale degrees to rad / 2pi
+    description: str = "Cavity phase request"
 
 
 class CavityPREQReadbackVariable(_ReadbackFromControlMixin, CavityPREQVariable):
     """Read-only variant of cavity phase request variable."""
+
+    description: str = "Cavity phase readback"
 
 
 class DummyEnumVariable(BmadEnumVariable, WritableActionMixin):
@@ -360,6 +390,7 @@ class CavityMODECFGVariable(BmadEnumVariable, WritableActionMixin):
 
     options: list[str] = ["Disable", "ACCEL", "STDBY", "ACCEL_STDBY"]
     default_value: str = "ACCEL_STDBY"
+    description: str = "Cavity mode configuration"
 
     def _get(self, simulator: Tao) -> Any:
         return "ACCEL_STDBY" if simulator.ele(self.element_name).head.is_on else "STDBY"
@@ -380,6 +411,7 @@ class RMatrixAction(NDVariable, ReadOnlyActionMixin):
     shape: tuple[int, int] = (6, 6)
     read_only: bool = True
     dtype: np.dtype = np.dtype(np.float64)
+    description: str = "6x6 R-matrix between start and end elements"
 
     def _get(self, tao: Tao) -> float:
         return np.array(rmat_get(tao, self.start_element, self.end_element))
