@@ -31,7 +31,36 @@ pip install .[pva]
 pip install .[surrogate]
 pip install .[all]
 ```
+Note that to run impact, you will also need to mamba install the following:
+```
+conda install -c conda-forge impact-t
+conda install -c conda-forge distgen
+```
+To run multi-core tracking with Impact-T, you will need to choose openmpi or mpich and do one (ONLY ONE) of the following:
+```
+# For OpenMPI
+conda install -c conda-forge impact-t=*=mpi_openmpi*
 
+# For MPICH
+conda install -c conda-forge impact-t=*=mpi_mpich*
+```
+
+And the examples require installing ipykernel and register as a Jupyter kernel.
+
+
+<<<<<<< HEAD
+Optional Dependency Keys by Model:
+| Model / Factory Function | Optional dependency key(s) | Notes |
+| --- | --- | --- |
+| `get_cu_hxr_bmad_model` | `bmad` | Requires BMAD/PyTAO backend. |
+| `get_facet_bmad_model` | `bmad` | FACET-II BMAD model; requires `FACET2_LATTICE`. |
+| `get_cu_hxr_injector_surrogate_model` | `surrogate` | Uses torch surrogate + cheetah particles. |
+| `get_facet_staged_model` | `surrogate`, `bmad` | FACET-II staged model (injector surrogate + FACET-II BMAD). |
+| `get_cu_hxr_staged_model` | `surrogate`, `bmad` | Stages `InjectorSurrogate` + CU HXR BMAD model. |
+| `get_cu_hxr_zfel_model` | `zfel` | CU HXR taper model using the 1D ZFEL backend. |
+| `virtual_accelerator.models.runners` CLI | `pva` (+ model backend key) | Runner requires `pva`; selected model backend must also be installed. |
+| `get_cu_inj_impact_model` | `Impact` | Requires impact pip install AND conda install, both detailed above |
+=======
 ## Loading a model
 
 Use `get_model()` to build a single model or a staged chain. See
@@ -83,6 +112,7 @@ Standard staged chains (build with `get_model([upstream, downstream], ...)`):
 | `fast_facet2_s2e` | `surrogate_f2e_inj` | `bmad_f2_elec` | PR10241 |
 
 The `Runner` CLI additionally needs the `pva` extra.
+>>>>>>> upstream/main
 
 The package now lazily imports backend-specific dependencies. If you call a model
 whose optional dependency is not installed, you will get an actionable error with

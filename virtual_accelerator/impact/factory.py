@@ -1,9 +1,10 @@
 from impact import Impact
 from distgen import Generator
 import os
+import logging
 from pathlib import Path
 import yaml
-from dataclasses import dataclass
+from dataclasses import dataclass, field
 
 from impact.model.distgen.distgen_impact_model import LUMEDistgenImpactModel
 from virtual_accelerator.impact.actions import ImpactGroupVariable
@@ -11,6 +12,8 @@ from virtual_accelerator.utils.variables import (
     get_element_attr_mapping,
 )
 from virtual_accelerator.impact.variables import get_variables
+
+logger = logging.getLogger(__name__)
 
 
 @dataclass(frozen=True)
@@ -25,6 +28,10 @@ class ImpactModelSpec:
     impact_yaml_file: str = None
     numprocs: int = 1
     space_charge: bool = False
+    header: dict = field(default_factory=dict)
+    command: str = None
+    command_mpi: str = None
+    mpi_run: str = None
     include_stop_element: bool = True
     custom_aliases: dict[str, str] | None = None
 
@@ -138,21 +145,62 @@ def set_stop_location(
     return impact
 
 
+def build_impact_header(spec: ImpactModelSpec) -> dict:
+    """
+    Build the Impact header for a run, preserving any keys already set in
+    ``spec.header``.
+
+    ``Np`` and ``Bcurr`` are derived from the spec but only applied when the key
+    is not already present in ``spec.header``; a warning is logged for any
+    derived value skipped because the key already existed.
+    """
+    header = dict(spec.header)  # copy so the frozen spec is never mutated
+    derived = {
+        "Np": spec.n_particles,
+        "Bcurr": 1 if spec.space_charge else 0,
+    }
+    for key, value in derived.items():
+        if key in header:
+            logger.warning(
+                "Header key '%s' already set to %r in spec.header; "
+                "derived value %r not used.",
+                key,
+                header[key],
+                value,
+            )
+        else:
+            header[key] = value
+    return header
+
+
 def build_impact_model(spec: ImpactModelSpec):
     """Build and return the impact model based on the provided specification."""
     impact, distgen = get_impact_and_distgen(spec)
 
-    # set the parameters of the impact model
-    impact.header["Np"] = spec.n_particles
-    impact.numprocs = spec.numprocs
-    impact.header["Bcurr"] = 1 if spec.space_charge else 0
-
+    # Set the stop location of the simulation
     if spec.stop_location is not None:
         impact = set_stop_location(
             impact, spec.stop_location, spec.include_stop_element
         )
 
-    impact.run()
+    # Set the parameters for the smallest possible run
+    impact.header["Np"] = 1  # spec.n_particles
+    impact.numprocs = 1  # spec.numprocs
+    impact.header["Bcurr"] = 0  # 1 if spec.space_charge else 0
+
+    impact.run()  # run with absolute minimum required to initialize output fields in impact object
+
+    # set the REAL run parameters of the impact model
+    impact.header.update(build_impact_header(spec))
+    impact.numprocs = spec.numprocs
+
+    # set optional run/executable commands directly on the impact object when provided
+    if spec.command is not None:
+        impact.command = spec.command
+    if spec.command_mpi is not None:
+        impact.command_mpi = spec.command_mpi
+    if spec.mpi_run is not None:
+        impact.mpi_run = spec.mpi_run
 
     # set the parameters of the distgen model
     distgen["n_particle"] = spec.n_particles

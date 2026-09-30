@@ -55,6 +55,48 @@ IMPACT_ELEMENT_PV_MAPPING = {
 }
 
 
+# FACET_PV_MAP = {
+#     # Solenoids
+#     "SOLN:IN10:121": "SOL10121",
+#     "SOLN:IN10:111": "SOL10111",
+#     # Quadrupoles
+#     "QUAD:IN10:121": "CQ10121",
+#     "QUAD:IN10:122": "SQ10122",
+#     "QUAD:IN10:361": "QA10361",
+#     "QUAD:IN10:371": "QA10371",
+#     "QUAD:IN10:425": "QE10425",
+#     "QUAD:IN10:441": "QE10441",
+#     "QUAD:IN10:511": "QE10511",
+#     "QUAD:IN10:525": "QE10525",
+#     # RF Klystrons
+#     "KLYS:LI10:21": "GUNF",
+#     "KLYS:LI10:31": "L0AF",
+#     "KLYS:LI10:41": "L0BF",
+#     # Transverse cavity
+#     "TCAV:IN20:490": "TCY10490",
+#     # Beam Position Monitors
+#     "BPMS:IN10:221": "BPM10221",
+#     "BPMS:IN10:371": "BPM10371",
+#     "BPMS:IN10:425": "BPM10425",
+#     "BPMS:IN10:511": "BPM10511",
+#     "BPMS:IN10:525": "BPM10525",
+#     "BPMS:IN10:581": "BPM10581",
+#     "BPMS:IN10:631": "BPM10631",
+#     "BPMS:IN10:651": "BPM10651",
+#     "BPMS:IN10:731": "BPM10731",
+#     "BPMS:IN10:771": "BPM10771",
+#     "BPMS:IN10:781": "BPM10781",
+#     # Toroids (charge monitors)
+#     "TORO:IN10:591": "IM10591",
+#     "TORO:IN10:791": "IM10791",
+#     # Cameras
+#     "CAMR:LT10:900": "VCCF",  # Virtual Cathode Camera
+#     "PROF:IN10:571": "PR10571",  # 571
+#     "PROF:IN10:241": "PR10241",
+#     "PROF:IN10:711": "PR10711",
+# }
+
+
 def add_facet_custom_bmad_variables(model) -> None:
     """
     Add custom variables to the FACET-II model.
@@ -321,8 +363,8 @@ def get_facet_impact_model(
     )
     model = build_impact_model(spec)
 
-    # register custom action variables for solenoids based on the element attribute mapping
-    add_facet_custom_impact_variables(model)
+    # # register custom action variables for solenoids based on the element attribute mapping
+    # add_facet_custom_impact_variables(model)
 
     # register custom actions for linac L0A and L0B sections
     group_actions = get_actions_from_groups(model.impact_model.simulator, spec)
