@@ -77,9 +77,15 @@ class TestDiscovery:
             assert not {"CATHODE", "CATHODEF"} & set(list_handoff_points(fixed))
 
     def test_facet_handoff_is_restricted_to_pr10241(self):
-        for inj in ("impact_f2e_inj", "surrogate_f2e_inj"):
-            assert list_handoff_points(inj) == ("PR10241",)
-            assert common_handoff_points(inj, "bmad_f2_elec") == ("PR10241",)
+        assert list_handoff_points("impact_f2e_inj") == ("PR10241", "L0AFEND")
+        assert common_handoff_points("impact_f2e_inj", "bmad_f2_elec") == (
+            "PR10241",
+            "L0AFEND",
+        )
+        assert list_handoff_points("surrogate_f2e_inj") == ("PR10241",)
+        assert common_handoff_points("surrogate_f2e_inj", "bmad_f2_elec") == (
+            "PR10241",
+        )
 
 
 class TestEntryIntegrity:
