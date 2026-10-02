@@ -122,6 +122,7 @@ def calc_effective_length(sol: dict[str, Any]) -> float:
 class SolenoidBCTRLVariable(ImpactScalarVariable, WritableActionMixin):
     read_only: bool = False
     unit: str = "kG-m"
+    description: str = "Solenoid field integral setpoint (BDES)"
 
     def _load_solrf(self, simulator: Impact) -> Any:
         # Use the fieldmap already parsed into the simulator
@@ -159,12 +160,15 @@ class SolenoidBCTRLVariable(ImpactScalarVariable, WritableActionMixin):
 class SolenoidBACTVariable(_ReadbackFromControlMixin, SolenoidBCTRLVariable):
     """BACT readback of the solenoid."""
 
+    description: str = "Solenoid field integral readback (BACT)"
+
 
 class QuadrupoleBCTRLVariable(ImpactScalarVariable, WritableActionMixin):
     """Action that operates on the BCTRL/BDES property of Quadrupoles"""
 
     read_only: bool = False
     unit: str = "kG"
+    description: str = "Quadrupole magnet field integral setpoint (BDES)"
 
     def _get_bctrl_value(self, simulator: Impact) -> Any:
         ele_attr = self._get_ele_attr(simulator)
@@ -186,11 +190,14 @@ class QuadrupoleBCTRLVariable(ImpactScalarVariable, WritableActionMixin):
 class QuadrupoleBACTVariable(_ReadbackFromControlMixin, QuadrupoleBCTRLVariable):
     """Action that operates on the BACT property of Quadrupoles"""
 
+    description: str = "Quadrupole magnet field integral readback (BACT)"
+
 
 class StatusVariable(ImpactScalarVariable, ReadOnlyActionMixin):
     """Action that operates on the status of a device (e.g. STATCTRLSUB.T)"""
 
     read_only: bool = True
+    description: str = "Device status word"
 
     def _get(self, simulator: Impact) -> Any:
         return 0  # TODO: add logic for status of device
@@ -200,6 +207,7 @@ class BminVariable(ImpactScalarVariable, ReadOnlyActionMixin):
     """Action that operates on the BMIN/DRVL property of a device"""
 
     read_only: bool = True
+    description: str = "Device soft low limit (DRVL)"
 
     def _get(self, simulator: Impact) -> Any:
         return -100  # TODO: add logic for these limits
@@ -209,6 +217,7 @@ class BmaxVariable(ImpactScalarVariable, ReadOnlyActionMixin):
     """Action that operates on the BMAX/DRVH property of a device"""
 
     read_only: bool = True
+    description: str = "Device soft high limit (DRVH)"
 
     def _get(self, simulator: Impact) -> Any:
         return 100  # TODO: add logic for these limits
@@ -220,6 +229,7 @@ class ControlStateVariable(ImpactEnumVariable, ReadOnlyActionMixin):
     read_only: bool = True
     options: list[str] = ["Ready", "TRIM", "PERTURB", "BCON_TO_BDES", "BACT_TO_BDES"]
     default_value: str = "Ready"
+    description: str = "Device control state"
 
     def _get(self, simulator: Impact) -> Any:
         return "Ready"

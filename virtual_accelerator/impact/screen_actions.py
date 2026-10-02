@@ -62,6 +62,7 @@ class ScreenImageVariable(_ScreenSpecVariableMixin, NDVariable, ReadOnlyActionMi
 
     pixel_size: float  # default pixel size in meters
     read_only: bool = True
+    description: str = "Screen image (normalized)"
 
     @classmethod
     def from_screen_spec(cls, name: str, screen_spec: ScreenSpec, **kwargs):
@@ -99,6 +100,7 @@ class ScreenResolutionVariable(
     pixel_size: float
     unit: str = "um"  # default unit is microns
     read_only: bool = True
+    description: str = "Screen pixel resolution"
 
     @classmethod
     def from_screen_spec(cls, name: str, screen_spec: ScreenSpec, **kwargs):
@@ -121,6 +123,7 @@ class ScreenImageShapeVariable(
 
     index: int  # index of the dimension to return (0 for x, 1 for y)
     read_only: bool = True
+    description: str = "Screen image dimension size"
 
     @classmethod
     def from_screen_spec(cls, name: str, screen_spec: ScreenSpec, **kwargs):

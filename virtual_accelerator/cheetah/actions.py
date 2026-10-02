@@ -46,6 +46,7 @@ class QuadrupoleBCTRLVariable(CheetahWritableScalarVariable):
 
     unit: str = "kG"
     element_attribute: str = "k1"
+    description: str = "Quadrupole magnet field integral setpoint (BDES)"
 
     def _get(self, simulator):
         element, energy = self._resolve_element_and_energy(simulator, self.element_name)
@@ -64,12 +65,15 @@ class QuadrupoleBCTRLVariable(CheetahWritableScalarVariable):
 class QuadrupoleBACTVariable(_ReadbackFromControlMixin, QuadrupoleBCTRLVariable):
     """Quadrupole readback magnetic strength (BACT) in kG."""
 
+    description: str = "Quadrupole magnet field integral readback (BACT)"
+
 
 class SolenoidBCTRLVariable(CheetahWritableScalarVariable):
     """Solenoid control/desired field variable in kG-equivalent units."""
 
     unit: str = "kG"
     element_attribute: str = "k"
+    description: str = "Solenoid field integral setpoint (BDES)"
 
     def _get(self, simulator):
         element, energy = self._resolve_element_and_energy(simulator, self.element_name)
@@ -84,11 +88,14 @@ class SolenoidBCTRLVariable(CheetahWritableScalarVariable):
 class SolenoidBACTVariable(_ReadbackFromControlMixin, SolenoidBCTRLVariable):
     """Solenoid readback field variable in kG-equivalent units."""
 
+    description: str = "Solenoid field integral readback (BACT)"
+
 
 class SBendBCTRLVariable(CheetahWritableScalarVariable):
     """SBend control/desired momentum-field representation in GeV/c."""
 
     unit: str = "GeV/c"
+    description: str = "SBend momentum setpoint (BDES)"
 
     def _get(self, simulator):
         element, _ = self._resolve_element_and_energy(simulator, self.element_name)
@@ -120,12 +127,15 @@ class SBendBCTRLVariable(CheetahWritableScalarVariable):
 class SBendBACTVariable(_ReadbackFromControlMixin, SBendBCTRLVariable):
     """SBend readback momentum-field representation in GeV/c."""
 
+    description: str = "SBend momentum readback (BACT)"
+
 
 class KickerBCTRLVariable(CheetahWritableScalarVariable):
     """Horizontal/vertical corrector control variable (BCTRL/BDES) in kG."""
 
     unit: str = "kG"
     element_attribute: str = "angle"
+    description: str = "Corrector kicker field integral setpoint (BDES)"
 
     def _get(self, simulator):
         element, energy = self._resolve_element_and_energy(simulator, self.element_name)
@@ -140,11 +150,14 @@ class KickerBCTRLVariable(CheetahWritableScalarVariable):
 class KickerBACTVariable(_ReadbackFromControlMixin, KickerBCTRLVariable):
     """Horizontal/vertical corrector readback variable (BACT) in kG."""
 
+    description: str = "Corrector kicker field integral readback (BACT)"
+
 
 class StatusVariable(TorchScalarVariable, _ReadOnlyActionMixin):
     """Read-only device status scalar value."""
 
     element_name: str
+    description: str = "Device status word"
 
     def _get(self, simulator):
         return 1.0
@@ -154,6 +167,7 @@ class BminVariable(TorchScalarVariable, _ReadOnlyActionMixin):
     """Read-only lower operating limit variable for magnet-like devices."""
 
     element_name: str
+    description: str = "Device soft low limit (DRVL)"
 
     def _get(self, simulator):
         return -BCTRL_LIMIT
@@ -163,6 +177,7 @@ class BmaxVariable(TorchScalarVariable, _ReadOnlyActionMixin):
     """Read-only upper operating limit variable for magnet-like devices."""
 
     element_name: str
+    description: str = "Device soft high limit (DRVH)"
 
     def _get(self, simulator):
         return BCTRL_LIMIT
@@ -175,6 +190,7 @@ class ControlStateVariable(EnumVariable, _ReadOnlyActionMixin):
 
     options: list[str] = ["Ready", "TRIM", "PERTURB", "BCON_TO_BDES", "BACT_TO_BDES"]
     default_value: str = "Ready"
+    description: str = "Device control state"
 
     def _get(self, simulator):
         return "Ready"
@@ -197,6 +213,7 @@ class BPMXVariable(CheetahReadOnlyScalarVariable):
 
     unit: str = "mm"
     element_attribute: str = "reading"
+    description: str = "BPM horizontal orbit position"
 
     def _get(self, simulator):
         return super()._get(simulator)[0]
@@ -207,6 +224,7 @@ class BPMYVariable(CheetahReadOnlyScalarVariable):
 
     unit: str = "mm"
     element_attribute: str = "reading"
+    description: str = "BPM vertical orbit position"
 
     def _get(self, simulator):
         return super()._get(simulator)[1]
@@ -218,6 +236,7 @@ class BPMTMITDummyVariable(TorchScalarVariable, _ReadOnlyActionMixin):
     element_name: str
 
     unit: str = "arbitrary units"
+    description: str = "BPM beam intensity (dummy)"
 
     def _get(self, simulator):
         return 1.0
@@ -228,6 +247,7 @@ class CavityAREQVariable(CheetahWritableScalarVariable):
 
     unit: str = "MV"
     element_attribute: str = "voltage"
+    description: str = "Cavity amplitude request"
 
     def _get(self, simulator):
         # Cheetah stores the physical voltage in V; this PV is in MV.
@@ -240,12 +260,15 @@ class CavityAREQVariable(CheetahWritableScalarVariable):
 class CavityAREQReadbackVariable(_ReadbackFromControlMixin, CavityAREQVariable):
     """Read-only cavity amplitude readback variable in MV."""
 
+    description: str = "Cavity amplitude readback"
+
 
 class CavityPREQVariable(CheetahWritableScalarVariable):
     """Writable cavity phase request variable in degrees."""
 
     unit: str = "degrees"
     element_attribute: str = "phase"
+    description: str = "Cavity phase request"
 
     def _get(self, simulator):
         # Cheetah stores phase in rad/2pi (turns); this PV is in degrees.
@@ -258,12 +281,15 @@ class CavityPREQVariable(CheetahWritableScalarVariable):
 class CavityPREQReadbackVariable(_ReadbackFromControlMixin, CavityPREQVariable):
     """Read-only cavity phase readback variable in degrees."""
 
+    description: str = "Cavity phase readback"
+
 
 class CavityMODECFGVariable(EnumVariable, _ReadOnlyActionMixin):
     """Read-only cavity mode configuration enum."""
 
     options: list[str] = ["Disable", "ACCEL", "STDBY", "ACCEL_STDBY"]
     default_value: str = "ACCEL_STDBY"
+    description: str = "Cavity mode configuration"
 
     def _get(self, simulator):
         return "ACCEL_STDBY"
@@ -273,6 +299,7 @@ class ScreenImageVariable(CheetahReadOnlyNDVariable):
     """Read-only screen image array variable."""
 
     element_attribute: str = "reading"
+    description: str = "Screen image"
 
     def _get(self, simulator):
         # `.mT` transposes only the last two axes. `reading` is (..., y, x) and this
@@ -285,6 +312,7 @@ class ScreenImageArraySizeVariable(CheetahReadOnlyScalarVariable):
 
     element_attribute: str = "resolution"
     index: int
+    description: str = "Screen image dimension size"
 
     def _get(self, simulator):
         return super()._get(simulator)[self.index]
@@ -295,6 +323,7 @@ class ScreenResolutionVariable(CheetahReadOnlyScalarVariable):
 
     element_attribute: str = "pixel_size"
     unit: str = "um"
+    description: str = "Screen pixel resolution"
 
     def _get(self, simulator):
         return super()._get(simulator)[0] * 1e6
@@ -304,6 +333,7 @@ class ScreenPneumaticVariable(CheetahWritableScalarVariable):
     """Writable scalar representing screen insertion/activation control."""
 
     element_attribute: str = "is_active"
+    description: str = "Screen pneumatic insertion control"
 
     def _get(self, simulator):
         return 1.0 if bool(super()._get(simulator)) else 0.0
@@ -333,6 +363,7 @@ class ScreenXVariable(ScreenCentroidVariable):
 
     centroid_axis: str = "x"
     unit: str = "mm"
+    description: str = "Screen beam x centroid"
 
 
 class ScreenYVariable(ScreenCentroidVariable):
@@ -340,3 +371,4 @@ class ScreenYVariable(ScreenCentroidVariable):
 
     centroid_axis: str = "y"
     unit: str = "mm"
+    description: str = "Screen beam y centroid"
