@@ -213,6 +213,7 @@ __marimo__/
 .vscode/
 
 *.h5
+!virtual_accelerator/beams/**/*.h5
 *.png
 *.svg
 
