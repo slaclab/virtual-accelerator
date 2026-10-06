@@ -26,6 +26,7 @@ jobs:
         with:
           submodules: recursive
           fetch-depth: 1
+          lfs: true
 
       - name: Checkout lattice repos
         uses: ./.github/actions/checkout-lattices
