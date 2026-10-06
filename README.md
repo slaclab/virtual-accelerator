@@ -47,8 +47,6 @@ conda install -c conda-forge impact-t=*=mpi_mpich*
 
 And the examples require installing ipykernel and register as a Jupyter kernel.
 
-
-<<<<<<< HEAD
 Optional Dependency Keys by Model:
 | Model / Factory Function | Optional dependency key(s) | Notes |
 | --- | --- | --- |
@@ -60,7 +58,7 @@ Optional Dependency Keys by Model:
 | `get_cu_hxr_zfel_model` | `zfel` | CU HXR taper model using the 1D ZFEL backend. |
 | `virtual_accelerator.models.runners` CLI | `pva` (+ model backend key) | Runner requires `pva`; selected model backend must also be installed. |
 | `get_cu_inj_impact_model` | `Impact` | Requires impact pip install AND conda install, both detailed above |
-=======
+
 ## Loading a model
 
 Use `get_model()` to build a single model or a staged chain. See
@@ -112,7 +110,6 @@ Standard staged chains (build with `get_model([upstream, downstream], ...)`):
 | `fast_facet2_s2e` | `surrogate_f2e_inj` | `bmad_f2_elec` | PR10241 |
 
 The `Runner` CLI additionally needs the `pva` extra.
->>>>>>> upstream/main
 
 The package now lazily imports backend-specific dependencies. If you call a model
 whose optional dependency is not installed, you will get an actionable error with

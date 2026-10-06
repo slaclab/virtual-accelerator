@@ -25,6 +25,11 @@ def main():
         help="End lattice element for BMAD models (default: END)",
     )
     parser.add_argument(
+        "--start-element",
+        default="CATHODE",
+        help="Start lattice element for BMAD models (default: CATHODE)",
+    )
+    parser.add_argument(
         "--n-particles",
         type=int,
         default=10000,
@@ -54,7 +59,7 @@ def main():
     if args.model == "cu_hxr_bmad":
         from virtual_accelerator.models.cu_hxr import get_cu_hxr_bmad_model
 
-        model = get_cu_hxr_bmad_model(end_element=args.end_element, track_beam=True)
+        model = get_cu_hxr_bmad_model(start_element=args.start_element, end_element=args.end_element, track_beam=True)
     elif args.model == "cu_hxr_staged":
         from virtual_accelerator.models.cu_hxr import get_cu_hxr_staged_model
 
@@ -64,7 +69,9 @@ def main():
     elif args.model == "facet_bmad":
         from virtual_accelerator.models.facet2 import get_facet_bmad_model
 
-        model = get_facet_bmad_model(end_element=args.end_element, track_beam=True)
+        if args.start_element == "CATHODE":
+            args.start_element = "CATHODEF"
+        model = get_facet_bmad_model(start_element=args.start_element, end_element=args.end_element, track_beam=True)
     elif args.model == "facet_staged":
         from virtual_accelerator.models.facet2 import get_facet_staged_model
 
