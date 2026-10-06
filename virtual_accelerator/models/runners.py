@@ -5,39 +5,15 @@ from virtual_accelerator.registry import get_model, list_models
 from virtual_accelerator.utils.optional_dependencies import import_optional_symbol
 
 
-# Old CLI names kept so existing scripts and docs keep working. Each maps to a
-# `get_model` spec (a registry name or a chain alias) plus any implicit kwargs
-# the old CLI hardcoded for that choice -- in particular `track_beam=True` on
-# the single-stage Bmad models, which the previous `_build_model` set
-# unconditionally. Flagged as deprecated at use.
-_LEGACY_ALIASES: dict[str, tuple[str, dict]] = {
-    "cu_hxr_bmad": ("bmad_cu_hxr", {"track_beam": True}),
-    "cu_hxr_staged": ("fast_cu_hxr_s2e", {}),
-    "facet_bmad": ("bmad_f2_elec", {"track_beam": True}),
-    "facet_staged": ("fast_facet2_s2e", {}),
-    "cu_hxr_zfel": ("zfel_cu_hxr", {}),
-}
-
-
 def _build_model(args):
-    spec = args.model
-    extra: dict = {}
-    if spec in _LEGACY_ALIASES:
-        new, extra = _LEGACY_ALIASES[spec]
-        logging.warning(
-            "CLI name %r is deprecated, use %r (see `--list-models`).", spec, new
-        )
-        spec = new
-
-    # Only pass what the user actually set, so registry defaults win otherwise.
-    kwargs = dict(extra)
+    kwargs = {}
     if args.n_particles is not None:
         kwargs["n_particles"] = args.n_particles
     if args.track_beam:
         kwargs["track_beam"] = True
 
     return get_model(
-        spec,
+        args.model,
         start_ele=args.start_ele,
         end_ele=args.end_ele,
         handoff_loc=args.handoff_loc,
@@ -64,15 +40,11 @@ def main():
     )
     parser.add_argument(
         "--start-ele",
-        "--start-element",
-        dest="start_ele",
         default=None,
         help="Start element. Default: model's standard start.",
     )
     parser.add_argument(
         "--end-ele",
-        "--end-element",
-        dest="end_ele",
         default=None,
         help="End element. Default: model's standard end.",
     )
