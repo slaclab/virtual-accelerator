@@ -199,7 +199,7 @@ class BPMXVariable(CheetahReadOnlyScalarVariable):
     element_attribute: str = "reading"
 
     def _get(self, simulator):
-        return super()._get(simulator)[0]*(1e3)
+        return super()._get(simulator)[0] * (1e3)
 
 
 class BPMYVariable(CheetahReadOnlyScalarVariable):
@@ -209,7 +209,7 @@ class BPMYVariable(CheetahReadOnlyScalarVariable):
     element_attribute: str = "reading"
 
     def _get(self, simulator):
-        return super()._get(simulator)[1]*(1e3)
+        return super()._get(simulator)[1] * (1e3)
 
 
 class BPMTMITDummyVariable(TorchScalarVariable, _ReadOnlyActionMixin):
