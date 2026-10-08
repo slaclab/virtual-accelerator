@@ -47,17 +47,8 @@ conda install -c conda-forge impact-t=*=mpi_mpich*
 
 And the examples require installing ipykernel and register as a Jupyter kernel.
 
-Optional Dependency Keys by Model:
-| Model / Factory Function | Optional dependency key(s) | Notes |
-| --- | --- | --- |
-| `get_cu_hxr_bmad_model` | `bmad` | Requires BMAD/PyTAO backend. |
-| `get_facet_bmad_model` | `bmad` | FACET-II BMAD model; requires `FACET2_LATTICE`. |
-| `get_cu_hxr_injector_surrogate_model` | `surrogate` | Uses torch surrogate + cheetah particles. |
-| `get_facet_staged_model` | `surrogate`, `bmad` | FACET-II staged model (injector surrogate + FACET-II BMAD). |
-| `get_cu_hxr_staged_model` | `surrogate`, `bmad` | Stages `InjectorSurrogate` + CU HXR BMAD model. |
-| `get_cu_hxr_zfel_model` | `zfel` | CU HXR taper model using the 1D ZFEL backend. |
-| `virtual_accelerator.models.runners` CLI | `pva` (+ model backend key) | Runner requires `pva`; selected model backend must also be installed. |
-| `get_cu_inj_impact_model` | `Impact` | Requires impact pip install AND conda install, both detailed above |
+Each model's required extra is listed in the "Supported models" table below. The
+`runners.py` CLI additionally needs the `pva` extra.
 
 ## Loading a model
 
@@ -122,17 +113,18 @@ repo https://github.com/slaclab/facet2-lattice.
 
 ## Running the models
 
-You can use the runner script to start the model. The script allows you to specify the model backend,
-number of particles, and end element to run with.
+Use the runner CLI to serve a model over PVA. MODEL is any registry name or chain
+alias from the tables above; `--list-models` prints the catalog.
 
-For example:
 ```
-python virtual_accelerator/models/runners.py cu_hxr_bmad --end-element OTR4
+python -m virtual_accelerator.models.runners bmad_cu_hxr --end-ele OTR4 --track-beam
+python -m virtual_accelerator.models.runners fast_cu_hxr_s2e --n-particles 500
+python -m virtual_accelerator.models.runners --list-models
 ```
 
 For more info, run:
 ```
-python virtual_accelerator/models/runners.py -h
+python -m virtual_accelerator.models.runners -h
 ```
 
 #### Note
