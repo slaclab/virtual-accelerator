@@ -241,7 +241,14 @@ def get_cu_hxr_cheetah_model(
 
 
 def get_cu_inj_impact_model(
-    n_particles: int = 100, end_element="OTR2", include_end_element: bool = True
+    n_particles: int = 100,
+    end_element="OTR2",
+    include_end_element: bool = True,
+    numprocs: int = 1,
+    workdir: str | None = None,
+    mpi_run: str | None = None,
+    command_mpi: str | None = None,
+    header: dict | None = None,
 ):
     from virtual_accelerator.impact.factory import (
         ImpactModelSpec,
@@ -256,7 +263,11 @@ def get_cu_inj_impact_model(
         profmon_config_filename="cu_hxr_profmon_info.yaml",
         element_name_to_base_pv_mapping=IMPACT_ELEMENT_PV_MAPPING,
         n_particles=n_particles,
-        numprocs=1,
+        numprocs=numprocs,
+        workdir=workdir,
+        mpi_run=mpi_run,
+        command_mpi=command_mpi,
+        header=header if header is not None else {},
         space_charge=False,
         stop_location=end_element,
         include_stop_element=include_end_element,

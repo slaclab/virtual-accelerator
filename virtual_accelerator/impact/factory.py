@@ -32,6 +32,7 @@ class ImpactModelSpec:
     command: str = None
     command_mpi: str = None
     mpi_run: str = None
+    workdir: str | None = None
     include_stop_element: bool = True
     custom_aliases: dict[str, str] | None = None
 
@@ -62,6 +63,11 @@ def get_impact_and_distgen(spec: ImpactModelSpec):
         impact = Impact.from_yaml(impact_yaml_file)
     else:
         impact = Impact(impact_file)
+
+    # Set the working directory before initialization so MPI processes
+    # can access the IMPACT run files on shared storage.
+    if spec.workdir is not None:
+        impact.workdir = spec.workdir
 
     distgen = Generator(distgen_file)
 
