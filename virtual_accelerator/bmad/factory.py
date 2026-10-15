@@ -42,6 +42,7 @@ def build_bmad_model(
     custom_beam_path: str | None,
     custom_tao_commands: list[str] | None = None,
     custom_aliases: dict[str, str] | None = None,
+    pv_name_overrides: dict[str, dict[str, str]] | None = None,
     end_mode: str = "end",
     start_mode: str = "beginning",
 ):
@@ -65,6 +66,10 @@ def build_bmad_model(
         List of custom Tao commands to apply, by default None.
     custom_aliases : dict[str, str] | None, optional
         Dictionary of custom element aliases, by default None.
+    pv_name_overrides : dict[str, dict[str, str]] | None, optional
+        Mapping of element name -> {attr suffix: full PV name} used to
+        hard-code PV names that don't follow the standard alias-based
+        naming, by default None.
     end_mode : str, optional
         Mode for determining the end of the lattice slice, by default "end".
     start_mode : str, optional
@@ -138,7 +143,9 @@ def build_bmad_model(
         screen_config_dict = yaml.safe_load(f)
 
     # get variables for all elements in the lattice based on the element attribute mapping and screen configuration for the model
-    variables = get_variables(tao, get_element_attr_mapping(), screen_config_dict)
+    variables = get_variables(
+        tao, get_element_attr_mapping(), screen_config_dict, pv_name_overrides
+    )
 
     # get list of screens that are present in the lattice
     element_types = get_all_element_types(tao)

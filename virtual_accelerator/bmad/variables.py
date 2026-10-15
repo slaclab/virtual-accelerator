@@ -204,6 +204,7 @@ def get_variables(
     tao: Tao,
     element_attr_mapping: dict[str, dict[str, dict[str, Any]]],
     screen_config_dict: dict[str, dict[str, Any]],
+    pv_name_overrides: dict[str, dict[str, str]] | None = None,
 ):
     """
     Build variables for supported lattice elements.
@@ -218,6 +219,10 @@ def get_variables(
     screen_config_dict : dict[str, dict[str, Any]], optional
         Mapping of screen element name -> screen configuration with ``shape``
         and ``pixel_size``.
+    pv_name_overrides : dict[str, dict[str, str]] | None, optional
+        Mapping of element name -> {attr suffix: full PV name} used to
+        hard-code PV names that don't follow the standard ``{base_pv}:{attr}``
+        convention, by default None.
 
     Returns
     -------
@@ -284,6 +289,7 @@ def get_variables(
                 element_name=element_name,
                 base_pv=alias,
                 class_mapping=element_pv_suffix_mapping,
+                pv_name_overrides=(pv_name_overrides or {}).get(element_name),
             )
         )
 
@@ -294,6 +300,7 @@ def create_variables_from_element(
     element_name: str,
     base_pv: str,
     class_mapping: dict[str, Any],
+    pv_name_overrides: dict[str, str] | None = None,
 ) -> list[Variable]:
     """
     Instantiate variables for one element from a PV-class mapping.
@@ -306,6 +313,10 @@ def create_variables_from_element(
         Base PV name to use for the variables.
     class_mapping : dict[str, Any]
         Mapping of PV attribute suffix -> variable specification.
+    pv_name_overrides : dict[str, str] | None, optional
+        Mapping of attr suffix -> full PV name, used to hard-code PV names
+        for this element instead of deriving them from ``base_pv``, by
+        default None.
 
     Returns
     -------
@@ -320,9 +331,10 @@ def create_variables_from_element(
     """
 
     variables = []
+    pv_name_overrides = pv_name_overrides or {}
 
     for attr, var_spec in class_mapping.items():
-        pv_name = f"{base_pv}:{attr}"
+        pv_name = pv_name_overrides.get(attr, f"{base_pv}:{attr}")
 
         if isinstance(var_spec, dict):
             var_class_name = var_spec["variable_class"]

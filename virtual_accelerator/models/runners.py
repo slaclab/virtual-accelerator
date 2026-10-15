@@ -1,41 +1,69 @@
 import argparse
+import logging
 
+from virtual_accelerator.registry import get_model, list_models
 from virtual_accelerator.utils.optional_dependencies import import_optional_symbol
 
-import logging
+
+def _build_model(args):
+    kwargs = {}
+    if args.n_particles is not None:
+        kwargs["n_particles"] = args.n_particles
+    if args.track_beam:
+        kwargs["track_beam"] = True
+
+    return get_model(
+        args.model,
+        start_ele=args.start_ele,
+        end_ele=args.end_ele,
+        handoff_loc=args.handoff_loc,
+        **kwargs,
+    )
 
 
 def main():
-    parser = argparse.ArgumentParser(description="Run a virtual accelerator model")
-    choices = [
-        "cu_hxr_bmad",
-        "cu_hxr_staged",
-        "facet_bmad",
-        "facet_staged",
-        "cu_hxr_zfel",
-    ]
+    parser = argparse.ArgumentParser(
+        description=(
+            "Run a virtual accelerator model. MODEL is any registry name or "
+            "chain alias (see --list-models)."
+        ),
+    )
     parser.add_argument(
         "model",
-        choices=choices,
-        help="Model backend to run (cu_hxr_bmad, cu_hxr_staged, facet_bmad, facet_staged, or cu_hxr_zfel)",
+        nargs="?",
+        help="Registry name (e.g. bmad_cu_hxr) or chain alias (e.g. fast_cu_hxr_s2e).",
     )
     parser.add_argument(
-        "--end-element",
-        default="END",
-        help="End lattice element for BMAD models (default: END)",
+        "--list-models",
+        action="store_true",
+        help="Print the registry table and exit.",
     )
     parser.add_argument(
-        "--start-element",
-        default="CATHODE",
-        help="Start lattice element for BMAD models (default: CATHODE)",
+        "--start-ele",
+        default=None,
+        help="Start element. Default: model's standard start.",
+    )
+    parser.add_argument(
+        "--end-ele",
+        default=None,
+        help="End element. Default: model's standard end.",
+    )
+    parser.add_argument(
+        "--handoff-loc",
+        default=None,
+        help="Element handing the beam between stages of a chain. Default: inferred.",
     )
     parser.add_argument(
         "--n-particles",
         type=int,
-        default=10000,
-        help="Number of particles for model if used (default: 10000)",
+        default=None,
+        help="Particle count for models that sample one.",
     )
-
+    parser.add_argument(
+        "--track-beam",
+        action="store_true",
+        help="Force beam tracking on for a single Bmad model (chains always track).",
+    )
     parser.add_argument(
         "--log-level",
         default="INFO",
@@ -44,9 +72,15 @@ def main():
     )
 
     args = parser.parse_args()
-
     logging.basicConfig(level=getattr(logging, args.log_level))
     logging.getLogger("pytao").setLevel(logging.WARNING)
+
+    if args.list_models:
+        print(list_models())
+        return
+
+    if args.model is None:
+        parser.error("the following arguments are required: model (or --list-models)")
 
     Runner = import_optional_symbol(
         "lume_pva.runner",
@@ -55,48 +89,8 @@ def main():
         extra="pva",
     )
 
-    # Get the appropriate model based on user input
-    if args.model == "cu_hxr_bmad":
-        from virtual_accelerator.models.cu_hxr import get_cu_hxr_bmad_model
-
-        model = get_cu_hxr_bmad_model(
-            start_element=args.start_element,
-            end_element=args.end_element,
-            track_beam=True,
-        )
-    elif args.model == "cu_hxr_staged":
-        from virtual_accelerator.models.cu_hxr import get_cu_hxr_staged_model
-
-        model = get_cu_hxr_staged_model(
-            end_element=args.end_element, n_particles=args.n_particles
-        )
-    elif args.model == "facet_bmad":
-        from virtual_accelerator.models.facet2 import get_facet_bmad_model
-
-        if args.start_element == "CATHODE":
-            args.start_element = "CATHODEF"
-        model = get_facet_bmad_model(
-            start_element=args.start_element,
-            end_element=args.end_element,
-            track_beam=True,
-        )
-    elif args.model == "facet_staged":
-        from virtual_accelerator.models.facet2 import get_facet_staged_model
-
-        model = get_facet_staged_model(
-            end_element=args.end_element, n_particles=args.n_particles
-        )
-    elif args.model == "cu_hxr_zfel":
-        from virtual_accelerator.models.cu_hxr_zfel import get_cu_hxr_zfel_model
-
-        model = get_cu_hxr_zfel_model()
-
-    else:
-        raise ValueError(f"Invalid model choice. Please choose one of {choices}.")
-
-    # Run the model
-    runner = Runner(model)
-    runner.run()
+    model = _build_model(args)
+    Runner(model).run()
 
 
 if __name__ == "__main__":

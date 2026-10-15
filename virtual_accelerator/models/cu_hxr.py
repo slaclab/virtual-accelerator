@@ -37,6 +37,24 @@ IMPACT_ELEMENT_PV_MAPPING = {
     "OTR2": "OTRS:IN20:571",
 }
 
+# the lattice alias for TCAV0 doesn't match the real PVs, so these are hard-coded
+BMAD_PV_OVERRIDES = {
+    "TCAV0": {
+        "ADES": "TCAV:IN20:490:TC0_ADES",
+        "AREQ": "TCAV:IN20:490:TC0_AREQ",
+        "AFBENB": "TCAV:IN20:490:TC0_AMPL_FB",
+        "AFBST": "TCAV:IN20:490:TC0_AMPL_FB",
+        "AMPL_W0CH0": "TCAV:IN20:490:TC0_ADES",
+        "MODECFG": "KLYS:LI20:51:BEAMCODE1_TCTL",
+        "PDES": "TCAV:IN20:490:TC0_PDES",
+        "PRE": "TCAV:IN20:490:TC0_PDES",
+        "PACT_AVGNT": "TCAV:IN20:490:TC0_PDES",
+        "PFBENB": "TCAV:IN20:490:TC0_PHAS_FB",
+        "PFBST": "TCAV:IN20:490:TC0_PHAS_FB",
+        "RF_ENABLE": "KLYS:LI20:51:BEAMCODE1_TCTL",
+    }
+}
+
 
 def get_cu_hxr_bmad_model(
     start_element="OTR2",
@@ -93,6 +111,7 @@ def get_cu_hxr_bmad_model(
             "set bmad_com lr_wakes_on=false",
             "set bmad_com sr_wakes_on=false",
         ],
+        pv_name_overrides=BMAD_PV_OVERRIDES,
     )
 
 
