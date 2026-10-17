@@ -1,0 +1,14 @@
+{
+  "beamline": "facet2",
+  "element": "L0AFEND",
+  "s_m": 4.128,
+  "ref_energy_eV": 6.862e7,
+  "generator": "impact",
+  "n_particles": 100000,
+  "charge_C": 1.6e-9,
+  "species": "electron",
+  "date_generated": "2024-10-22",
+  "mode": "nominal_one_bunch",
+  "source": "FACET2-S2E 2024-10-22 one-bunch scenario",
+  "notes": "Default beam for the FACET-II Bmad model (resolved by virtual_accelerator.beams.get_beam). Mean z and energy computed with pmd_beamphysics.ParticleGroup: z=4.128 m, energy=68.62 MeV. The FACET2-S2E 2024-10-22_Impact_OneBunch run stops at PR10241 upstream of L0AF."
+}
