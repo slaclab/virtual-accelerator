@@ -271,11 +271,8 @@ def assert_bmad_model_track_beam_custom_path(get_model) -> None:
     AssertionError
         If the returned model instance is ``None``.
     """
-    # get the 50th element of the lattice
-    tenth_element = get_model(track_beam=False).tao.lat_list("*", "ele.name")[49]
-
     # This test ensures shared track_beam setup works when custom_beam_path is given.
-    model = get_model(track_beam=True, custom_beam_path=TEST_BEAM_PATH, end_element=tenth_element)
+    model = get_model(track_beam=True, custom_beam_path=TEST_BEAM_PATH)
     assert model is not None
 
 
