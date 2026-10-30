@@ -154,12 +154,12 @@ def get_element_type(tao: Tao, element_name: str) -> str:
     """
     try:
         element_type = tao.ele_head(element_name)["key"]
-    except Exception as exc:
-        #logger.warning(
+    except Exception:
+        # logger.warning(
         #    "Error getting element type for %s: %s. Defaulting to 'Unknown'.",
         #    element_name,
         #    exc,
-        #)
+        # )
         return "Unknown"
 
     # handle BPMs

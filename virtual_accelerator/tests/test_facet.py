@@ -22,7 +22,6 @@ from virtual_accelerator.tests._bmad_model_test_utils import (
     TEST_BEAM_PATH,
     assert_bpm_pvs_match_tao_lattice,
     assert_bmad_model_initialization,
-    assert_bmad_model_track_beam_custom_path,
     assert_bmad_model_twiss_outputs,
     assert_magnet_pvs_match_lattice_elements,
     assert_magnet_pvs_match_tao_lattice,
@@ -83,7 +82,9 @@ class TestFACET2Bmad:
         new_output = model.get_value(screen_pv)
         assert not (new_output == output).all()  # Check that the screen output changed
 
-    @pytest.mark.xfail(reason="SBEND test is expected to fail since we will remove SBEND control soon")
+    @pytest.mark.xfail(
+        reason="SBEND test is expected to fail since we will remove SBEND control soon"
+    )
     def test_sbend(self):
         model = get_facet_bmad_model(
             track_beam=True,
