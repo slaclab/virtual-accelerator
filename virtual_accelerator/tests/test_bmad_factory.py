@@ -3,16 +3,19 @@ from pathlib import Path
 import numpy as np
 import pytest
 
-from virtual_accelerator.tests.dependency_profiles import HAS_BMAD_DEPS, HAS_LCLS_LATTICE
+from virtual_accelerator.tests.dependency_profiles import (
+    HAS_BMAD_DEPS,
+    HAS_LCLS_LATTICE,
+)
 
 pytestmark = [pytest.mark.requires_bmad, pytest.mark.requires_lcls_lattice]
 
-if not (HAS_BMAD_DEPS and HAS_LCLS_LATTICE):
+if HAS_BMAD_DEPS and HAS_LCLS_LATTICE:
+    from beamphysics import ParticleGroup
+    from lume_bmad.model import LUMEBmadModel
+    from virtual_accelerator.models.cu_hxr import get_cu_hxr_bmad_model
+else:
     pytest.skip("requires Bmad and LCLS_LATTICE", allow_module_level=True)
-
-from beamphysics import ParticleGroup
-from lume_bmad.model import LUMEBmadModel
-from virtual_accelerator.models.cu_hxr import get_cu_hxr_bmad_model
 
 BEAM_DIR = Path(__file__).resolve().parents[1] / "bmad"
 
