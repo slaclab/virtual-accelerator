@@ -37,7 +37,7 @@ Documentation = "https://github.com/slaclab/virtual-accelerator"
 
 [project.optional-dependencies]
 bmad = [
-    "lume-bmad>=0.1.1",
+    "lume-bmad>=0.1.2",
 ]
 cheetah = [
     "torch",
@@ -63,7 +63,7 @@ surrogate = [
 ]
 all = [
     "torch",
-    "lume-bmad>=0.1.1",
+    "lume-bmad>=0.1.2",
     "lume-cheetah",
     "lume-impact",
     "lume-torch",
