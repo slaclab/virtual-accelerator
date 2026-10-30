@@ -100,7 +100,7 @@ include = [ "virtual_accelerator*", ]
 namespaces = false
 
 [tool.setuptools.package-data]
-virtual_accelerator = ["py.typed"]
+virtual_accelerator = ["py.typed", "bmad/*.h5"]
 
 [tool.setuptools_scm]
 version_file = "virtual_accelerator/_version.py"

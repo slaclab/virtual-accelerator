@@ -61,7 +61,7 @@ def build_bmad_model(
     track_beam : bool
         Whether to enable beam tracking.
     custom_beam_path : str | None
-        Path to a custom beam file, if any.
+        Path to a custom openPMD ParticleGroup HDF5 file, if any.
     custom_tao_commands : list[str] | None, optional
         List of custom Tao commands to apply, by default None.
     custom_aliases : dict[str, str] | None, optional
@@ -91,6 +91,7 @@ def build_bmad_model(
 
     from pytao import Tao
     from lume_bmad.model import LUMEBmadModel
+    from beamphysics import ParticleGroup
 
     lattice_root = os.environ[spec.lattice_env_var]
     init_file = os.path.join(lattice_root, spec.tao_init_relpath)
@@ -165,22 +166,41 @@ def build_bmad_model(
     # if tracking is enabled, set up the beam in the model based on the provided custom beam path or default beam path in the spec
     if track_beam:
         if custom_beam_path is not None:
-            beam_path = custom_beam_path
+            particles = ParticleGroup(h5=Path(custom_beam_path).expanduser())
         elif (
             spec.default_track_start is not None
             and spec.default_beam_relpath is not None
             and start_element == spec.default_track_start
         ):
-            beam_path = Path(__file__).parent / spec.default_beam_relpath
+            particles = ParticleGroup(
+                h5=Path(__file__).parent / spec.default_beam_relpath
+            )
 
         else:
             warnings.warn(
                 "track_beam=True for start_element "
-                f"!= {spec.default_track_start} without providing custom_beam_path"
+                f"!= {spec.default_track_start} without providing custom_beam_path; "
+                "using a single reference particle at the origin"
             )
-            beam_path = Path(__file__).parent / "bmad_ref_particle"
+            reference = tao.ele_orbit("BEGINNING")
+            particles = ParticleGroup(
+                data={
+                    "x": [0.0],
+                    "px": [0.0],
+                    "y": [0.0],
+                    "py": [0.0],
+                    "z": [0.0],
+                    "pz": [reference["p0c"]],
+                    "t": [0.0],
+                    "weight": [5e-12],
+                    "status": [1],
+                    "species": reference["species"].lower(),
+                }
+            )
 
-        model.tao.cmd(f"set beam_init position_file = {beam_path}")
-        model.set({"track_type": "beam"})
+        # Do not track the old beam before the model installs the new particles.
+        model.tao.cmd("set global lattice_calc_on = F")
+        model.tao.cmd("set global track_type = beam")
+        model.initial_particles = particles
 
     return model
