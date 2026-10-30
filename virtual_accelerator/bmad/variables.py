@@ -26,7 +26,7 @@ ELEMENT_TYPE_MAPPING = {
     "HKicker": "HorizontalCorrector",
 }
 
-SKIPPED_TYPES = ["Drift", "Marker", "Instrument", "Fixer"]
+SKIPPED_TYPES = ["Drift", "Marker", "Instrument", "Fixer", "Unknown"]
 
 
 def set_overlay_aliases(tao: Tao):
@@ -155,11 +155,11 @@ def get_element_type(tao: Tao, element_name: str) -> str:
     try:
         element_type = tao.ele_head(element_name)["key"]
     except Exception as exc:
-        logger.warning(
-            "Error getting element type for %s: %s. Defaulting to 'Unknown'.",
-            element_name,
-            exc,
-        )
+        #logger.warning(
+        #    "Error getting element type for %s: %s. Defaulting to 'Unknown'.",
+        #    element_name,
+        #    exc,
+        #)
         return "Unknown"
 
     # handle BPMs
