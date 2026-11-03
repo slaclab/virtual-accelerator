@@ -302,30 +302,25 @@ class KlystronPACTVariable(_ReadbackFromControlMixin, KlystronPDESVariable):
     description: str = "Klystron phase readback"
 
 
-class KlystronStatVariable(BmadEnumVariable, WritableActionMixin):
+class KlystronStatVariable(BmadScalarVariable, WritableActionMixin):
     """
-    Action that operates on the status of a klystron which acts on an overlay in Bmad
-    Note: the element_name for this variable should be set for a Bmad overlay element
+    Action that operates on the status of a klystron which acts on an overlay in Bmad.
+    Note: the element_name for this variable should be set for a Bmad overlay element.
 
+    Values other than 1.0 (e.g. 0.0, 4.0 for bypassed/standby beamcodes) are
+    treated as "off" and set the overlay's IN_USE to 0.
     """
 
-    read_only: bool = True
-    options: list[str] = ["0", "1"]
-    default_value: str = "0"
+    read_only: bool = False
+    default_value: float = 0.0
     description: str = "Klystron on/off status"
 
-    _logic_mapping = {"0": True, "1": False}
-
     def _get(self, simulator: Tao) -> Any:
-        inverse_logic_mapping = {v: k for k, v in self._logic_mapping.items()}
-        return inverse_logic_mapping[
-            simulator.ele(self.element_name).control_vars["IN_USE"]
-        ]
+        return float(simulator.ele(self.element_name).control_vars["IN_USE"])
 
     def _set(self, simulator: Tao, value: Any) -> None:
-        simulator.cmd(
-            f"set ele {self.element_name} IN_USE = {self._logic_mapping[value]}"
-        )
+        in_use = 1 if value == 1.0 else 0
+        simulator.cmd(f"set ele {self.element_name} IN_USE = {in_use}")
 
 
 class CavityAREQVariable(ScaledEleScalarVariable):

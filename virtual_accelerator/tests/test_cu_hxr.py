@@ -197,6 +197,28 @@ class TestCUHXRBmad:
         )
         assert_roundtrip_pv_get_set(model)
 
+    def test_klystron_stat_normalizes_non_one_to_zero(self):
+        model = get_cu_hxr_bmad_model(
+            custom_beam_path=TEST_BEAM_PATH, end_element="ENDL1"
+        )
+        stat_pv = next(
+            name
+            for name in model.supported_variables
+            if name.endswith("BEAMCODE1_STAT")
+        )
+
+        model.set({stat_pv: 1.0})
+        assert model.get_value(stat_pv) == 1.0
+
+        model.set({stat_pv: 0.0})
+        assert model.get_value(stat_pv) == 0.0
+
+        model.set({stat_pv: 4.0})
+        assert model.get_value(stat_pv) == 0.0
+
+        model.set({stat_pv: 0.5})
+        assert model.get_value(stat_pv) == 0.0
+
     def test_screen_pvs_match_tao_lattice(self):
         model = get_cu_hxr_bmad_model(
             custom_beam_path=TEST_BEAM_PATH, end_element="OTR4", track_beam=True

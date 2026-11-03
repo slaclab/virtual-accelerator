@@ -635,6 +635,8 @@ def assert_roundtrip_pv_get_set(
         elif isinstance(current_value, Real):
             if pv_name.endswith(":PNEUMATIC"):
                 target_value = 0.0 if float(current_value) >= 0.5 else 1.0
+            elif pv_name.endswith(("BEAMCODE1_STAT", "BEAMCODE2_STAT")):
+                target_value = 0.0 if float(current_value) >= 0.5 else 1.0
             else:
                 target_value = float(current_value) + 0.001
         else:
