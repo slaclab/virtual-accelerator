@@ -39,6 +39,14 @@ def main():
         help="Print the registry table and exit.",
     )
     parser.add_argument(
+        "--list-pvs",
+        action="store_true",
+        help=(
+            "Build the model and print the PVs it would publish, one per line, "
+            "then exit without starting the server."
+        ),
+    )
+    parser.add_argument(
         "--start-ele",
         default=None,
         help="Start element. Default: model's standard start.",
@@ -81,6 +89,29 @@ def main():
 
     if args.model is None:
         parser.error("the following arguments are required: model (or --list-models)")
+
+    if args.list_pvs:
+        # Behave like `cat`/`grep` when the reader closes early (e.g. `| head`):
+        # exit silently on SIGPIPE instead of letting Python's default handler
+        # raise BrokenPipeError during interpreter shutdown.
+        import signal
+
+        if hasattr(signal, "SIGPIPE"):
+            signal.signal(signal.SIGPIPE, signal.SIG_DFL)
+
+        from lume.variables.particle_group import ParticleGroupVariable
+
+        model = _build_model(args)
+        for name, variable in model.supported_variables.items():
+            # ParticleGroup outputs are python objects (openPMD ParticleGroup /
+            # Cheetah ParticleBeam), not scalar CA channels, so caget cannot
+            # reach them. "name" is a Bmad info stat with no CA endpoint.
+            if isinstance(variable, ParticleGroupVariable):
+                continue
+            if name == "name":
+                continue
+            print(name)
+        return
 
     Runner = import_optional_symbol(
         "lume_pva.runner",
