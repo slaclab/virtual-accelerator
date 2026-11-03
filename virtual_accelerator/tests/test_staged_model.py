@@ -10,7 +10,7 @@ from .dependency_profiles import (
 )
 from lume.staged_model import StagedModel
 
-TEST_BEAM_PATH = os.path.join(Path(__file__).parent, "../bmad", "test_beam")
+TEST_BEAM_PATH = os.path.join(Path(__file__).parent, "../bmad", "test_beam.h5")
 pytestmark = [
     pytest.mark.requires_staged_model,
     pytest.mark.requires_lcls_lattice,

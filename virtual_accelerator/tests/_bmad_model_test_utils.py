@@ -6,7 +6,7 @@ from pathlib import Path
 
 from virtual_accelerator.utils.variables import get_pvs_by_element_name
 
-TEST_BEAM_PATH = os.path.join(Path(__file__).parent, "../bmad", "test_beam")
+TEST_BEAM_PATH = os.path.join(Path(__file__).parent, "../bmad", "test_beam.h5")
 
 DEFAULT_MAGNET_PV_ATTRS = (
     "BCTRL",
