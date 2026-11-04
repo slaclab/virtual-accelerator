@@ -170,6 +170,17 @@ MODELS: dict[str, ModelEntry] = {
         extras=("surrogate",),
         params={},
     ),
+    "surrogate_cu_hxr_fel_genesis": ModelEntry(
+        name="surrogate_cu_hxr_fel_genesis",
+        description="LCLS CU-HXR FEL Genesis surrogate",
+        facility="lcls",
+        simulator="surrogate",
+        builder=(
+            "virtual_accelerator.models.cu_hxr:get_cu_hxr_fel_genesis_surrogate_model"
+        ),
+        extras=("surrogate",),
+        params={},
+    ),
     # 1D ZFEL: a dedicated model rather than a selectable beamline segment, so no
     # start_element / end_element / handoff_points.
     "zfel_cu_hxr": ModelEntry(

@@ -145,6 +145,21 @@ def get_cu_hxr_fel_surrogate_model():
     return LUMETorchModel(load_model())
 
 
+def get_cu_hxr_fel_genesis_surrogate_model():
+    """
+    Get the LCLS FEL Genesis surrogate model.
+
+    Scalar NN mapping electron-beam Twiss parameters, chirp, undulator taper/start
+    and bunch length to Genesis-simulated FEL outputs (energy, bandwidth, peak
+    intensity, peak photon energy). Takes physics inputs rather than PVs; not a
+    beam-tracking stage.
+    """
+    from lume_torch.base import LUMETorchModel
+    from models.lcls_fel_genesis import load_model
+
+    return LUMETorchModel(load_model())
+
+
 # get lume model instances for each stage of the accelerator
 def get_cu_hxr_staged_model(n_particles: int = 1000, **kwargs) -> StagedModel:
     """

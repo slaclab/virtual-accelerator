@@ -58,7 +58,7 @@ surrogate = [
     "lume-torch",
     "lume-cheetah",
     "distgen",
-    "slac-surrogate-models[lcls_cu_inj,lcls_fel,facet2_inj_241] @ git+https://github.com/slaclab/slac-surrogate-models",
+    "slac-surrogate-models[lcls_cu_inj,lcls_fel,lcls_fel_genesis,facet2_inj_241] @ git+https://github.com/slaclab/slac-surrogate-models",
 ]
 all = [
     "torch",
@@ -68,7 +68,7 @@ all = [
     "lume-torch",
     "lume-pva",
     "distgen",
-    "slac-surrogate-models[lcls_cu_inj,lcls_fel,facet2_inj_241] @ git+https://github.com/slaclab/slac-surrogate-models",
+    "slac-surrogate-models[lcls_cu_inj,lcls_fel,lcls_fel_genesis,facet2_inj_241] @ git+https://github.com/slaclab/slac-surrogate-models",
     "zfel @ git+https://github.com/slaclab/zfel.git",
 ]
 dev = [
