@@ -132,6 +132,19 @@ def get_cu_hxr_injector_surrogate_model(
     return injector_surrogate
 
 
+def get_cu_hxr_fel_surrogate_model():
+    """
+    Get the LCLS CU HXR FEL surrogate model.
+
+    Scalar NN mapping undulator gaps and upstream quad settings to the GDET
+    pulse-energy diagnostic (``GDET:FEE1:241:ENRC``). Not a beam-tracking stage.
+    """
+    from lume_torch.base import LUMETorchModel
+    from models.lcls_fel import load_model
+
+    return LUMETorchModel(load_model())
+
+
 # get lume model instances for each stage of the accelerator
 def get_cu_hxr_staged_model(n_particles: int = 1000, **kwargs) -> StagedModel:
     """

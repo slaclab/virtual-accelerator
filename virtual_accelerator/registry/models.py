@@ -161,6 +161,15 @@ MODELS: dict[str, ModelEntry] = {
         default_end="END",
         shared_params=frozenset({"n_particles"}),
     ),
+    "surrogate_cu_hxr_fel": ModelEntry(
+        name="surrogate_cu_hxr_fel",
+        description="LCLS CU-HXR FEL GDET surrogate",
+        facility="lcls",
+        simulator="surrogate",
+        builder="virtual_accelerator.models.cu_hxr:get_cu_hxr_fel_surrogate_model",
+        extras=("surrogate",),
+        params={},
+    ),
     # 1D ZFEL: a dedicated model rather than a selectable beamline segment, so no
     # start_element / end_element / handoff_points.
     "zfel_cu_hxr": ModelEntry(

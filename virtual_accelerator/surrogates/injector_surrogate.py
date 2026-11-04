@@ -3,7 +3,7 @@ import torch
 from lume.variables import EnumVariable, ScalarVariable
 from virtual_accelerator.surrogates.beam_output import BeamOutputModel
 
-from lcls_cu_inj_model import load_model
+from models.lcls_cu_inj import load_model
 
 from typing import Any, Mapping
 
