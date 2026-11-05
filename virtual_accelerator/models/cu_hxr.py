@@ -151,13 +151,14 @@ def get_cu_hxr_fel_genesis_surrogate_model():
 
     Scalar NN mapping electron-beam Twiss parameters, chirp, undulator taper/start
     and bunch length to Genesis-simulated FEL outputs (energy, bandwidth, peak
-    intensity, peak photon energy). Takes physics inputs rather than PVs; not a
-    beam-tracking stage.
+    intensity, peak photon energy). Wrapped so Twiss and bunch length are drawn
+    from an incoming beam distribution set via ``initial_particles``.
     """
-    from lume_torch.base import LUMETorchModel
-    from models.lcls_fel_genesis import load_model
+    from virtual_accelerator.surrogates.fel_genesis_surrogate import (
+        GenesisFELSurrogate,
+    )
 
-    return LUMETorchModel(load_model())
+    return GenesisFELSurrogate()
 
 
 # get lume model instances for each stage of the accelerator
