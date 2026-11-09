@@ -216,7 +216,7 @@ class BPMXVariable(CheetahReadOnlyScalarVariable):
     description: str = "BPM horizontal orbit position"
 
     def _get(self, simulator):
-        return super()._get(simulator)[0]
+        return super()._get(simulator)[0] * (1e3)
 
 
 class BPMYVariable(CheetahReadOnlyScalarVariable):
@@ -227,7 +227,7 @@ class BPMYVariable(CheetahReadOnlyScalarVariable):
     description: str = "BPM vertical orbit position"
 
     def _get(self, simulator):
-        return super()._get(simulator)[1]
+        return super()._get(simulator)[1] * (1e3)
 
 
 class BPMTMITDummyVariable(TorchScalarVariable, _ReadOnlyActionMixin):
