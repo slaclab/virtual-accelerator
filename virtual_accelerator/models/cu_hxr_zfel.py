@@ -1,5 +1,7 @@
 from typing import Any
 
+import time
+
 import numpy as np
 
 from lume.model import LUMEModel
@@ -20,7 +22,24 @@ class ZFELPVModel(LUMEModel):
         KAct[32], DSKact[32] -> zfel
     """
 
-    def __init__(self):
+    def __init__(self,
+        simulate_motion=False,
+        motion_t_avg=30.0,
+        motion_jitter=0.2,
+    ):
+        if motion_t_avg < 0:
+            raise ValueError("motion_t_avg must be nonnegative")
+        if not 0.0 <= motion_jitter <= 1.0:
+            raise ValueError("motion_jitter must be between 0 and 1")
+
+        self.simulate_motion = simulate_motion
+        self.motion_t_avg = float(motion_t_avg)
+        self.motion_jitter = float(motion_jitter)
+
+        self._rng = np.random.default_rng()
+        self._pending_controls = None
+        self._motion_deadline = None
+
         self._backend = ZFELBackend()
 
         backend_state = self._backend.get(
@@ -47,6 +66,8 @@ class ZFELPVModel(LUMEModel):
         self._pv_aliases = {}
         self._variables = {}
         self._state["model_eval_id"] = 0.0
+        self._state["motion_busy"] = 0.0
+        self._state["refresh"] = 0.0
 
         # ------------------------------------------------------
         # Scalar, real-machine-like undulator controls
@@ -209,6 +230,24 @@ class ZFELPVModel(LUMEModel):
             }
         )
 
+        self._pv_aliases["ZFEL:MOTION_BUSY"] = "motion_busy"
+
+        self._variables["ZFEL:MOTION_BUSY"] = ScalarVariable(
+            name="ZFEL:MOTION_BUSY",
+            default_value=0.0,
+            unit="",
+            read_only=True,
+        )
+
+        self._pv_aliases["ZFEL:REFRESH"] = "refresh"
+
+        self._variables["ZFEL:REFRESH"] = ScalarVariable(
+            name="ZFEL:REFRESH",
+            default_value=0.0,
+            unit="",
+            read_only=False,
+        )
+
     @property
     def supported_variables(self):
         return self._variables
@@ -226,43 +265,105 @@ class ZFELPVModel(LUMEModel):
         return super().get(names)
 
     def _get(self, names):
-        return {name: self._state[self._pv_aliases.get(name, name)] for name in names}
+        self._complete_motion_if_ready()
+
+        return {
+            name: self._state[self._pv_aliases.get(name, name)]
+            for name in names
+        }
+
+
+    def _complete_motion_if_ready(self):
+        """Finish simulated motion when its deadline has passed."""
+        if self._motion_deadline is None:
+            return
+
+        if time.monotonic() < self._motion_deadline:
+            return
+
+        self._backend.set(self._pending_controls)
+        self._sync_from_backend(include_controls=True)
+
+        self._state["model_eval_id"] += 1.0
+        self._state["motion_busy"] = 0.0
+
+        self._pending_controls = None
+        self._motion_deadline = None
+
+        print("VA: Simulated motion complete", flush=True)
 
     def _set(self, values: dict[str, Any]) -> None:
-        """
-        Update any scalar KAct/DSKAct values, then run zfel once.
+        """Stage K changes and simulate motion before ZFEL evaluation."""
+        self._complete_motion_if_ready()
 
-        Lume-PVA batches multiple PV writes before calling this,
-        according to Runner update_rate.
-        """
+        # Remove refresh commands before processing K changes.
+        values = {
+            name: value
+            for name, value in values.items()
+            if self._pv_aliases.get(name, name) != "refresh"
+        }
 
         if not values:
-            self._sync_from_backend(include_controls=True)
             return
+
+    # Keep the existing KAct/DSKAct processing below unchanged.
+        if self._pending_controls is not None:
+            kact = self._pending_controls["KAct"].copy()
+            dskact = self._pending_controls["DSKAct"].copy()
+        else:
+            kact = np.asarray(
+                [self._state[f"KAct_{cell}"] for cell in HXR_CELLS],
+                dtype=float,
+            )
+            dskact = np.asarray(
+                [self._state[f"DSKAct_{cell}"] for cell in HXR_CELLS],
+                dtype=float,
+            )
+
+        cell_indices = {
+            cell: index for index, cell in enumerate(HXR_CELLS)
+        }
 
         for name, value in values.items():
             state_name = self._pv_aliases.get(name, name)
-            self._state[state_name] = float(value)
 
-        kact = np.asarray(
-            [self._state[f"KAct_{cell}"] for cell in HXR_CELLS],
-            dtype=float,
-        )
+            if state_name.startswith("KAct_"):
+                cell = int(state_name.split("_")[1])
+                kact[cell_indices[cell]] = float(value)
 
-        dskact = np.asarray(
-            [self._state[f"DSKAct_{cell}"] for cell in HXR_CELLS],
-            dtype=float,
-        )
+            elif state_name.startswith("DSKAct_"):
+                cell = int(state_name.split("_")[1])
+                dskact[cell_indices[cell]] = float(value)
 
-        self._backend.set(
-            {
-                "KAct": kact,
-                "DSKAct": dskact,
-            }
-        )
+            else:
+                raise KeyError(f"Unsupported control: {name}")
 
+        controls = {
+            "KAct": kact,
+            "DSKAct": dskact,
+        }
+
+        if self.simulate_motion:
+            self._pending_controls = controls
+
+            if self._motion_deadline is None:
+                delay = self.motion_t_avg * self._rng.uniform(
+                    1.0 - self.motion_jitter,
+                    1.0 + self.motion_jitter,
+                )
+
+                self._motion_deadline = time.monotonic() + delay
+                self._state["motion_busy"] = 1.0
+
+                print(
+                    f"VA: Simulated motion time = {delay:.1f} s",
+                    flush=True,
+                )
+
+            return
+
+        self._backend.set(controls)
         self._sync_from_backend(include_controls=True)
-
         self._state["model_eval_id"] += 1.0
 
     def _sync_from_backend(
@@ -310,6 +411,9 @@ class ZFELPVModel(LUMEModel):
         self._state["pulse_intensity_std_relative"] = 0.0
 
     def reset(self) -> None:
+        self._pending_controls = None
+        self._motion_deadline = None
+        self._state["motion_busy"] = 0.0
         self._backend.reset()
 
         self._sync_from_backend(include_controls=True)
@@ -319,4 +423,8 @@ def get_cu_hxr_zfel_model() -> ZFELPVModel:
     """
     Construct the CU HXR ZFEL virtual-accelerator model.
     """
-    return ZFELPVModel()
+    return ZFELPVModel(
+        simulate_motion=True,
+        motion_t_avg=10.0,
+        motion_jitter=0.2,
+    )
