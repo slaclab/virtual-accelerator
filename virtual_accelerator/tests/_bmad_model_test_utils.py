@@ -6,7 +6,7 @@ from pathlib import Path
 
 from virtual_accelerator.utils.variables import get_pvs_by_element_name
 
-TEST_BEAM_PATH = os.path.join(Path(__file__).parent, "../bmad", "test_beam")
+TEST_BEAM_PATH = os.path.join(Path(__file__).parent, "../bmad", "test_beam.h5")
 
 DEFAULT_MAGNET_PV_ATTRS = (
     "BCTRL",
@@ -634,6 +634,8 @@ def assert_roundtrip_pv_get_set(
             target_value = not current_value
         elif isinstance(current_value, Real):
             if pv_name.endswith(":PNEUMATIC"):
+                target_value = 0.0 if float(current_value) >= 0.5 else 1.0
+            elif pv_name.endswith(("BEAMCODE1_STAT", "BEAMCODE2_STAT")):
                 target_value = 0.0 if float(current_value) >= 0.5 else 1.0
             else:
                 target_value = float(current_value) + 0.001

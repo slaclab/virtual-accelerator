@@ -31,6 +31,24 @@ pip install .[pva]
 pip install .[surrogate]
 pip install .[all]
 ```
+Note that to run impact, you will also need to mamba install the following:
+```
+conda install -c conda-forge impact-t
+conda install -c conda-forge distgen
+```
+To run multi-core tracking with Impact-T, you will need to choose openmpi or mpich and do one (ONLY ONE) of the following:
+```
+# For OpenMPI
+conda install -c conda-forge impact-t=*=mpi_openmpi*
+
+# For MPICH
+conda install -c conda-forge impact-t=*=mpi_mpich*
+```
+
+And the examples require installing ipykernel and register as a Jupyter kernel.
+
+Each model's required extra is listed in the "Supported models" table below. The
+`runners.py` CLI additionally needs the `pva` extra.
 
 ## Loading a model
 
@@ -95,17 +113,18 @@ repo https://github.com/slaclab/facet2-lattice.
 
 ## Running the models
 
-You can use the runner script to start the model. The script allows you to specify the model backend,
-number of particles, and end element to run with.
+Use the runner CLI to serve a model over PVA. MODEL is any registry name or chain
+alias from the tables above; `--list-models` prints the catalog.
 
-For example:
 ```
-python virtual_accelerator/models/runners.py cu_hxr_bmad --end-element OTR4
+python -m virtual_accelerator.models.runners bmad_cu_hxr --end-ele OTR4 --track-beam
+python -m virtual_accelerator.models.runners fast_cu_hxr_s2e --n-particles 500
+python -m virtual_accelerator.models.runners --list-models
 ```
 
 For more info, run:
 ```
-python virtual_accelerator/models/runners.py -h
+python -m virtual_accelerator.models.runners -h
 ```
 
 #### Note

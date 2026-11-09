@@ -37,7 +37,7 @@ Documentation = "https://github.com/slaclab/virtual-accelerator"
 
 [project.optional-dependencies]
 bmad = [
-    "lume-bmad>=0.1.1",
+    "lume-bmad>=0.1.2",
 ]
 cheetah = [
     "torch",
@@ -63,7 +63,7 @@ surrogate = [
 ]
 all = [
     "torch",
-    "lume-bmad>=0.1.1",
+    "lume-bmad>=0.1.2",
     "lume-cheetah",
     "lume-impact",
     "lume-torch",
@@ -100,7 +100,7 @@ include = [ "virtual_accelerator*", ]
 namespaces = false
 
 [tool.setuptools.package-data]
-virtual_accelerator = ["py.typed"]
+virtual_accelerator = ["py.typed", "bmad/*.h5"]
 
 [tool.setuptools_scm]
 version_file = "virtual_accelerator/_version.py"

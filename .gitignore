@@ -213,6 +213,8 @@ __marimo__/
 .vscode/
 
 *.h5
+!virtual_accelerator/bmad/test_beam.h5
+!virtual_accelerator/bmad/bmad_set_beam2000_pg.h5
 *.png
 *.svg
 

@@ -4,6 +4,7 @@ from typing import Any
 from impact import Impact
 from lume.actions import ReadOnlyActionMixin, WritableActionMixin
 from lume.variables import ScalarVariable, EnumVariable
+import numpy as np
 
 import logging
 
@@ -56,8 +57,118 @@ class _ReadbackFromControlMixin(ReadOnlyActionMixin):
         raise RuntimeError(f"{self.name} is read-only")
 
 
-class _QuadrupoleGradientVariable(ImpactScalarVariable):
-    """Shared quadrupole conversion helpers."""
+def reconstruct_fields(field: dict[str, Any], z: np.ndarray) -> np.ndarray:
+    """
+    Reconstruct the normalized on-axis field from Impact-T Fourier coefficients.
+
+    Parameters
+    ----------
+    field : dict[str, Any]
+        A solrf fieldmap component (e.g. ``fieldmap["field"]["Bz"]``) holding the
+        Fourier coefficients (``"fourier_coefficients"``), leading edge (``"z0"``),
+        and periodic length (``"L"``).
+    z : np.ndarray
+        Longitudinal positions (m) at which to evaluate the field.
+
+    Returns
+    -------
+    np.ndarray
+        The reconstructed on-axis field at each ``z``, normalized to unit peak.
+    """
+    z = np.asarray(z, dtype=float)
+    coefs = field[
+        "fourier_coefficients"
+    ]  # key used by lume-impact's in-memory solrf fieldmap
+    n_cos = (len(coefs) - 1) // 2
+    c0, c_cos, c_sin = coefs[0], coefs[1::2], coefs[2::2]
+    n = np.arange(1, n_cos + 1)
+    arg = np.outer(2 * np.pi * (z - field["L"] / 2 - field["z0"]) / field["L"], n)
+    return c0 / 2 + np.cos(arg) @ c_cos + np.sin(arg) @ c_sin
+
+
+def calc_effective_length(sol: dict[str, Any]) -> float:
+    """
+    Compute the field-squared effective length of a solenoid Bz fieldmap.
+
+    Uses ``integral(Bz**2 dz) / max(Bz)**2`` over the physical hump (``z > 0``),
+    the effective length that characterizes the solenoid focusing strength.
+
+    Parameters
+    ----------
+    sol : dict[str, Any]
+        Solenoid Bz fieldmap component with keys ``"z0"``, ``"z1"``, ``"L"``, and
+        ``"fourier_coefficients"``.
+
+    Returns
+    -------
+    float
+        The effective length in meters.
+    """
+    z = np.linspace(sol["z0"], sol["z1"], 1001)
+    Bz = reconstruct_fields(sol, z)  # normalized on-axis field (peak ~ 1)
+    # Effective length using only z > 0 (single physical solenoid hump)
+    mask = z > 0
+    z_pos, Bz_pos = z[mask], Bz[mask]
+    Bpeak_pos = np.max(np.abs(Bz_pos))
+
+    trapz = (
+        np.trapezoid if hasattr(np, "trapezoid") else np.trapz
+    )  # np.trapz removed in NumPy 2.0
+    int_Bz2_pos = trapz(Bz_pos**2, z_pos)
+    L_eff_focus_pos = int_Bz2_pos / Bpeak_pos**2
+    return L_eff_focus_pos
+
+
+class SolenoidBCTRLVariable(ImpactScalarVariable, WritableActionMixin):
+    read_only: bool = False
+    unit: str = "kG-m"
+    description: str = "Solenoid field integral setpoint (BDES)"
+
+    def _load_solrf(self, simulator: Impact) -> Any:
+        # Use the fieldmap already parsed into the simulator
+        ele_attr = self._get_ele_attr(simulator)
+        fieldmap = simulator.fieldmaps[ele_attr["filename"]]
+        return fieldmap["field"]["Bz"]
+
+    def _calculate_effective_length(self, simulator: Impact) -> Any:
+        sol = self._load_solrf(simulator)
+        return calc_effective_length(sol)
+
+    def _get_bctrl_value(self, simulator: Impact) -> Any:
+        ele_attr = self._get_ele_attr(simulator)
+        # kG-m: field scale * effective length, with a T->kG factor of 10.
+        return (
+            ele_attr["solenoid_field_scale"]
+            * self._calculate_effective_length(simulator)
+            * 10
+        )
+
+    def _set_bctrl_value(self, simulator: Impact, value: Any) -> None:
+        self._set_ele_attr(
+            simulator,
+            "solenoid_field_scale",
+            value / (self._calculate_effective_length(simulator) * 10),
+        )
+
+    def _get(self, simulator):
+        return self._get_bctrl_value(simulator)
+
+    def _set(self, simulator, value):
+        self._set_bctrl_value(simulator, value)
+
+
+class SolenoidBACTVariable(_ReadbackFromControlMixin, SolenoidBCTRLVariable):
+    """BACT readback of the solenoid."""
+
+    description: str = "Solenoid field integral readback (BACT)"
+
+
+class QuadrupoleBCTRLVariable(ImpactScalarVariable, WritableActionMixin):
+    """Action that operates on the BCTRL/BDES property of Quadrupoles"""
+
+    read_only: bool = False
+    unit: str = "kG"
+    description: str = "Quadrupole magnet field integral setpoint (BDES)"
 
     def _get_bctrl_value(self, simulator: Impact) -> Any:
         ele_attr = self._get_ele_attr(simulator)
@@ -69,13 +180,6 @@ class _QuadrupoleGradientVariable(ImpactScalarVariable):
             simulator, "b1_gradient", -value / (ele_attr["L_effective"] * 10)
         )
 
-
-class QuadrupoleBCTRLVariable(_QuadrupoleGradientVariable, WritableActionMixin):
-    """Action that operates on the BCTRL/BDES property of Quadrupoles"""
-
-    read_only: bool = False
-    unit: str = "kG"
-
     def _get(self, simulator: Impact) -> Any:
         return self._get_bctrl_value(simulator)
 
@@ -86,11 +190,14 @@ class QuadrupoleBCTRLVariable(_QuadrupoleGradientVariable, WritableActionMixin):
 class QuadrupoleBACTVariable(_ReadbackFromControlMixin, QuadrupoleBCTRLVariable):
     """Action that operates on the BACT property of Quadrupoles"""
 
+    description: str = "Quadrupole magnet field integral readback (BACT)"
+
 
 class StatusVariable(ImpactScalarVariable, ReadOnlyActionMixin):
     """Action that operates on the status of a device (e.g. STATCTRLSUB.T)"""
 
     read_only: bool = True
+    description: str = "Device status word"
 
     def _get(self, simulator: Impact) -> Any:
         return 0  # TODO: add logic for status of device
@@ -100,6 +207,7 @@ class BminVariable(ImpactScalarVariable, ReadOnlyActionMixin):
     """Action that operates on the BMIN/DRVL property of a device"""
 
     read_only: bool = True
+    description: str = "Device soft low limit (DRVL)"
 
     def _get(self, simulator: Impact) -> Any:
         return -100  # TODO: add logic for these limits
@@ -109,6 +217,7 @@ class BmaxVariable(ImpactScalarVariable, ReadOnlyActionMixin):
     """Action that operates on the BMAX/DRVH property of a device"""
 
     read_only: bool = True
+    description: str = "Device soft high limit (DRVH)"
 
     def _get(self, simulator: Impact) -> Any:
         return 100  # TODO: add logic for these limits
@@ -120,6 +229,7 @@ class ControlStateVariable(ImpactEnumVariable, ReadOnlyActionMixin):
     read_only: bool = True
     options: list[str] = ["Ready", "TRIM", "PERTURB", "BCON_TO_BDES", "BACT_TO_BDES"]
     default_value: str = "Ready"
+    description: str = "Device control state"
 
     def _get(self, simulator: Impact) -> Any:
         return "Ready"

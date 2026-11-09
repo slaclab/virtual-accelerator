@@ -321,8 +321,8 @@ def get_facet_impact_model(
     )
     model = build_impact_model(spec)
 
-    # register custom action variables for solenoids based on the element attribute mapping
-    add_facet_custom_impact_variables(model)
+    # # register custom action variables for solenoids based on the element attribute mapping
+    # add_facet_custom_impact_variables(model)
 
     # register custom actions for linac L0A and L0B sections
     group_actions = get_actions_from_groups(model.impact_model.simulator, spec)

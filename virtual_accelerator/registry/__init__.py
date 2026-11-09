@@ -246,8 +246,9 @@ def _entry(name: str) -> ModelEntry:
     try:
         return MODELS[name]
     except KeyError:
+        available = sorted(MODELS) + sorted(_CHAIN_ALIASES)
         raise KeyError(
-            f"Unknown model {name!r}. Available: {', '.join(sorted(MODELS))}"
+            f"Unknown model {name!r}. Available: {', '.join(available)}"
         ) from None
 
 
