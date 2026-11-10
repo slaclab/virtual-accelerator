@@ -86,6 +86,8 @@ Supported models:
 | `bmad_cu_hxr` | LCLS | Bmad | OTR2 | END | `bmad` |
 | `surrogate_cu_inj` | LCLS | Surrogate | CATHODE | OTR2 | `surrogate` |
 | `cheetah_cu_hxr` | LCLS | Cheetah | CATHODE | END | `cheetah` |
+| `surrogate_cu_hxr_fel` | LCLS | Surrogate | — | — | `surrogate` |
+| `surrogate_cu_hxr_fel_genesis` | LCLS | Surrogate | UMAHXH14#1 | END | `surrogate` |
 | `zfel_cu_hxr` | LCLS | ZFEL | — | — | `zfel` |
 | `impact_f2e_inj` | Facet2 | IMPACT | CATHODEF | PR10241 | `impact` |
 | `surrogate_f2e_inj` | Facet2 | Surrogate | CATHODEF | PR10241 | `surrogate` |
@@ -128,9 +130,15 @@ python -m virtual_accelerator.models.runners -h
 ```
 
 #### Note
-The Cu Injector model is present in subtrees/lcls_cu_injector_ml_model.
-To pull latest changes from the Cu Inj repo
+Surrogate models (LCLS Cu Injector, LCLS FEL, FACET-II injector) are packaged in the
+`slac-surrogate-models` monorepo. They are installed together via the `surrogate` extra:
 
 ```
-pip install git+https://github.com/slaclab/lcls_cu_injector_ml_model.git
+pip install -e ".[surrogate]"
+```
+
+To pull the latest surrogate weights directly:
+
+```
+pip install --force-reinstall "slac-surrogate-models[lcls_cu_inj,lcls_fel,lcls_fel_genesis,facet2_inj_241] @ git+https://github.com/slaclab/slac-surrogate-models"
 ```

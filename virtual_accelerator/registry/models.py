@@ -126,8 +126,9 @@ MODELS: dict[str, ModelEntry] = {
             "custom_beam_path": None,
         },
         # Starts wherever the upstream injector hands off: YAG03 from
-        # impact_cu_inj, OTR2 from surrogate_cu_inj.
-        handoff_points=("CATHODE", *_ALL_CU_HXR_SCREENS, "END"),
+        # impact_cu_inj, OTR2 from surrogate_cu_inj. UMAHXH14#1 is the first HXR
+        # undulator -- the plane where surrogate_cu_hxr_fel_genesis picks up.
+        handoff_points=("CATHODE", *_ALL_CU_HXR_SCREENS, "UMAHXH14#1", "END"),
         start_param="start_element",
         end_param="end_element",
         default_start="OTR2",
@@ -160,6 +161,29 @@ MODELS: dict[str, ModelEntry] = {
         default_start="CATHODE",
         default_end="END",
         shared_params=frozenset({"n_particles"}),
+    ),
+    "surrogate_cu_hxr_fel": ModelEntry(
+        name="surrogate_cu_hxr_fel",
+        description="LCLS CU-HXR FEL GDET surrogate",
+        facility="lcls",
+        simulator="surrogate",
+        builder="virtual_accelerator.models.cu_hxr:get_cu_hxr_fel_surrogate_model",
+        extras=("surrogate",),
+        params={},
+    ),
+    "surrogate_cu_hxr_fel_genesis": ModelEntry(
+        name="surrogate_cu_hxr_fel_genesis",
+        description="LCLS CU-HXR FEL Genesis surrogate",
+        facility="lcls",
+        simulator="surrogate",
+        builder=(
+            "virtual_accelerator.models.cu_hxr:get_cu_hxr_fel_genesis_surrogate_model"
+        ),
+        extras=("surrogate",),
+        params={},
+        handoff_points=("UMAHXH14#1",),
+        default_start="UMAHXH14#1",
+        default_end="END",
     ),
     # 1D ZFEL: a dedicated model rather than a selectable beamline segment, so no
     # start_element / end_element / handoff_points.

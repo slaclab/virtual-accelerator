@@ -247,7 +247,7 @@ def get_facet_injector_surrogate_model(
     element's s position. They would need to move per-plane if a second FACET
     handoff location is ever used.
     """
-    from facet2_inj_ml_model import load_model
+    from models.facet2_inj_241 import load_model
     from virtual_accelerator.surrogates.beam_output import BeamOutputModel
 
     return BeamOutputModel(
