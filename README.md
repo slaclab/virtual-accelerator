@@ -87,7 +87,7 @@ Supported models:
 | `surrogate_cu_inj` | LCLS | Surrogate | CATHODE | OTR2 | `surrogate` |
 | `cheetah_cu_hxr` | LCLS | Cheetah | CATHODE | END | `cheetah` |
 | `surrogate_cu_hxr_fel` | LCLS | Surrogate | — | — | `surrogate` |
-| `surrogate_cu_hxr_fel_genesis` | LCLS | Surrogate | — | — | `surrogate` |
+| `surrogate_cu_hxr_fel_genesis` | LCLS | Surrogate | UMAHXH14#1 | END | `surrogate` |
 | `zfel_cu_hxr` | LCLS | ZFEL | — | — | `zfel` |
 | `impact_f2e_inj` | Facet2 | IMPACT | CATHODEF | PR10241 | `impact` |
 | `surrogate_f2e_inj` | Facet2 | Surrogate | CATHODEF | PR10241 | `surrogate` |
