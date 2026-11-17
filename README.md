@@ -64,8 +64,15 @@ model = get_model("bmad_cu_hxr", end_ele="TD11")
 # Staged chain (upstream -> downstream), handoff inferred when unambiguous:
 model = get_model(["surrogate_cu_inj", "bmad_cu_hxr"], end_ele="OTR4", n_particles=500)
 
-# Or use a chain alias:
-model = get_model("high_fidelity_cu_hxr_s2e", handoff_loc="YAG03", n_particles=1000)
+# Or use a chain alias (default handoff OTR2):
+model = get_model("high_fidelity_cu_hxr_s2e", n_particles=1000)
+
+# Three-stage CU-HXR to FEL Genesis, explicit handoffs required:
+model = get_model(
+    ["impact_cu_inj", "bmad_cu_hxr", "surrogate_cu_hxr_fel_genesis"],
+    handoff_loc=["OTR2", "UMAHXH14#1"],
+    n_particles=1000,
+)
 ```
 
 Discovery helpers:
@@ -82,7 +89,7 @@ Supported models:
 
 | Model | Facility | Simulator | Start | End | Extras |
 | --- | --- | --- | --- | --- | --- |
-| `impact_cu_inj` | LCLS | IMPACT | CATHODE | YAG03 | `impact` |
+| `impact_cu_inj` | LCLS | IMPACT | CATHODE | OTR2 | `impact` |
 | `bmad_cu_hxr` | LCLS | Bmad | OTR2 | END | `bmad` |
 | `surrogate_cu_inj` | LCLS | Surrogate | CATHODE | OTR2 | `surrogate` |
 | `cheetah_cu_hxr` | LCLS | Cheetah | CATHODE | END | `cheetah` |
@@ -93,14 +100,14 @@ Supported models:
 | `surrogate_f2e_inj` | Facet2 | Surrogate | CATHODEF | PR10241 | `surrogate` |
 | `bmad_f2_elec` | Facet2 | Bmad | CATHODEF | END | `bmad` |
 
-Standard staged chains (build with `get_model([upstream, downstream], ...)`):
+Standard staged chains (build with `get_model([stage1, stage2, ...], ...)`):
 
-| Alias | Upstream | Downstream | Handoff |
-| --- | --- | --- | --- |
-| `high_fidelity_cu_hxr_s2e` | `impact_cu_inj` | `bmad_cu_hxr` | YAG03 |
-| `fast_cu_hxr_s2e` | `surrogate_cu_inj` | `bmad_cu_hxr` | OTR2 |
-| `high_fidelity_facet2_s2e` | `impact_f2e_inj` | `bmad_f2_elec` | PR10241 |
-| `fast_facet2_s2e` | `surrogate_f2e_inj` | `bmad_f2_elec` | PR10241 |
+| Alias | Stages | Handoffs |
+| --- | --- | --- |
+| `high_fidelity_cu_hxr_s2e` | `impact_cu_inj` -> `bmad_cu_hxr` | OTR2 |
+| `fast_cu_hxr_s2e` | `surrogate_cu_inj` -> `bmad_cu_hxr` | OTR2 |
+| `high_fidelity_facet2_s2e` | `impact_f2e_inj` -> `bmad_f2_elec` | PR10241 |
+| `fast_facet2_s2e` | `surrogate_f2e_inj` -> `bmad_f2_elec` | PR10241 |
 
 The `Runner` CLI additionally needs the `pva` extra.
 

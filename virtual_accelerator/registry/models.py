@@ -101,15 +101,16 @@ MODELS: dict[str, ModelEntry] = {
         extras=("impact",),
         params={
             "n_particles": 100,
-            "end_element": "YAG03",
+            "end_element": "OTR2",
             "include_end_element": True,
         },
         # YAG01 and OTR3 exist in the deck but their lines are commented out;
-        # OTR4 is past stop_1 at z=16.5.
-        handoff_points=("YAG02", "YAG03"),
+        # OTR4 is past stop_1 at z=16.5. OTR2 (z=14.24) is the default handoff
+        # to bmad_cu_hxr, whose default_start is OTR2.
+        handoff_points=("YAG02", "YAG03", "OTR1", "OTR2"),
         end_param="end_element",
         default_start="CATHODE",
-        default_end="YAG03",
+        default_end="OTR2",
         shared_params=frozenset({"n_particles"}),
     ),
     "bmad_cu_hxr": ModelEntry(
@@ -125,8 +126,8 @@ MODELS: dict[str, ModelEntry] = {
             "track_beam": False,
             "custom_beam_path": None,
         },
-        # Starts wherever the upstream injector hands off: YAG03 from
-        # impact_cu_inj, OTR2 from surrogate_cu_inj. UMAHXH14#1 is the first HXR
+        # Starts wherever the upstream injector hands off: OTR2 from
+        # impact_cu_inj or surrogate_cu_inj. UMAHXH14#1 is the first HXR
         # undulator -- the plane where surrogate_cu_hxr_fel_genesis picks up.
         handoff_points=("CATHODE", *_ALL_CU_HXR_SCREENS, "UMAHXH14#1", "END"),
         start_param="start_element",
