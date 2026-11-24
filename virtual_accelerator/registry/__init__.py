@@ -4,7 +4,7 @@ from virtual_accelerator.registry import get_model, list_models
 
 print(list_models())
 model = get_model("bmad_cu_hxr", end_ele="OTR4", track_beam=True)
-model = get_model(["impact_cu_inj", "bmad_cu_hxr"], handoff_loc="YAG03")
+model = get_model(["impact_cu_inj", "bmad_cu_hxr"], handoff_loc="OTR2")
 model = get_model("high_fidelity_cu_hxr_s2e", n_particles=1000)
 """
 
@@ -43,17 +43,18 @@ _SIMULATOR_LABELS = {
 
 
 # Standard staged chains, each addressable by its alias in `get_model`. A row is
-# (alias, upstream, downstream); the alias resolves to the stage pair so
-# `get_model("high_fidelity_cu_hxr_s2e")` behaves like passing the pair as a list.
-_STANDARD_CHAINS: tuple[tuple[str, str, str], ...] = (
+# (alias, *stages) with two or more stages; the alias resolves to the stage
+# tuple so `get_model("high_fidelity_cu_hxr_s2e")` behaves like passing the
+# stages as a list.
+_STANDARD_CHAINS: tuple[tuple[str, ...], ...] = (
     ("high_fidelity_cu_hxr_s2e", "impact_cu_inj", "bmad_cu_hxr"),
     ("fast_cu_hxr_s2e", "surrogate_cu_inj", "bmad_cu_hxr"),
     ("high_fidelity_facet2_s2e", "impact_f2e_inj", "bmad_f2_elec"),
     ("fast_facet2_s2e", "surrogate_f2e_inj", "bmad_f2_elec"),
 )
 
-_CHAIN_ALIASES: dict[str, tuple[str, str]] = {
-    alias: (upstream, downstream) for alias, upstream, downstream in _STANDARD_CHAINS
+_CHAIN_ALIASES: dict[str, tuple[str, ...]] = {
+    row[0]: row[1:] for row in _STANDARD_CHAINS
 }
 
 
@@ -77,26 +78,24 @@ class _ModelCatalog(dict):
             entry.description,
         )
 
-    def _chain_row(
-        self, alias: str, upstream: ModelEntry, downstream: ModelEntry
-    ) -> tuple[str, ...]:
+    def _chain_row(self, alias: str, stages: tuple[ModelEntry, ...]) -> tuple[str, ...]:
         simulator = "+".join(
             dict.fromkeys(
-                _SIMULATOR_LABELS.get(e.simulator, e.simulator)
-                for e in (upstream, downstream)
+                _SIMULATOR_LABELS.get(e.simulator, e.simulator) for e in stages
             )
         )
-        # Handoff plane comes from the upstream stage's default end -- that is what
-        # get_model will pick when handoff_loc is not passed, so it is the honest
-        # default to advertise here.
-        handoff = upstream.default_end or "?"
+        # Handoff planes come from each upstream stage's default_end -- that is
+        # what get_model will pick when handoff_loc is not passed, so it is the
+        # honest default to advertise here.
+        handoffs = " / ".join(e.default_end or "?" for e in stages[:-1])
+        flow = " -> ".join(e.name for e in stages)
         return (
             alias,
-            _FACILITY_LABELS.get(upstream.facility, upstream.facility),
+            _FACILITY_LABELS.get(stages[0].facility, stages[0].facility),
             simulator,
-            upstream.default_start or "-",
-            downstream.default_end or "-",
-            f"{upstream.name} -> {downstream.name} (handoff {handoff})",
+            stages[0].default_start or "-",
+            stages[-1].default_end or "-",
+            f"{flow} (handoff {handoffs})",
         )
 
     def __repr__(self) -> str:
@@ -104,9 +103,9 @@ class _ModelCatalog(dict):
             return "(no models registered)"
         rows = [self._row(entry) for entry in self.values()]
         chain_rows = [
-            self._chain_row(alias, self[up], self[down])
-            for alias, up, down in self._chains
-            if up in self and down in self
+            self._chain_row(alias, tuple(self[s] for s in stages))
+            for alias, stages in self._chains
+            if all(s in self for s in stages)
         ]
         all_rows = rows + chain_rows
         widths = [
@@ -157,12 +156,12 @@ def list_models(
         if (facility is None or entry.facility == facility)
         and (simulator is None or entry.simulator == simulator)
     }
-    # Only include a chain when both stages survived the filter, so the block
+    # Only include a chain when every stage survived the filter, so the block
     # tracks the visible rows rather than advertising unreachable staging.
     chains = tuple(
-        (alias, up, down)
-        for alias, up, down in _STANDARD_CHAINS
-        if up in kept and down in kept
+        (row[0], row[1:])
+        for row in _STANDARD_CHAINS
+        if all(stage in kept for stage in row[1:])
     )
     return _ModelCatalog(kept.items(), chains=chains)
 
@@ -531,12 +530,22 @@ def _validate_pair(upstream: ModelEntry, downstream: ModelEntry, handoff: str) -
         )
 
     if downstream.start_param is None:
-        reason = (
-            "IMPACT models can only start at the cathode"
-            if downstream.simulator == "impact"
-            else f"{downstream.name!r} has a fixed start"
-        )
-        raise ValueError(f"{downstream.name!r} cannot be a downstream stage: {reason}.")
+        # Fixed-start stage is still a valid downstream iff the handoff lands
+        # exactly at its default_start -- a surrogate predicting over a
+        # non-sliceable region (e.g. the HXR undulators) has nothing to configure
+        # but can still receive initial_particles there.
+        if downstream.default_start is None or handoff != downstream.default_start:
+            reason = (
+                "IMPACT models can only start at the cathode"
+                if downstream.simulator == "impact"
+                else (
+                    f"{downstream.name!r} has a fixed start at "
+                    f"{downstream.default_start!r}, not {handoff!r}"
+                )
+            )
+            raise ValueError(
+                f"{downstream.name!r} cannot be a downstream stage: {reason}."
+            )
 
     if handoff in CATHODES:
         raise ValueError(

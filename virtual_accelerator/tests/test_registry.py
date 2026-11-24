@@ -34,9 +34,9 @@ class TestDiscovery:
         # A staged-chain row is rendered when both stages pass the filter, with
         # the inferred handoff spelled out so users can see which plane
         # get_model will pick when handoff_loc is not passed.
-        assert "impact_cu_inj -> bmad_cu_hxr (handoff YAG03)" in text
+        assert "impact_cu_inj -> bmad_cu_hxr (handoff OTR2)" in text
         # Endpoints appear as their own columns rather than in the description.
-        assert "CATHODE" in text and "YAG03" in text
+        assert "CATHODE" in text and "OTR2" in text
 
     def test_repr_omits_chain_block_when_no_pair_survives_filter(self):
         # Only Bmad models remain -- neither standard chain has both stages Bmad.
@@ -59,12 +59,12 @@ class TestDiscovery:
         assert diags.index("YAG02") < diags.index("YAG03") < diags.index("OTR2")
 
     def test_impact_lists_only_its_standard_extent(self):
-        # Standard injector extent is cathode -> YAG03. Screens further downstream
+        # Standard injector extent is cathode -> OTR2. Screens further downstream
         # are excluded: YAG01/OTR3 are commented out in the deck, OTR4 is past
-        # stop_1 at z=16.5, and OTR1/OTR2 are past the standard handoff.
+        # stop_1 at z=16.5.
         diags = list_handoff_points("impact_cu_inj")
-        assert diags == ("YAG02", "YAG03")
-        for absent in ("YAG01", "OTR1", "OTR2", "OTR3", "OTR4"):
+        assert diags == ("YAG02", "YAG03", "OTR1", "OTR2")
+        for absent in ("YAG01", "OTR3", "OTR4"):
             assert absent not in diags
 
     def test_cathode_is_only_listed_where_it_is_usable(self):
@@ -266,11 +266,10 @@ class TestChainAliases:
         assert alias == "high_fidelity_cu_hxr_s2e"
 
     def test_every_alias_points_at_registered_stages(self):
-        for alias, (upstream, downstream) in _CHAIN_ALIASES.items():
-            assert upstream in MODELS, f"{alias} upstream {upstream!r} unregistered"
-            assert downstream in MODELS, (
-                f"{alias} downstream {downstream!r} unregistered"
-            )
+        for alias, stages in _CHAIN_ALIASES.items():
+            assert len(stages) >= 2, f"{alias} has fewer than two stages"
+            for stage in stages:
+                assert stage in MODELS, f"{alias} stage {stage!r} unregistered"
 
     def test_plain_name_returns_singleton_and_no_alias(self):
         names, alias = _resolve_spec("bmad_cu_hxr")
@@ -306,6 +305,8 @@ class TestCommonHandoffPoints:
         assert common_handoff_points("impact_cu_inj", "bmad_cu_hxr") == (
             "YAG02",
             "YAG03",
+            "OTR1",
+            "OTR2",
         )
         assert common_handoff_points("surrogate_cu_inj", "bmad_cu_hxr") == ("OTR2",)
 
@@ -331,7 +332,10 @@ class TestCommonHandoffPoints:
         )
 
     def test_no_shared_points_gives_empty_tuple(self):
-        assert common_handoff_points("impact_cu_inj", "surrogate_cu_inj") == ()
+        assert (
+            common_handoff_points("surrogate_cu_inj", "surrogate_cu_hxr_fel_genesis")
+            == ()
+        )
 
     def test_cross_facility_pairs_share_nothing(self):
         assert common_handoff_points("impact_cu_inj", "bmad_f2_elec") == ()

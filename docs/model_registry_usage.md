@@ -42,7 +42,7 @@ Print all registered models as a table:
 +--------------------------+----------+----------------+----------+---------+-----------------------------------------------------+
 | name                     | facility | simulator      | start    | end     | description                                         |
 +--------------------------+----------+----------------+----------+---------+-----------------------------------------------------+
-| impact_cu_inj            | LCLS     | IMPACT         | CATHODE  | YAG03   | LCLS CU injector                                    |
+| impact_cu_inj            | LCLS     | IMPACT         | CATHODE  | OTR2    | LCLS CU injector                                    |
 | bmad_cu_hxr              | LCLS     | Bmad           | OTR2     | END     | LCLS CU-HXR linac                                   |
 | surrogate_cu_inj         | LCLS     | Surrogate      | CATHODE  | OTR2    | LCLS CU injector (NN surrogate)                     |
 | cheetah_cu_hxr           | LCLS     | Cheetah        | CATHODE  | END     | LCLS CU-HXR full beamline                           |
@@ -51,7 +51,7 @@ Print all registered models as a table:
 | surrogate_f2e_inj        | Facet2   | Surrogate      | CATHODEF | PR10241 | FACET-II injector (NN surrogate)                    |
 | bmad_f2_elec             | Facet2   | Bmad           | CATHODEF | END     | FACET-II e- linac                                   |
 +--------------------------+----------+----------------+----------+---------+-----------------------------------------------------+
-| high_fidelity_cu_hxr_s2e | LCLS     | IMPACT+Bmad    | CATHODE  | END     | impact_cu_inj -> bmad_cu_hxr (handoff YAG03)        |
+| high_fidelity_cu_hxr_s2e | LCLS     | IMPACT+Bmad    | CATHODE  | END     | impact_cu_inj -> bmad_cu_hxr (handoff OTR2)         |
 | fast_cu_hxr_s2e          | LCLS     | Surrogate+Bmad | CATHODE  | END     | surrogate_cu_inj -> bmad_cu_hxr (handoff OTR2)      |
 | high_fidelity_facet2_s2e | Facet2   | IMPACT+Bmad    | CATHODEF | END     | impact_f2e_inj -> bmad_f2_elec (handoff PR10241)    |
 | fast_facet2_s2e          | Facet2   | Surrogate+Bmad | CATHODEF | END     | surrogate_f2e_inj -> bmad_f2_elec (handoff PR10241) |
@@ -84,7 +84,7 @@ endpoints, not intermediate handoffs.
 >>> for m in ["impact_cu_inj", "bmad_cu_hxr", "surrogate_cu_inj", "cheetah_cu_hxr"]:
 ...     pts = tuple(p for p in list_handoff_points(m) if p not in {"CATHODE", "CATHODEF", "END"})
 ...     print(f"{m:<18} {pts}")
-impact_cu_inj      ('YAG02', 'YAG03')
+impact_cu_inj      ('YAG02', 'YAG03', 'OTR1', 'OTR2')
 bmad_cu_hxr        ('YAG02', 'YAG03', 'OTRH1', 'OTRH2', 'OTR1', 'OTR2', 'OTR3', 'OTR4', 'OTR11', 'OTR12', 'OTR21', 'OTRDMP')
 surrogate_cu_inj   ('OTR2',)
 cheetah_cu_hxr     ('YAG02', 'YAG03', 'OTRH1', 'OTRH2', 'OTR1', 'OTR2', 'OTR3', 'OTR4', 'OTR11', 'OTR12', 'OTR21', 'OTRDMP')
@@ -104,7 +104,7 @@ upstream of it.
 
 ```python
 >>> common_handoff_points("impact_cu_inj", "bmad_cu_hxr")
-('YAG02', 'YAG03')
+('YAG02', 'YAG03', 'OTR1', 'OTR2')
 
 >>> common_handoff_points("surrogate_cu_inj", "bmad_cu_hxr")
 ('OTR2',)
@@ -145,12 +145,11 @@ surrogate's fixed end (OTR2):
 
 ```
 
-`impact_cu_inj` → `bmad_cu_hxr` — hand off at YAG03:
+`impact_cu_inj` → `bmad_cu_hxr` — hand off at OTR2 (the inferred default):
 
 ```python
 >>> model = get_model(                                                    # doctest: +SKIP
 ...     ["impact_cu_inj", "bmad_cu_hxr"],
-...     handoff_loc="YAG03",
 ...     end_ele="TD11",
 ...     n_particles=1000,
 ... )
@@ -180,14 +179,14 @@ Standard chains:
 
 | Alias | Upstream | Downstream | Handoff |
 |---|---|---|---|
-| `high_fidelity_cu_hxr_s2e` | `impact_cu_inj` | `bmad_cu_hxr` | YAG03 |
+| `high_fidelity_cu_hxr_s2e` | `impact_cu_inj` | `bmad_cu_hxr` | OTR2 (inferred) |
 | `fast_cu_hxr_s2e` | `surrogate_cu_inj` | `bmad_cu_hxr` | OTR2 (inferred) |
 | `high_fidelity_facet2_s2e` | `impact_f2e_inj` | `bmad_f2_elec` | PR10241 (inferred) |
 | `fast_facet2_s2e` | `surrogate_f2e_inj` | `bmad_f2_elec` | PR10241 (inferred) |
 
-LCLS needs two handoff planes because its injector models end at different places
-and neither can move: the NN surrogate predicts `OTRS:IN20:571` (OTR2) at 135 MeV
-and cannot produce a beam at YAG03, which sits before L0B at 64 MeV.
+Both LCLS injectors now end at OTR2, which is where `bmad_cu_hxr` picks up at 135 MeV.
+YAG02/YAG03/OTR1 are additionally exposed as handoff points on `impact_cu_inj` for
+callers that want a shorter IMPACT run upstream of OTR2.
 
 ### The Handoff Element Belongs To The Downstream Stage
 

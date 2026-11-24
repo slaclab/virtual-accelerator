@@ -132,6 +132,35 @@ def get_cu_hxr_injector_surrogate_model(
     return injector_surrogate
 
 
+def get_cu_hxr_fel_surrogate_model():
+    """
+    Get the LCLS CU HXR FEL surrogate model.
+
+    Scalar NN mapping undulator gaps and upstream quad settings to the GDET
+    pulse-energy diagnostic (``GDET:FEE1:241:ENRC``). Not a beam-tracking stage.
+    """
+    from lume_torch.base import LUMETorchModel
+    from models.lcls_fel import load_model
+
+    return LUMETorchModel(load_model())
+
+
+def get_cu_hxr_fel_genesis_surrogate_model():
+    """
+    Get the LCLS FEL Genesis surrogate model.
+
+    Scalar NN mapping electron-beam Twiss parameters, chirp, undulator taper/start
+    and bunch length to Genesis-simulated FEL outputs (energy, bandwidth, peak
+    intensity, peak photon energy). Wrapped so Twiss and bunch length are drawn
+    from an incoming beam distribution set via ``initial_particles``.
+    """
+    from virtual_accelerator.surrogates.fel_genesis_surrogate import (
+        GenesisFELSurrogate,
+    )
+
+    return GenesisFELSurrogate()
+
+
 # get lume model instances for each stage of the accelerator
 def get_cu_hxr_staged_model(n_particles: int = 1000, **kwargs) -> StagedModel:
     """

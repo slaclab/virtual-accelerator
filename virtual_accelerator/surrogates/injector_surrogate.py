@@ -3,7 +3,7 @@ import torch
 from lume.variables import EnumVariable, ScalarVariable
 from virtual_accelerator.surrogates.beam_output import BeamOutputModel
 
-from lcls_cu_inj_model import load_model
+from models.lcls_cu_inj import load_model
 
 from typing import Any, Mapping
 
@@ -13,7 +13,7 @@ from scipy import constants
 
 def compute_covariance_matrix(state: Mapping[str, Any], energy: float) -> np.ndarray:
     """Compute a diagonal 6x6 covariance matrix from scalar beam
-    parameters for a specific (lcls_cu_inj_model) surrogate model.
+    parameters for a specific (models.lcls_cu_inj) surrogate model.
 
     The matrix is in OpenPMDBeamphysics units with no off-diagonal terms.
     variable order: [x, px, y, py, t, pz]

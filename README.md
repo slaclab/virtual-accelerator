@@ -64,8 +64,15 @@ model = get_model("bmad_cu_hxr", end_ele="TD11")
 # Staged chain (upstream -> downstream), handoff inferred when unambiguous:
 model = get_model(["surrogate_cu_inj", "bmad_cu_hxr"], end_ele="OTR4", n_particles=500)
 
-# Or use a chain alias:
-model = get_model("high_fidelity_cu_hxr_s2e", handoff_loc="YAG03", n_particles=1000)
+# Or use a chain alias (default handoff OTR2):
+model = get_model("high_fidelity_cu_hxr_s2e", n_particles=1000)
+
+# Three-stage CU-HXR to FEL Genesis, explicit handoffs required:
+model = get_model(
+    ["impact_cu_inj", "bmad_cu_hxr", "surrogate_cu_hxr_fel_genesis"],
+    handoff_loc=["OTR2", "UMAHXH14#1"],
+    n_particles=1000,
+)
 ```
 
 Discovery helpers:
@@ -82,23 +89,25 @@ Supported models:
 
 | Model | Facility | Simulator | Start | End | Extras |
 | --- | --- | --- | --- | --- | --- |
-| `impact_cu_inj` | LCLS | IMPACT | CATHODE | YAG03 | `impact` |
+| `impact_cu_inj` | LCLS | IMPACT | CATHODE | OTR2 | `impact` |
 | `bmad_cu_hxr` | LCLS | Bmad | OTR2 | END | `bmad` |
 | `surrogate_cu_inj` | LCLS | Surrogate | CATHODE | OTR2 | `surrogate` |
 | `cheetah_cu_hxr` | LCLS | Cheetah | CATHODE | END | `cheetah` |
+| `surrogate_cu_hxr_fel` | LCLS | Surrogate | — | — | `surrogate` |
+| `surrogate_cu_hxr_fel_genesis` | LCLS | Surrogate | UMAHXH14#1 | - | `surrogate` |
 | `zfel_cu_hxr` | LCLS | ZFEL | — | — | `zfel` |
 | `impact_f2e_inj` | Facet2 | IMPACT | CATHODEF | PR10241 | `impact` |
 | `surrogate_f2e_inj` | Facet2 | Surrogate | CATHODEF | PR10241 | `surrogate` |
 | `bmad_f2_elec` | Facet2 | Bmad | CATHODEF | END | `bmad` |
 
-Standard staged chains (build with `get_model([upstream, downstream], ...)`):
+Standard staged chains (build with `get_model([stage1, stage2, ...], ...)`):
 
-| Alias | Upstream | Downstream | Handoff |
-| --- | --- | --- | --- |
-| `high_fidelity_cu_hxr_s2e` | `impact_cu_inj` | `bmad_cu_hxr` | YAG03 |
-| `fast_cu_hxr_s2e` | `surrogate_cu_inj` | `bmad_cu_hxr` | OTR2 |
-| `high_fidelity_facet2_s2e` | `impact_f2e_inj` | `bmad_f2_elec` | PR10241 |
-| `fast_facet2_s2e` | `surrogate_f2e_inj` | `bmad_f2_elec` | PR10241 |
+| Alias | Stages | Handoffs |
+| --- | --- | --- |
+| `high_fidelity_cu_hxr_s2e` | `impact_cu_inj` -> `bmad_cu_hxr` | OTR2 |
+| `fast_cu_hxr_s2e` | `surrogate_cu_inj` -> `bmad_cu_hxr` | OTR2 |
+| `high_fidelity_facet2_s2e` | `impact_f2e_inj` -> `bmad_f2_elec` | PR10241 |
+| `fast_facet2_s2e` | `surrogate_f2e_inj` -> `bmad_f2_elec` | PR10241 |
 
 The `Runner` CLI additionally needs the `pva` extra.
 
@@ -128,9 +137,15 @@ python -m virtual_accelerator.models.runners -h
 ```
 
 #### Note
-The Cu Injector model is present in subtrees/lcls_cu_injector_ml_model.
-To pull latest changes from the Cu Inj repo
+Surrogate models (LCLS Cu Injector, LCLS FEL, FACET-II injector) are packaged in the
+`slac-surrogate-models` monorepo. They are installed together via the `surrogate` extra:
 
 ```
-pip install git+https://github.com/slaclab/lcls_cu_injector_ml_model.git
+pip install -e ".[surrogate]"
+```
+
+To pull the latest surrogate weights directly:
+
+```
+pip install --force-reinstall "slac-surrogate-models[lcls_cu_inj,lcls_fel,lcls_fel_genesis,facet2_inj_241] @ git+https://github.com/slaclab/slac-surrogate-models"
 ```
