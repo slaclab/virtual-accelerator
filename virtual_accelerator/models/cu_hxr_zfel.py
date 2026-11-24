@@ -22,7 +22,8 @@ class ZFELPVModel(LUMEModel):
         KAct[32], DSKact[32] -> zfel
     """
 
-    def __init__(self,
+    def __init__(
+        self,
         simulate_motion=False,
         motion_t_avg=30.0,
         motion_jitter=0.2,
@@ -267,11 +268,7 @@ class ZFELPVModel(LUMEModel):
     def _get(self, names):
         self._complete_motion_if_ready()
 
-        return {
-            name: self._state[self._pv_aliases.get(name, name)]
-            for name in names
-        }
-
+        return {name: self._state[self._pv_aliases.get(name, name)] for name in names}
 
     def _complete_motion_if_ready(self):
         """Finish simulated motion when its deadline has passed."""
@@ -306,7 +303,7 @@ class ZFELPVModel(LUMEModel):
         if not values:
             return
 
-    # Keep the existing KAct/DSKAct processing below unchanged.
+        # Keep the existing KAct/DSKAct processing below unchanged.
         if self._pending_controls is not None:
             kact = self._pending_controls["KAct"].copy()
             dskact = self._pending_controls["DSKAct"].copy()
@@ -320,9 +317,7 @@ class ZFELPVModel(LUMEModel):
                 dtype=float,
             )
 
-        cell_indices = {
-            cell: index for index, cell in enumerate(HXR_CELLS)
-        }
+        cell_indices = {cell: index for index, cell in enumerate(HXR_CELLS)}
 
         for name, value in values.items():
             state_name = self._pv_aliases.get(name, name)

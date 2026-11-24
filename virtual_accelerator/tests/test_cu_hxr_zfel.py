@@ -148,13 +148,15 @@ def test_machine_style_pv_write():
         target_k,
     )
 
+
 def test_simulated_motion_delay(monkeypatch):
     from types import SimpleNamespace
     from virtual_accelerator.models import cu_hxr_zfel as va
 
     clock = [100.0]
     monkeypatch.setattr(
-        va, "time",
+        va,
+        "time",
         SimpleNamespace(monotonic=lambda: clock[0]),
     )
 
@@ -174,12 +176,14 @@ def test_simulated_motion_delay(monkeypatch):
     model.set({"KAct_46": 3.47})
 
     clock[0] += 5.1
-    state = model.get([
-        "KAct_47",
-        "KAct_46",
-        "ZFEL:MOTION_BUSY",
-        "ZFEL:MODEL_EVAL_ID",
-    ])
+    state = model.get(
+        [
+            "KAct_47",
+            "KAct_46",
+            "ZFEL:MOTION_BUSY",
+            "ZFEL:MODEL_EVAL_ID",
+        ]
+    )
 
     assert np.isclose(state["KAct_47"], 3.48)
     assert np.isclose(state["KAct_46"], 3.47)
